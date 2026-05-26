@@ -49,13 +49,3 @@ export async function uploadToolImage(file: Buffer | Blob, fileName: string) {
 
   return publicUrlData.publicUrl;
 }
-
-/**
- * Creates a Supabase client for use in Server Components.
- */
-export const createServerClient = () => {
-  // Using the newer approach for Next.js App Router
-  // Note: auth-helpers-nextjs is deprecated but still widely used for simple setups
-  // Ideally, migrate to @supabase/ssr later if needed.
-  return createClient(supabaseUrl, supabaseAnonKey);
-};

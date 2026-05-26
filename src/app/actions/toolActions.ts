@@ -65,7 +65,7 @@ export async function submitTool(formData: FormData, userId: string) {
       repoUrl,
       userId,
       ...stats,
-      published: true, 
+      status: 'ACTIVE', 
       lastFetchedAt: new Date(),
       platforms: {
         connectOrCreate: platformNames.map(name => ({
@@ -96,7 +96,7 @@ export async function submitTool(formData: FormData, userId: string) {
 export async function getTools(query?: string, platform?: string, toolType?: string) {
   return prisma.tool.findMany({
     where: {
-      published: true,
+      status: 'ACTIVE',
       ...(query && {
         OR: [
           { name: { contains: query } },

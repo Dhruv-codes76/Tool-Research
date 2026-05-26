@@ -14,6 +14,7 @@ async function main() {
       data: {
         name: 'Admin',
         email: adminEmail,
+        role: 'ADMIN',
       }
     });
     console.log("Created admin user:", user.email);
@@ -70,12 +71,12 @@ async function main() {
       where: { repoUrl: toolInfo.repoUrl },
       update: {
         stars: toolInfo.stars,
-        published: true,
+        status: 'ACTIVE',
       },
       create: {
         ...toolInfo,
         userId: user.id,
-        published: true,
+        status: 'ACTIVE',
         platforms: {
           connectOrCreate: platforms.map(name => ({
             where: { name },

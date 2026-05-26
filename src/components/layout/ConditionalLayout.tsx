@@ -10,13 +10,13 @@ import Footer from '@/components/layout/Footer';
  * Auth pages (/login, /signup, /forgot-password) get a clean fullscreen canvas
  * without any navigation chrome.
  */
-const AUTH_ROUTES = ['/login', '/signup', '/forgot-password'];
+const EXCLUDED_ROUTES = ['/login', '/signup', '/forgot-password', '/admin'];
 
 export function ConditionalLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const isAuthPage = AUTH_ROUTES.some((route) => pathname.startsWith(route));
+  const isExcludedPage = EXCLUDED_ROUTES.some((route) => pathname.startsWith(route));
 
-  if (isAuthPage) {
+  if (isExcludedPage) {
     return <>{children}</>;
   }
 

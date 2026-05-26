@@ -36,10 +36,22 @@ export const AuthForm: React.FC<AuthFormProps> = ({ mode }) => {
     }
   }, [verified]);
 
+  useEffect(() => {
+    if (mode === 'update-password') {
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (!session) {
+          setError('You must be logged in to update your password or use the link from your email.');
+          setTimeout(() => router.push('/login'), 3000);
+        }
+      });
+    }
+  }, [mode, router]);
+
   // Auth state
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -97,7 +109,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({ mode }) => {
         type: 'signup',
         email,
         options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback?next=/login`,
+          emailRedirectTo: `${window.location.origin}/auth/callback?next=/auth/verified`,
         },
       });
       if (error) throw error;
@@ -115,6 +127,14 @@ export const AuthForm: React.FC<AuthFormProps> = ({ mode }) => {
     setError(null);
 
     try {
+      if (!isForgotPassword && password.length < 6) {
+        throw new Error("Password must be at least 6 characters long.");
+      }
+
+      if ((isSignup || isUpdatePassword) && password !== confirmPassword) {
+        throw new Error("Passwords do not match.");
+      }
+
       if (isLogin) {
         const { error } = await supabase.auth.signInWithPassword({
           email,
@@ -143,7 +163,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({ mode }) => {
             data: {
               full_name: fullName,
             },
-            emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent('/login?verified=true')}`,
+            emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent('/auth/verified')}`,
           },
         });
         if (error) throw error;
@@ -412,9 +432,9 @@ export const AuthForm: React.FC<AuthFormProps> = ({ mode }) => {
                 </div>
               )}
 
-              {/* Confirm Password (signup only) */}
+              {/* Confirm Password (signup and update-password) */}
               <AnimatePresence>
-                {!isLogin && (
+                {(isSignup || isUpdatePassword) && (
                   <motion.div
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: 'auto' }}
@@ -429,9 +449,12 @@ export const AuthForm: React.FC<AuthFormProps> = ({ mode }) => {
                     <input
                       type="password"
                       placeholder="Confirm Password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
                       onFocus={() => setIsPasswordFocused(true)}
                       onBlur={() => setIsPasswordFocused(false)}
                       onKeyDown={handleKeyDown}
+                      required
                       className="w-full pl-11 pr-4 py-3.5 rounded-xl bg-[#131313] border border-[#464555]/30
                                  text-[#e5e2e1] text-sm placeholder-[#918fa1]/60
                                  focus:outline-none focus:border-[#4F46E5]/60 focus:ring-1 focus:ring-[#4F46E5]/20
