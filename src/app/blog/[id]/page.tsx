@@ -358,50 +358,72 @@ export default function BlogPostPage({ params }: { params: Promise<{ id: string 
     <main className="flex-grow pt-24 pb-32 md:pt-32 px-gutter max-w-container-max mx-auto w-full flex flex-col md:flex-row gap-gutter relative">
       {/* Sticky Table of Contents (Desktop) */}
       <aside className="hidden md:block w-64 shrink-0 relative">
-        <div className="sticky top-32 glass-panel rounded-xl p-6">
-          <h3 className="font-headline-md text-headline-md mb-stack-md text-primary font-bold">Contents</h3>
-          <nav className="flex flex-col gap-3 font-label-sm text-label-sm">
-            <a 
-              className={`transition-all duration-300 cursor-pointer block border-l-2 pl-2 ${
-                activeSection === 'intro'
-                  ? 'text-primary border-primary font-bold scale-[1.02] translate-x-0.5'
-                  : 'text-on-surface-variant border-transparent hover:text-primary/85 hover:border-primary/30'
-              }`} 
-              href="#intro"
-            >
-              Introduction
-            </a>
-            <a 
-              className={`transition-all duration-300 cursor-pointer block border-l-2 pl-2 ${
-                activeSection === 'step1'
-                  ? 'text-primary border-primary font-bold scale-[1.02] translate-x-0.5'
-                  : 'text-on-surface-variant border-transparent hover:text-primary/85 hover:border-primary/30'
-              }`} 
-              href="#step1"
-            >
-              {post.sections.setup.title.split(':')[0] || 'Step 1'}
-            </a>
-            <a 
-              className={`transition-all duration-300 cursor-pointer block border-l-2 pl-2 ${
-                activeSection === 'step2'
-                  ? 'text-primary border-primary font-bold scale-[1.02] translate-x-0.5'
-                  : 'text-on-surface-variant border-transparent hover:text-primary/85 hover:border-primary/30'
-              }`} 
-              href="#step2"
-            >
-              {post.sections.config.title.split(':')[0] || 'Step 2'}
-            </a>
-            <a 
-              className={`transition-all duration-300 cursor-pointer block border-l-2 pl-2 ${
-                activeSection === 'conclusion'
-                  ? 'text-primary border-primary font-bold scale-[1.02] translate-x-0.5'
-                  : 'text-on-surface-variant border-transparent hover:text-primary/85 hover:border-primary/30'
-              }`} 
-              href="#conclusion"
-            >
-              Conclusion
-            </a>
-          </nav>
+        <div className="sticky top-32 flex flex-col gap-3">
+          {/* Header Title inside its own sleek glass container */}
+          <div className="glass-panel rounded-xl px-5 py-3 border border-outline-variant/20 flex items-center justify-between">
+            <span className="text-xs font-bold uppercase tracking-wider text-primary glow-text">Contents</span>
+            <span className="material-symbols-outlined text-[16px] text-primary/80" style={{ fontVariationSettings: "'FILL' 1" }}>list_alt</span>
+          </div>
+          
+          {/* Introduction Box */}
+          <a 
+            href="#intro" 
+            className={`no-underline block transition-all duration-300 p-4 rounded-xl border ${
+              activeSection === 'intro'
+                ? 'bg-primary-container/15 border-primary text-primary font-bold shadow-[0_0_20px_rgba(195,192,255,0.2)] scale-[1.03] translate-x-1'
+                : 'glass-panel border-outline-variant/15 text-on-surface-variant hover:border-primary/40 hover:text-primary hover:scale-[1.01] hover:translate-x-0.5'
+            }`}
+          >
+            <div className="flex items-center gap-3">
+              <span className="material-symbols-outlined text-[18px]">info</span>
+              <span className="text-xs font-medium tracking-wide">Introduction</span>
+            </div>
+          </a>
+
+          {/* Step 1 Box */}
+          <a 
+            href="#step1" 
+            className={`no-underline block transition-all duration-300 p-4 rounded-xl border ${
+              activeSection === 'step1'
+                ? 'bg-primary-container/15 border-primary text-primary font-bold shadow-[0_0_20px_rgba(195,192,255,0.2)] scale-[1.03] translate-x-1'
+                : 'glass-panel border-outline-variant/15 text-on-surface-variant hover:border-primary/40 hover:text-primary hover:scale-[1.01] hover:translate-x-0.5'
+            }`}
+          >
+            <div className="flex items-center gap-3">
+              <span className="material-symbols-outlined text-[18px]">extension</span>
+              <span className="text-xs font-medium tracking-wide">{post.sections.setup.title.split(':')[0] || 'Step 1'}</span>
+            </div>
+          </a>
+
+          {/* Step 2 Box */}
+          <a 
+            href="#step2" 
+            className={`no-underline block transition-all duration-300 p-4 rounded-xl border ${
+              activeSection === 'step2'
+                ? 'bg-primary-container/15 border-primary text-primary font-bold shadow-[0_0_20px_rgba(195,192,255,0.2)] scale-[1.03] translate-x-1'
+                : 'glass-panel border-outline-variant/15 text-on-surface-variant hover:border-primary/40 hover:text-primary hover:scale-[1.01] hover:translate-x-0.5'
+            }`}
+          >
+            <div className="flex items-center gap-3">
+              <span className="material-symbols-outlined text-[18px]">settings</span>
+              <span className="text-xs font-medium tracking-wide">{post.sections.config.title.split(':')[0] || 'Step 2'}</span>
+            </div>
+          </a>
+
+          {/* Conclusion Box */}
+          <a 
+            href="#conclusion" 
+            className={`no-underline block transition-all duration-300 p-4 rounded-xl border ${
+              activeSection === 'conclusion'
+                ? 'bg-primary-container/15 border-primary text-primary font-bold shadow-[0_0_20px_rgba(195,192,255,0.2)] scale-[1.03] translate-x-1'
+                : 'glass-panel border-outline-variant/15 text-on-surface-variant hover:border-primary/40 hover:text-primary hover:scale-[1.01] hover:translate-x-0.5'
+            }`}
+          >
+            <div className="flex items-center gap-3">
+              <span className="material-symbols-outlined text-[18px]">verified</span>
+              <span className="text-xs font-medium tracking-wide">Conclusion</span>
+            </div>
+          </a>
         </div>
       </aside>
 
