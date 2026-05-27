@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 
 interface Author {
   name: string;
@@ -136,52 +137,53 @@ export default function BlogPage() {
       <div className="relative z-10 max-w-container-max mx-auto px-4 sm:px-6 lg:px-8 mb-12">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {filteredNodes.map((node) => (
-            <article
-              key={node.id}
-              className="liquid-glass overflow-hidden flex flex-col group cursor-pointer transition-all duration-300 hover:-translate-y-1.5"
-            >
-              {/* Card Cover Image */}
-              <div className="relative aspect-[16/10] w-full overflow-hidden border-b border-outline-variant/20 bg-surface-container">
-                <img
-                  alt={node.title}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 opacity-80 group-hover:opacity-100"
-                  src={node.image}
-                />
-                <div className="absolute inset-0 bg-primary/5 mix-blend-overlay"></div>
-              </div>
-
-              {/* Card Main Body */}
-              <div className="p-6 sm:p-7 flex flex-col flex-grow">
-                {/* Meta Text (PhishSkill styling: small text, inline, bold violet/primary) */}
-                <div className="text-[11px] font-bold text-primary tracking-wider uppercase mb-3 flex items-center gap-1.5 flex-wrap">
-                  <span>{node.date}</span>
-                  <span>•</span>
-                  <span>{node.readTime} read</span>
-                  <span>•</span>
-                  <span>By {node.author.name}</span>
+            <Link href={`/blog/${node.id}`} key={node.id} className="block no-underline">
+              <article
+                className="liquid-glass overflow-hidden flex flex-col h-full group cursor-pointer transition-all duration-300 hover:-translate-y-1.5"
+              >
+                {/* Card Cover Image */}
+                <div className="relative aspect-[16/10] w-full overflow-hidden border-b border-outline-variant/20 bg-surface-container">
+                  <img
+                    alt={node.title}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 opacity-80 group-hover:opacity-100"
+                    src={node.image}
+                  />
+                  <div className="absolute inset-0 bg-primary/5 mix-blend-overlay"></div>
                 </div>
 
-                {/* Prominent Bold Title */}
-                <h2 className="text-[19px] font-bold text-on-surface leading-snug mb-3 group-hover:text-primary transition-colors duration-300">
-                  {node.title}
-                </h2>
+                {/* Card Main Body */}
+                <div className="p-6 sm:p-7 flex flex-col flex-grow">
+                  {/* Meta Text (PhishSkill styling: small text, inline, bold violet/primary) */}
+                  <div className="text-[11px] font-bold text-primary tracking-wider uppercase mb-3 flex items-center gap-1.5 flex-wrap">
+                    <span>{node.date}</span>
+                    <span>•</span>
+                    <span>{node.readTime} read</span>
+                    <span>•</span>
+                    <span>By {node.author.name}</span>
+                  </div>
 
-                {/* Snippet Description */}
-                <p className="text-[13px] text-on-surface-variant leading-relaxed mb-6 line-clamp-3">
-                  {node.description}
-                </p>
+                  {/* Prominent Bold Title */}
+                  <h2 className="text-[19px] font-bold text-on-surface leading-snug mb-3 group-hover:text-primary transition-colors duration-300">
+                    {node.title}
+                  </h2>
 
-                {/* Footer Link (PhishSkill styling: bold violet, dynamic hover) */}
-                <div className="text-[12px] font-bold text-primary mt-auto pt-4 border-t border-outline-variant/20 flex items-center justify-between group/link">
-                  <span className="line-clamp-1 group-hover/link:underline">
-                    Read: {node.title}
-                  </span>
-                  <span className="material-symbols-outlined text-[16px] transform group-hover/link:translate-x-1 transition-transform">
-                    arrow_forward
-                  </span>
+                  {/* Snippet Description */}
+                  <p className="text-[13px] text-on-surface-variant leading-relaxed mb-6 line-clamp-3">
+                    {node.description}
+                  </p>
+
+                  {/* Footer Link (PhishSkill styling: bold violet, dynamic hover) */}
+                  <div className="text-[12px] font-bold text-primary mt-auto pt-4 border-t border-outline-variant/20 flex items-center justify-between group/link">
+                    <span className="line-clamp-1 group-hover/link:underline">
+                      Read: {node.title}
+                    </span>
+                    <span className="material-symbols-outlined text-[16px] transform group-hover/link:translate-x-1 transition-transform">
+                      arrow_forward
+                    </span>
+                  </div>
                 </div>
-              </div>
-            </article>
+              </article>
+            </Link>
           ))}
         </div>
       </div>
