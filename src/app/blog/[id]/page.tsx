@@ -370,7 +370,7 @@ export default function BlogPostPage({ params }: { params: Promise<{ id: string 
             href="#intro" 
             className={`no-underline block transition-all duration-300 p-4 rounded-xl border ${
               activeSection === 'intro'
-                ? 'bg-primary-container/15 border-primary text-primary font-bold shadow-[0_0_20px_rgba(195,192,255,0.2)] scale-[1.03] translate-x-1'
+                ? 'neon-active-box'
                 : 'glass-panel border-outline-variant/15 text-on-surface-variant hover:border-primary/40 hover:text-primary hover:scale-[1.01] hover:translate-x-0.5'
             }`}
           >
@@ -384,7 +384,7 @@ export default function BlogPostPage({ params }: { params: Promise<{ id: string 
             href="#step1" 
             className={`no-underline block transition-all duration-300 p-4 rounded-xl border ${
               activeSection === 'step1'
-                ? 'bg-primary-container/15 border-primary text-primary font-bold shadow-[0_0_20px_rgba(195,192,255,0.2)] scale-[1.03] translate-x-1'
+                ? 'neon-active-box'
                 : 'glass-panel border-outline-variant/15 text-on-surface-variant hover:border-primary/40 hover:text-primary hover:scale-[1.01] hover:translate-x-0.5'
             }`}
           >
@@ -398,7 +398,7 @@ export default function BlogPostPage({ params }: { params: Promise<{ id: string 
             href="#step2" 
             className={`no-underline block transition-all duration-300 p-4 rounded-xl border ${
               activeSection === 'step2'
-                ? 'bg-primary-container/15 border-primary text-primary font-bold shadow-[0_0_20px_rgba(195,192,255,0.2)] scale-[1.03] translate-x-1'
+                ? 'neon-active-box'
                 : 'glass-panel border-outline-variant/15 text-on-surface-variant hover:border-primary/40 hover:text-primary hover:scale-[1.01] hover:translate-x-0.5'
             }`}
           >
@@ -412,7 +412,7 @@ export default function BlogPostPage({ params }: { params: Promise<{ id: string 
             href="#conclusion" 
             className={`no-underline block transition-all duration-300 p-4 rounded-xl border ${
               activeSection === 'conclusion'
-                ? 'bg-primary-container/15 border-primary text-primary font-bold shadow-[0_0_20px_rgba(195,192,255,0.2)] scale-[1.03] translate-x-1'
+                ? 'neon-active-box'
                 : 'glass-panel border-outline-variant/15 text-on-surface-variant hover:border-primary/40 hover:text-primary hover:scale-[1.01] hover:translate-x-0.5'
             }`}
           >
