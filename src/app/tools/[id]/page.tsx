@@ -61,13 +61,15 @@ export default async function ToolDetailPage({ params }: PageProps) {
   }
 
   // Bind dynamic details from database
-  const installCommand = dbTool.installCommand || `git clone ${dbTool.repoUrl}.git`;
+  // Golden Rule: Strict adherence to existing data without fallbacks
+  const installCommand = dbTool.installCommand || "";
   const aboutText = dbTool.aboutText || dbTool.description || "No description provided.";
-  const author = dbTool.author || "Community";
-  const since = dbTool.since || "N/A";
-  const license = dbTool.license || "Open Source";
-  const version = dbTool.version || "1.0.0 Stable";
-  const website = dbTool.websiteUrl || dbTool.repoUrl;
+  const author = dbTool.author;
+  const since = dbTool.since;
+  const license = dbTool.license;
+  const version = dbTool.version;
+  const website = dbTool.websiteUrl;
+  const downloadUrl = dbTool.downloadUrl;
 
   const formattedStars = dbTool.stars >= 1000 
     ? (dbTool.stars / 1000).toFixed(1).replace(/\.0$/, '') + 'k'
@@ -157,31 +159,52 @@ export default async function ToolDetailPage({ params }: PageProps) {
                   {formattedForks} Forks
                 </span>
               </div>
-              <div className="mt-2 text-sm text-on-surface-variant flex items-center gap-1.5">
-                <span className="material-symbols-outlined text-base">update</span>
-                Version: <span className="text-on-surface font-semibold">{version}</span>
-              </div>
-              {/* View Repo Button */}
-              <a 
-                href={dbTool.repoUrl} 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="inline-flex items-center justify-between gap-4 bg-[#181922] text-gray-200 pl-4 pr-1 py-1 rounded-full font-mono text-sm mt-2 hover:scale-[1.02] transition-transform shadow-xl w-fit group"
-              >
-                <span className="tracking-wide lowercase">view repo</span>
-                <div className="bg-[#ffa6ff] text-black w-7 h-7 rounded-full flex items-center justify-center group-hover:bg-[#ffb3ff] transition-colors">
-                  <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-                    <circle cx="2" cy="7" r="1.2" />
-                    <circle cx="5" cy="7" r="1.2" />
-                    <circle cx="8" cy="7" r="1.2" />
-                    <circle cx="11" cy="7" r="1.2" />
-                    <circle cx="8" cy="4" r="1.2" />
-                    <circle cx="5" cy="1.5" r="1.2" />
-                    <circle cx="8" cy="10" r="1.2" />
-                    <circle cx="5" cy="12.5" r="1.2" />
-                  </svg>
+              {version && (
+                <div className="mt-2 text-sm text-on-surface-variant flex items-center gap-1.5">
+                  <span className="material-symbols-outlined text-base">update</span>
+                  Version: <span className="text-on-surface font-semibold">{version}</span>
                 </div>
-              </a>
+              )}
+              
+              {/* Action Buttons */}
+              <div className="flex flex-wrap items-center gap-3 mt-4">
+                {/* View Repo Button */}
+                <a 
+                  href={dbTool.repoUrl} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-between gap-4 bg-[#181922] text-gray-200 pl-4 pr-1 py-1 rounded-full font-mono text-sm hover:scale-[1.02] transition-transform shadow-xl w-fit group"
+                >
+                  <span className="tracking-wide lowercase">view repo</span>
+                  <div className="bg-[#ffa6ff] text-black w-7 h-7 rounded-full flex items-center justify-center group-hover:bg-[#ffb3ff] transition-colors">
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                      <circle cx="2" cy="7" r="1.2" />
+                      <circle cx="5" cy="7" r="1.2" />
+                      <circle cx="8" cy="7" r="1.2" />
+                      <circle cx="11" cy="7" r="1.2" />
+                      <circle cx="8" cy="4" r="1.2" />
+                      <circle cx="5" cy="1.5" r="1.2" />
+                      <circle cx="8" cy="10" r="1.2" />
+                      <circle cx="5" cy="12.5" r="1.2" />
+                    </svg>
+                  </div>
+                </a>
+
+                {/* Download Button (Conditional based on explicit field) */}
+                {downloadUrl && (
+                  <a 
+                    href={downloadUrl} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center justify-between gap-3 bg-primary text-on-primary pl-4 pr-1 py-1 rounded-full font-mono text-sm hover:scale-[1.02] transition-transform shadow-xl w-fit group"
+                  >
+                    <span className="tracking-wide lowercase font-bold">download</span>
+                    <div className="bg-black/20 text-on-primary w-7 h-7 rounded-full flex items-center justify-center group-hover:bg-black/30 transition-colors">
+                      <span className="material-symbols-outlined text-[16px]">download</span>
+                    </div>
+                  </a>
+                )}
+              </div>
             </div>
           </div>
 
@@ -242,18 +265,24 @@ export default async function ToolDetailPage({ params }: PageProps) {
               className="p-6 rounded-2xl flex flex-col justify-between space-y-4"
               style={{ ...glassStyle, ...stellarGlowStyle }}
             >
-              <div className="flex justify-between items-center py-2 border-b border-outline-variant/30 text-sm">
-                <span className="text-on-surface-variant">Author</span>
-                <span className="text-on-surface font-bold">{author}</span>
-              </div>
-              <div className="flex justify-between items-center py-2 border-b border-outline-variant/30 text-sm">
-                <span className="text-on-surface-variant">Since</span>
-                <span className="text-on-surface font-bold">{since}</span>
-              </div>
-              <div className="flex justify-between items-center py-2 border-b border-outline-variant/30 text-sm">
-                <span className="text-on-surface-variant">License</span>
-                <span className="text-on-surface font-bold">{license}</span>
-              </div>
+              {author && (
+                <div className="flex justify-between items-center py-2 border-b border-outline-variant/30 text-sm">
+                  <span className="text-on-surface-variant">Author</span>
+                  <span className="text-on-surface font-bold">{author}</span>
+                </div>
+              )}
+              {since && (
+                <div className="flex justify-between items-center py-2 border-b border-outline-variant/30 text-sm">
+                  <span className="text-on-surface-variant">Since</span>
+                  <span className="text-on-surface font-bold">{since}</span>
+                </div>
+              )}
+              {license && (
+                <div className="flex justify-between items-center py-2 border-b border-outline-variant/30 text-sm">
+                  <span className="text-on-surface-variant">License</span>
+                  <span className="text-on-surface font-bold">{license}</span>
+                </div>
+              )}
               
               {website && (
                 <div className="flex justify-between items-center py-2 text-sm">

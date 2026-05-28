@@ -2,23 +2,42 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { createTool, updateTool, ToolAdminFormData } from '@/app/actions/adminActions';
+import { createTool, updateTool, fetchGitHubMetadata, ToolAdminFormData } from '@/app/actions/adminActions';
 import { uploadToolImage } from '@/lib/supabase';
 
 type Feature = { title: string; description: string; icon: string };
 
-export function ToolForm({ initialData }: { initialData?: any }) {
+export function ToolForm({ initialData, availablePlatforms = [], availableToolTypes = [] }: { 
+  initialData?: any;
+  availablePlatforms?: string[];
+  availableToolTypes?: string[];
+}) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState('windows');
   const [isFetching, setIsFetching] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
   const [uploadingGallery, setUploadingGallery] = useState<Record<number, boolean>>({});
+  const [logoTab, setLogoTab] = useState<'upload' | 'link'>('upload');
+  const [isDraggingLogo, setIsDraggingLogo] = useState(false);
+  const [isDraggingGallery, setIsDraggingGallery] = useState<Record<number, boolean>>({});
+  const [galleryTab, setGalleryTab] = useState<'upload' | 'link'>('upload');
 
   const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    await uploadLogoFile(file);
+  };
 
+  const handleLogoDrop = async (e: React.DragEvent<HTMLLabelElement>) => {
+    e.preventDefault();
+    setIsDraggingLogo(false);
+    const file = e.dataTransfer.files?.[0];
+    if (!file || !file.type.startsWith('image/')) return;
+    await uploadLogoFile(file);
+  };
+
+  const uploadLogoFile = async (file: File) => {
     setIsUploadingLogo(true);
     try {
       const fileName = `logo-${Date.now()}-${file.name}`;
@@ -35,7 +54,18 @@ export function ToolForm({ initialData }: { initialData?: any }) {
   const handleGalleryUpload = async (e: React.ChangeEvent<HTMLInputElement>, idx: number) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    await uploadGalleryFile(file, idx);
+  };
 
+  const handleGalleryDrop = async (e: React.DragEvent<HTMLLabelElement>, idx: number) => {
+    e.preventDefault();
+    setIsDraggingGallery(prev => ({ ...prev, [idx]: false }));
+    const file = e.dataTransfer.files?.[0];
+    if (!file || !file.type.startsWith('image/')) return;
+    await uploadGalleryFile(file, idx);
+  };
+
+  const uploadGalleryFile = async (file: File, idx: number) => {
     setUploadingGallery(prev => ({ ...prev, [idx]: true }));
     try {
       const fileName = `gallery-${idx}-${Date.now()}-${file.name}`;
@@ -56,6 +86,7 @@ export function ToolForm({ initialData }: { initialData?: any }) {
       setUploadingGallery(prev => ({ ...prev, [idx]: false }));
     }
   };
+
 
 
   // Parse initial features safely
@@ -93,27 +124,72 @@ export function ToolForm({ initialData }: { initialData?: any }) {
     galleryLayout: initialData?.galleryLayout || '16:9',
     features: initialData?.features || '[]',
     author: initialData?.author || '',
+    authorUrl: initialData?.authorUrl || '',
     since: initialData?.since || '',
     websiteUrl: initialData?.websiteUrl || '',
-    platforms: initialData?.platforms?.map((p: any) => p.name) || ['Agnostic'],
-    toolTypes: initialData?.toolTypes?.map((t: any) => t.name) || ['Developer Tool'],
+    downloadUrl: initialData?.downloadUrl || '',
+    platforms: initialData?.platforms?.map((p: any) => p.name) || [],
+    toolTypes: initialData?.toolTypes?.map((t: any) => t.name) || [],
   });
 
   const handleFetch = async () => {
     if (!formData.repoUrl) return;
     setIsFetching(true);
-    // In a real scenario, this calls autoFillFromGitHub server action
-    setTimeout(() => {
+    
+    try {
+      const data = await fetchGitHubMetadata(formData.repoUrl);
+      
+      // Attempt to auto-map platforms if possible, based on topics or something
+      // We can just add them if they match existing platforms (case-insensitive)
+      const newPlatforms = new Set(formData.platforms);
+      const newTypes = new Set(formData.toolTypes);
+      
+      data.topics.forEach((topic: string) => {
+        const lowerTopic = topic.toLowerCase();
+        
+        // Match platforms
+        availablePlatforms.forEach(p => {
+          if (p.toLowerCase() === lowerTopic || (lowerTopic === 'mac' && p.toLowerCase() === 'macos')) {
+            newPlatforms.add(p);
+          }
+        });
+        
+        // Match types
+        availableToolTypes.forEach(t => {
+          if (t.toLowerCase().includes(lowerTopic) || lowerTopic.includes(t.toLowerCase())) {
+            newTypes.add(t);
+          }
+        });
+      });
+
       setFormData(prev => ({
         ...prev,
-        name: 'Auto-fetched Tool Name',
-        description: 'Auto-fetched description from GitHub repository.',
-        stars: 1200,
-        forks: 150,
-        license: 'MIT',
+        name: data.name || prev.name,
+        description: data.description || prev.description,
+        stars: data.stars,
+        forks: data.forks,
+        issues: data.issues,
+        license: data.license || prev.license,
+        heroImageUrl: data.heroImageUrl || prev.heroImageUrl,
+        author: data.author || prev.author,
+        authorUrl: data.authorUrl || prev.authorUrl,
+        since: data.since || prev.since,
+        websiteUrl: data.websiteUrl || prev.websiteUrl,
+        version: data.version || prev.version,
+        aboutText: data.aboutText || prev.aboutText,
+        platforms: Array.from(newPlatforms),
+        toolTypes: Array.from(newTypes)
       }));
+      
+      if (data.heroImageUrl && logoTab !== 'link') {
+         setLogoTab('link');
+      }
+    } catch (error: any) {
+      console.error(error);
+      alert(error.message || 'Failed to fetch from GitHub');
+    } finally {
       setIsFetching(false);
-    }, 1000);
+    }
   };
 
   const updateFeature = (idx: number, key: keyof Feature, value: string) => {
@@ -240,8 +316,12 @@ export function ToolForm({ initialData }: { initialData?: any }) {
           
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-2">
-              <label className="font-label-sm text-[11px] text-on-surface-variant uppercase tracking-wider">Author</label>
+              <label className="font-label-sm text-[11px] text-on-surface-variant uppercase tracking-wider">Author Name</label>
               <input type="text" className="w-full bg-surface-container-low border border-outline-variant/30 rounded-lg px-3 py-2 text-on-surface text-sm" value={formData.author} onChange={e => setFormData({...formData, author: e.target.value})} />
+            </div>
+            <div className="flex flex-col gap-2">
+              <label className="font-label-sm text-[11px] text-on-surface-variant uppercase tracking-wider">Author URL</label>
+              <input type="text" placeholder="https://github.com/..." className="w-full bg-surface-container-low border border-outline-variant/30 rounded-lg px-3 py-2 text-on-surface text-sm" value={formData.authorUrl} onChange={e => setFormData({...formData, authorUrl: e.target.value})} />
             </div>
             <div className="flex flex-col gap-2">
               <label className="font-label-sm text-[11px] text-on-surface-variant uppercase tracking-wider">Since (Year)</label>
@@ -251,7 +331,7 @@ export function ToolForm({ initialData }: { initialData?: any }) {
               <label className="font-label-sm text-[11px] text-on-surface-variant uppercase tracking-wider">License</label>
               <input type="text" className="w-full bg-surface-container-low border border-outline-variant/30 rounded-lg px-3 py-2 text-on-surface text-sm" value={formData.license} onChange={e => setFormData({...formData, license: e.target.value})} />
             </div>
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-2 col-span-2">
               <label className="font-label-sm text-[11px] text-on-surface-variant uppercase tracking-wider">Version</label>
               <input type="text" className="w-full bg-surface-container-low border border-outline-variant/30 rounded-lg px-3 py-2 text-on-surface text-sm" value={formData.version} onChange={e => setFormData({...formData, version: e.target.value})} />
             </div>
@@ -263,13 +343,70 @@ export function ToolForm({ initialData }: { initialData?: any }) {
           </div>
 
           <div className="flex flex-col gap-2">
-            <label className="font-label-sm text-[11px] text-on-surface-variant uppercase tracking-wider">Tool Types (Comma separated)</label>
-            <input type="text" placeholder="AI Agent, CLI Tool" className="w-full bg-surface-container-low border border-outline-variant/30 rounded-lg px-3 py-2 text-on-surface text-sm" value={formData.toolTypes.join(', ')} onChange={e => setFormData({...formData, toolTypes: e.target.value.split(',').map(s => s.trim()).filter(Boolean)})} />
+            <label className="font-label-sm text-[11px] text-on-surface-variant uppercase tracking-wider">Download URL (Direct App/Installer Link)</label>
+            <input type="text" placeholder="https://" className="w-full bg-surface-container-low border border-outline-variant/30 rounded-lg px-3 py-2 text-on-surface text-sm" value={formData.downloadUrl} onChange={e => setFormData({...formData, downloadUrl: e.target.value})} />
           </div>
 
           <div className="flex flex-col gap-2">
-            <label className="font-label-sm text-[11px] text-on-surface-variant uppercase tracking-wider">Platforms (Comma separated)</label>
-            <input type="text" placeholder="macOS, Linux, Windows" className="w-full bg-surface-container-low border border-outline-variant/30 rounded-lg px-3 py-2 text-on-surface text-sm" value={formData.platforms.join(', ')} onChange={e => setFormData({...formData, platforms: e.target.value.split(',').map(s => s.trim()).filter(Boolean)})} />
+            <label className="font-label-sm text-[11px] text-on-surface-variant uppercase tracking-wider">Tool Types</label>
+            <div className="flex flex-wrap gap-2">
+              {availableToolTypes.map(name => {
+                const selected = formData.toolTypes.includes(name);
+                return (
+                  <button
+                    key={name}
+                    type="button"
+                    onClick={() => {
+                      const next = selected
+                        ? formData.toolTypes.filter(t => t !== name)
+                        : [...formData.toolTypes, name];
+                      setFormData({ ...formData, toolTypes: next });
+                    }}
+                    className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+                      selected
+                        ? 'bg-[#2d0096] text-white border-[#2d0096]'
+                        : 'bg-surface-container-low text-on-surface-variant border-outline-variant/30 hover:border-[#2d0096]/50 hover:text-on-surface'
+                    }`}
+                  >
+                    {selected && <span className="mr-1">✓</span>}{name}
+                  </button>
+                );
+              })}
+              {availableToolTypes.length === 0 && (
+                <p className="text-xs text-on-surface-variant italic">No tool categories found. Add some in the Categories section.</p>
+              )}
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <label className="font-label-sm text-[11px] text-on-surface-variant uppercase tracking-wider">Platforms (OS)</label>
+            <div className="flex flex-wrap gap-2">
+              {availablePlatforms.map(name => {
+                const selected = formData.platforms.includes(name);
+                return (
+                  <button
+                    key={name}
+                    type="button"
+                    onClick={() => {
+                      const next = selected
+                        ? formData.platforms.filter(p => p !== name)
+                        : [...formData.platforms, name];
+                      setFormData({ ...formData, platforms: next });
+                    }}
+                    className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+                      selected
+                        ? 'bg-[#2d0096] text-white border-[#2d0096]'
+                        : 'bg-surface-container-low text-on-surface-variant border-outline-variant/30 hover:border-[#2d0096]/50 hover:text-on-surface'
+                    }`}
+                  >
+                    {selected && <span className="mr-1">✓</span>}{name}
+                  </button>
+                );
+              })}
+              {availablePlatforms.length === 0 && (
+                <p className="text-xs text-on-surface-variant italic">No platforms found. Add some in the Categories section.</p>
+              )}
+            </div>
           </div>
 
         </div>
@@ -392,106 +529,230 @@ export function ToolForm({ initialData }: { initialData?: any }) {
       <div className="glass-panel p-6 rounded-xl flex flex-col gap-5 border border-outline-variant/20">
         <h2 className="font-label-sm text-sm text-on-surface uppercase tracking-wider">Media Assets</h2>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="flex flex-col gap-6">
           {/* Part 1: Logo */}
-          <div className="flex flex-col gap-2">
-            <label className="font-label-sm text-[11px] text-on-surface-variant uppercase tracking-wider">Logo (Part 1)</label>
-            <div className="flex gap-2">
-              <input 
-                type="text" 
-                placeholder="https://..." 
-                className="flex-1 bg-surface-container-low border border-outline-variant/30 rounded-lg px-3 py-2 text-on-surface text-sm focus:border-primary transition-colors" 
-                value={formData.heroImageUrl} 
-                onChange={e => setFormData({...formData, heroImageUrl: e.target.value})} 
-              />
-              <label className={`cursor-pointer bg-surface-container-high border border-outline-variant/30 text-on-surface hover:bg-surface-container-highest px-4 py-2 rounded-lg font-label-sm text-sm transition-colors flex items-center justify-center ${isUploadingLogo ? 'opacity-50 cursor-not-allowed' : ''}`}>
-                {isUploadingLogo ? 'Uploading...' : 'Upload'}
-                <input 
-                  type="file" 
-                  accept="image/*" 
-                  className="hidden" 
-                  onChange={handleLogoUpload} 
-                  disabled={isUploadingLogo}
-                />
-              </label>
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center justify-between">
+              <label className="font-label-sm text-[11px] text-on-surface-variant uppercase tracking-wider">Thumbnail Preview</label>
+              <div className="flex border-b border-outline-variant/20">
+                <button
+                  type="button"
+                  onClick={() => setLogoTab('upload')}
+                  className={`px-4 py-1.5 text-xs font-medium transition-colors border-b-2 -mb-px ${
+                    logoTab === 'upload' ? 'border-[#2d0096] text-[#2d0096]' : 'border-transparent text-on-surface-variant hover:text-on-surface'
+                  }`}
+                >
+                  Upload
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setLogoTab('link')}
+                  className={`px-4 py-1.5 text-xs font-medium transition-colors border-b-2 -mb-px ${
+                    logoTab === 'link' ? 'border-[#2d0096] text-[#2d0096]' : 'border-transparent text-on-surface-variant hover:text-on-surface'
+                  }`}
+                >
+                  Link
+                </button>
+              </div>
             </div>
-            {formData.heroImageUrl && (
-               <div className="mt-1 w-16 h-16 rounded overflow-hidden bg-[#1f2233] border border-outline-variant/20 flex items-center justify-center">
-                 <img src={formData.heroImageUrl} alt="Logo preview" className="max-w-full max-h-full object-contain p-1" />
-               </div>
+
+            <p className="text-sm font-medium text-on-surface">Thumbnail Image</p>
+
+            {logoTab === 'upload' ? (
+              <>
+                {formData.heroImageUrl ? (
+                  <div className="relative rounded-xl overflow-hidden border border-outline-variant/20 bg-surface-container-lowest">
+                    <img src={formData.heroImageUrl} alt="Logo" className="w-full h-32 object-contain p-4" />
+                    <button
+                      type="button"
+                      onClick={() => setFormData({ ...formData, heroImageUrl: '' })}
+                      className="absolute top-2 right-2 w-7 h-7 rounded-full bg-error/10 text-error flex items-center justify-center hover:bg-error/20 border border-error/20"
+                    >
+                      <span className="material-symbols-outlined text-[14px]">close</span>
+                    </button>
+                  </div>
+                ) : (
+                  <label
+                    className={`flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed transition-colors cursor-pointer py-8 ${
+                      isDraggingLogo
+                        ? 'border-[#2d0096] bg-[#2d0096]/5'
+                        : 'border-outline-variant/40 hover:border-[#2d0096]/50 hover:bg-surface-container-low'
+                    } ${isUploadingLogo ? 'opacity-50 pointer-events-none' : ''}`}
+                    onDragOver={e => { e.preventDefault(); setIsDraggingLogo(true); }}
+                    onDragLeave={() => setIsDraggingLogo(false)}
+                    onDrop={handleLogoDrop}
+                  >
+                    <span className="material-symbols-outlined text-[40px] text-[#2d0096]/60">image</span>
+                    <p className="text-sm font-medium text-on-surface">
+                      {isUploadingLogo ? 'Uploading...' : <><span className="text-on-surface-variant">Drag & drop or </span><span className="text-[#2d0096] underline underline-offset-2">browse</span></>}
+                    </p>
+                    <p className="text-xs text-on-surface-variant">Supports image/*</p>
+                    <input type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} disabled={isUploadingLogo} />
+                  </label>
+                )}
+              </>
+            ) : (
+              <div className="flex flex-col gap-2">
+                <input
+                  type="text"
+                  placeholder="https://..."
+                  className="w-full bg-surface-container-low border border-outline-variant/30 rounded-lg px-3 py-2 text-on-surface text-sm focus:border-primary transition-colors"
+                  value={formData.heroImageUrl}
+                  onChange={e => setFormData({ ...formData, heroImageUrl: e.target.value })}
+                />
+                {formData.heroImageUrl && (
+                  <div className="w-16 h-16 rounded overflow-hidden bg-[#1f2233] border border-outline-variant/20 flex items-center justify-center">
+                    <img src={formData.heroImageUrl} alt="Logo preview" className="max-w-full max-h-full object-contain p-1" />
+                  </div>
+                )}
+              </div>
             )}
             <p className="text-[10px] text-on-surface-variant">Used as the primary brand logo / header image.</p>
           </div>
 
           {/* Part 2: Pictures / Gallery */}
           <div className="flex flex-col gap-3">
-            <label className="font-label-sm text-[11px] text-on-surface-variant uppercase tracking-wider flex justify-between items-center">
-              <span>Gallery Pictures (Max 4)</span>
-              {/* Aspect Ratio Toggle */}
-              <div className="flex bg-surface-container-low rounded-lg p-1 border border-outline-variant/30">
-                <button
-                  type="button"
-                  className={`px-3 py-1 text-[10px] font-bold rounded transition-colors ${formData.galleryLayout === '16:9' ? 'bg-primary-container text-on-primary-container' : 'text-on-surface-variant hover:text-white'}`}
-                  onClick={() => setFormData({...formData, galleryLayout: '16:9'})}
-                >
-                  16:9
-                </button>
-                <button
-                  type="button"
-                  className={`px-3 py-1 text-[10px] font-bold rounded transition-colors ${formData.galleryLayout === '9:16' ? 'bg-primary-container text-on-primary-container' : 'text-on-surface-variant hover:text-white'}`}
-                  onClick={() => setFormData({...formData, galleryLayout: '9:16'})}
-                >
-                  9:16
-                </button>
+            {/* Header row: label + ratio toggle + upload/link tabs */}
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <label className="font-label-sm text-[11px] text-on-surface-variant uppercase tracking-wider">Gallery Pictures (Max 4)</label>
+              <div className="flex items-center gap-3">
+                {/* Upload / Link tabs */}
+                <div className="flex border-b border-outline-variant/20">
+                  <button
+                    type="button"
+                    onClick={() => setGalleryTab('upload')}
+                    className={`px-4 py-1.5 text-xs font-medium transition-colors border-b-2 -mb-px ${
+                      galleryTab === 'upload' ? 'border-[#2d0096] text-[#2d0096]' : 'border-transparent text-on-surface-variant hover:text-on-surface'
+                    }`}
+                  >
+                    Upload
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setGalleryTab('link')}
+                    className={`px-4 py-1.5 text-xs font-medium transition-colors border-b-2 -mb-px ${
+                      galleryTab === 'link' ? 'border-[#2d0096] text-[#2d0096]' : 'border-transparent text-on-surface-variant hover:text-on-surface'
+                    }`}
+                  >
+                    Link
+                  </button>
+                </div>
+                {/* Aspect Ratio Toggle */}
+                <div className="flex bg-surface-container-low rounded-lg p-1 border border-outline-variant/30">
+                  <button
+                    type="button"
+                    className={`px-3 py-1 text-[10px] font-bold rounded transition-colors ${formData.galleryLayout === '16:9' ? 'bg-primary-container text-on-primary-container' : 'text-on-surface-variant hover:text-white'}`}
+                    onClick={() => setFormData({...formData, galleryLayout: '16:9'})}
+                  >
+                    16:9
+                  </button>
+                  <button
+                    type="button"
+                    className={`px-3 py-1 text-[10px] font-bold rounded transition-colors ${formData.galleryLayout === '9:16' ? 'bg-primary-container text-on-primary-container' : 'text-on-surface-variant hover:text-white'}`}
+                    onClick={() => setFormData({...formData, galleryLayout: '9:16'})}
+                  >
+                    9:16
+                  </button>
+                </div>
               </div>
-            </label>
+            </div>
 
-            {/* Inputs for up to 4 images */}
             {(() => {
               let images: string[] = [];
-              try {
-                images = JSON.parse(formData.galleryImages || '[]');
-              } catch (e) {}
+              try { images = JSON.parse(formData.galleryImages || '[]'); } catch (e) {}
 
-              return (
-                <div className="flex flex-col gap-2">
-                  {Array.from({ length: 4 }).map((_, idx) => {
-                    const isUploading = uploadingGallery[idx];
-                    return (
-                      <div key={idx} className="flex gap-2">
-                        <input 
-                          type="text" 
-                          placeholder={`Picture ${idx + 1} URL`} 
-                          className="flex-1 bg-surface-container-low border border-outline-variant/30 rounded-lg px-3 py-2 text-on-surface text-sm focus:border-primary transition-colors" 
-                          value={images[idx] || ''} 
+              const is169 = formData.galleryLayout === '16:9';
+              // 16:9 → 2-col grid (landscape), 9:16 → 4-col row (portrait)
+              const gridClass = is169 ? 'grid grid-cols-2 gap-3' : 'grid grid-cols-4 gap-3';
+              const aspectClass = is169 ? 'aspect-video' : 'aspect-[9/16]';
+
+              if (galleryTab === 'link') {
+                return (
+                  <div className="flex flex-col gap-2">
+                    {Array.from({ length: 4 }).map((_, idx) => (
+                      <div key={idx} className="flex items-center gap-2">
+                        <span className="text-[11px] text-on-surface-variant w-16 shrink-0">Picture {idx + 1}</span>
+                        <input
+                          type="text"
+                          placeholder="https://..."
+                          className="flex-1 bg-surface-container-low border border-outline-variant/30 rounded-lg px-3 py-2 text-on-surface text-sm focus:border-primary transition-colors"
+                          value={images[idx] || ''}
                           onChange={e => {
                             const newImages = [...images];
                             while (newImages.length <= idx) newImages.push('');
                             newImages[idx] = e.target.value;
                             setFormData({...formData, galleryImages: JSON.stringify(newImages.filter(Boolean))});
-                          }} 
+                          }}
                         />
-                        <label className={`cursor-pointer bg-surface-container-high border border-outline-variant/30 text-on-surface hover:bg-surface-container-highest px-4 py-2 rounded-lg font-label-sm text-sm transition-colors flex items-center justify-center ${isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}>
-                          {isUploading ? 'Uploading...' : 'Upload'}
-                          <input 
-                            type="file" 
-                            accept="image/*" 
-                            className="hidden" 
-                            onChange={(e) => handleGalleryUpload(e, idx)} 
-                            disabled={isUploading}
-                          />
-                        </label>
+                        {images[idx] && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const newImages = [...images];
+                              newImages[idx] = '';
+                              setFormData({...formData, galleryImages: JSON.stringify(newImages.filter(Boolean))});
+                            }}
+                            className="w-7 h-7 rounded-full bg-error/10 text-error flex items-center justify-center hover:bg-error/20 border border-error/20 shrink-0"
+                          >
+                            <span className="material-symbols-outlined text-[14px]">close</span>
+                          </button>
+                        )}
                       </div>
+                    ))}
+                  </div>
+                );
+              }
+
+              return (
+                <div className={gridClass}>
+                  {Array.from({ length: 4 }).map((_, idx) => {
+                    const isUploading = uploadingGallery[idx];
+                    const isDragging = isDraggingGallery[idx];
+                    const imageUrl = images[idx] || '';
+
+                    return imageUrl ? (
+                      <div key={idx} className={`relative rounded-xl overflow-hidden border border-outline-variant/20 bg-surface-container-lowest ${aspectClass}`}>
+                        <img src={imageUrl} alt={`Gallery ${idx + 1}`} className="w-full h-full object-cover" />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const newImages = [...images];
+                            newImages[idx] = '';
+                            setFormData({...formData, galleryImages: JSON.stringify(newImages.filter(Boolean))});
+                          }}
+                          className="absolute top-2 right-2 w-7 h-7 rounded-full bg-black/50 text-white flex items-center justify-center hover:bg-black/70 transition-colors"
+                        >
+                          <span className="material-symbols-outlined text-[14px]">close</span>
+                        </button>
+                        <span className="absolute bottom-2 left-2 text-[10px] font-bold text-white/70 bg-black/40 px-1.5 py-0.5 rounded">{idx + 1}</span>
+                      </div>
+                    ) : (
+                      <label
+                        key={idx}
+                        className={`flex flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed transition-colors cursor-pointer ${aspectClass} ${
+                          isDragging
+                            ? 'border-[#2d0096] bg-[#2d0096]/5'
+                            : 'border-outline-variant/40 hover:border-[#2d0096]/50 hover:bg-surface-container-low'
+                        } ${isUploading ? 'opacity-50 pointer-events-none' : ''}`}
+                        onDragOver={e => { e.preventDefault(); setIsDraggingGallery(prev => ({ ...prev, [idx]: true })); }}
+                        onDragLeave={() => setIsDraggingGallery(prev => ({ ...prev, [idx]: false }))}
+                        onDrop={e => handleGalleryDrop(e as any, idx)}
+                      >
+                        <span className={`material-symbols-outlined text-[#2d0096]/60 ${is169 ? 'text-[28px]' : 'text-[22px]'}`}>add_photo_alternate</span>
+                        <p className="text-[11px] text-on-surface-variant text-center px-2">
+                          {isUploading ? 'Uploading...' : <><span>Drop or </span><span className="text-[#2d0096] underline underline-offset-1">browse</span></>}
+                        </p>
+                        <span className="text-[10px] text-on-surface-variant/60">{idx + 1}</span>
+                        <input type="file" accept="image/*" className="hidden" onChange={e => handleGalleryUpload(e, idx)} disabled={isUploading} />
+                      </label>
                     );
                   })}
-                  <p className="text-[10px] text-on-surface-variant mt-1">
-                    {formData.galleryLayout === '16:9' 
-                      ? 'Displays as 2 columns (two squares).' 
-                      : 'Displays as 4 columns.'}
-                  </p>
                 </div>
               );
             })()}
+            <p className="text-[10px] text-on-surface-variant">
+              {formData.galleryLayout === '16:9' ? '16:9 — landscape, 2×2 grid.' : '9:16 — portrait, 4-column row.'}
+            </p>
           </div>
         </div>
       </div>
