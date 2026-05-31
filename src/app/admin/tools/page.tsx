@@ -64,7 +64,7 @@ export default async function ManageToolsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-outline-variant/10">
-              {tools.map((tool) => (
+              {tools.map((tool: any) => (
                 <tr key={tool.id} className="hover:bg-surface-container-high/30 transition-colors">
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
@@ -85,7 +85,7 @@ export default async function ManageToolsPage() {
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex flex-wrap gap-1">
-                      {tool.platforms.slice(0, 2).map((p) => (
+                      {tool.platforms.slice(0, 2).map((p: any) => (
                         <span key={p.id} className="px-2 py-1 bg-surface-container rounded-full font-label-sm text-[9px] text-on-surface uppercase tracking-wider border border-outline-variant/20">
                           {p.name}
                         </span>
