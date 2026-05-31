@@ -1,100 +1,199 @@
-import React from 'react';
+'use client';
+
+import React, { useState } from 'react';
+import Link from 'next/link';
+
+interface Author {
+  name: string;
+  avatar: string;
+}
+
+interface BlogNode {
+  id: string;
+  category: string;
+  title: string;
+  description: string;
+  author: Author;
+  image: string;
+  date: string;
+  readTime: string;
+  icon: string;
+}
+
+const blogNodes: BlogNode[] = [
+  {
+    id: 'hero',
+    category: 'Deep Dives',
+    title: "Architecting the Perfect Neovim Configuration for 2024",
+    description: "A comprehensive guide to building a blazing fast, utterly minimal, and highly extensible development environment using Lua. We break down the absolute essentials and ditch the bloat.",
+    author: {
+      name: "Elias Thorne",
+      avatar: "https://lh3.googleusercontent.com/aida-public/AB6AXuBLYWLvC0nL2r-Udregl_oXHcy6k2g5eceUbpV2jreN-Jia0vykJIFvd82LTGqeiNuIlHpP8Halopy5R57lYtSYxkJDU5jqvPY2bNbq2hy0HPeWjA099qMc7q-0ACFNh_YPEXlq3ZuE5VhQ0ghYN5yG_FPn4HaQ-2mzMftn2nmHJTybphoF6sPLxy4q4L2xYqleKNM5dJcDPN2chmKl-s3FgQqNP5u2-X7JTWzLkfS3pSdrMOndE5zs5FGFYeHWuwcERat8AclwXZk"
+    },
+    image: "https://images.unsplash.com/photo-1542831371-29b0f74f9713?auto=format&fit=crop&w=800&q=80",
+    date: "2026-05-26",
+    readTime: "12 min",
+    icon: "star"
+  },
+  {
+    id: 'node-1',
+    category: 'Deep Dives',
+    title: "Mastering the Art of Dotfiles Management with GNU Stow",
+    description: "Stop losing your configurations. A detailed methodology for tracking, versioning, and deploying your entire system setup across multiple machines with zero friction.",
+    author: {
+      name: "Elias Thorne",
+      avatar: "https://lh3.googleusercontent.com/aida-public/AB6AXuBLYWLvC0nL2r-Udregl_oXHcy6k2g5eceUbpV2jreN-Jia0vykJIFvd82LTGqeiNuIlHpP8Halopy5R57lYtSYxkJDU5jqvPY2bNbq2hy0HPeWjA099qMc7q-0ACFNh_YPEXlq3ZuE5VhQ0ghYN5yG_FPn4HaQ-2mzMftn2nmHJTybphoF6sPLxy4q4L2xYqleKNM5dJcDPN2chmKl-s3FgQqNP5u2-X7JTWzLkfS3pSdrMOndE5zs5FGFYeHWuwcERat8AclwXZk"
+    },
+    image: "https://lh3.googleusercontent.com/aida-public/AB6AXuDFt60Mss7aNhdRPWBH585NeXnRdudcdntsHlb4Xwbq3sGyVVwq78FhVPEiuysNTCNJqB9A2M_e1tOe7X5Q18GivfPUtwF83YBTjnJcjh-Vs_eQfQHrNszR5UbPIDyX5QIQVs-XoOI6o-vZbgl0BfMHgrcYA7yXm89jvXQzNIcP6bTxvfNQcmVuv6mKoi4zXS8YeKuFugzern7eXc-VQfxpUz1qBfiOP-Sd8-yq2ul7ISv1ARSLQzGagw-qT6VBkK6OynUacNxJvYQ",
+    date: "2026-05-25",
+    readTime: "18 min",
+    icon: "account_tree"
+  },
+  {
+    id: 'node-2',
+    category: 'Tool Reviews',
+    title: "The Ultimate Developer Keyboard: Ergonomic & Ortholinear Efficiency",
+    description: "Reviewing the latest ultra-minimal 40% ortholinear mechanical keyboards for peak coding ergonomics and keymap optimization.",
+    author: {
+      name: "Sarah Jenkins",
+      avatar: "https://lh3.googleusercontent.com/aida-public/AB6AXuBLYWLvC0nL2r-Udregl_oXHcy6k2g5eceUbpV2jreN-Jia0vykJIFvd82LTGqeiNuIlHpP8Halopy5R57lYtSYxkJDU5jqvPY2bNbq2hy0HPeWjA099qMc7q-0ACFNh_YPEXlq3ZuE5VhQ0ghYN5yG_FPn4HaQ-2mzMftn2nmHJTybphoF6sPLxy4q4L2xYqleKNM5dJcDPN2chmKl-s3FgQqNP5u2-X7JTWzLkfS3pSdrMOndE5zs5FGFYeHWuwcERat8AclwXZk"
+    },
+    image: "https://lh3.googleusercontent.com/aida-public/AB6AXuA4di3ZDzJx_z5kvUYVkGz2cCB1ZG-QN9VvUqoN6doZSLLXSuWN3-m_TChKbZP6H9-f6fe_Mc21WoewbgjonXAKroQVet-CweyW7cxI_QxI7ea0Ifwol42ww5KjCYHUeuAIQFF5IYhl7650Ci6BfxJdTO1ukiDRCdGc4wKZulwbuzs5arW6falkCwcWNJmRPjIdmFiTDCoAwjH9rveGodyhXAVn_ajRC2NZgb1P785FUcGQW6eQjRTVPBtPXaRfnVT9_SP_R8C9xmA",
+    date: "2026-05-23",
+    readTime: "9 min",
+    icon: "keyboard"
+  },
+  {
+    id: 'node-3',
+    category: 'Tutorials',
+    title: "Tmux Workspaces: Scripting Your Core Terminal Environments",
+    description: "Scripting and automating your terminal sessions to spin up complex development environments instantaneously using Tmuxinator.",
+    author: {
+      name: "Sarah Jenkins",
+      avatar: "https://lh3.googleusercontent.com/aida-public/AB6AXuBLYWLvC0nL2r-Udregl_oXHcy6k2g5eceUbpV2jreN-Jia0vykJIFvd82LTGqeiNuIlHpP8Halopy5R57lYtSYxkJDU5jqvPY2bNbq2hy0HPeWjA099qMc7q-0ACFNh_YPEXlq3ZuE5VhQ0ghYN5yG_FPn4HaQ-2mzMftn2nmHJTybphoF6sPLxy4q4L2xYqleKNM5dJcDPN2chmKl-s3FgQqNP5u2-X7JTWzLkfS3pSdrMOndE5zs5FGFYeHWuwcERat8AclwXZk"
+    },
+    image: "https://images.unsplash.com/photo-1629654297299-c8506221ca97?auto=format&fit=crop&w=800&q=80",
+    date: "2026-05-20",
+    readTime: "8 min",
+    icon: "terminal"
+  }
+];
+
+const categories = ['All Nodes', 'Tutorials', 'Deep Dives', 'Tool Reviews'];
 
 export default function BlogPage() {
+  const [selectedCategory, setSelectedCategory] = useState<string>('All Nodes');
+
+  const handleCategorySelect = (category: string) => {
+    setSelectedCategory(category);
+  };
+
+  // Filter nodes according to selected category
+  const filteredNodes = selectedCategory === 'All Nodes'
+    ? blogNodes
+    : blogNodes.filter(node => node.category === selectedCategory);
+
   return (
-    <div className="pt-24 pb-32 md:pt-32 px-gutter max-w-container-max mx-auto w-full flex flex-col md:flex-row gap-gutter relative">
-      {/* Sticky TOC (Desktop) */}
-      <aside className="hidden md:block w-64 shrink-0 relative">
-        <div className="sticky top-32 glass-panel rounded-xl p-6">
-          <h3 className="font-headline-md text-headline-md mb-stack-md text-primary">Contents</h3>
-          <nav className="flex flex-col gap-stack-sm font-label-sm text-label-sm">
-            <a className="text-on-surface-variant hover:text-primary transition-colors" href="#intro">Introduction</a>
-            <a className="text-primary hover:text-primary transition-colors border-l-2 border-primary pl-2" href="#step1">Step 1: Setup</a>
-            <a className="text-on-surface-variant hover:text-primary transition-colors" href="#step2">Step 2: Configuration</a>
-            <a className="text-on-surface-variant hover:text-primary transition-colors" href="#conclusion">Conclusion</a>
-          </nav>
-        </div>
-      </aside>
+    <main className="flex-grow pt-[100px] pb-margin-page px-gutter w-full relative min-h-screen">
+      {/* Background Ambient Glows */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
+        <div className="absolute top-[10%] left-[20%] w-[600px] h-[600px] bg-primary-container/5 rounded-full blur-[140px]" />
+        <div className="absolute bottom-[20%] right-[15%] w-[500px] h-[500px] bg-secondary-container/5 rounded-full blur-[120px]" />
+      </div>
 
-      {/* Blog Article */}
-      <article className="flex-grow max-w-3xl mx-auto w-full space-y-stack-lg">
-        <header className="space-y-stack-md mb-margin-page">
-          <div className="flex items-center gap-2 text-primary font-label-sm text-label-sm">
-            <span className="bg-surface-container px-3 py-1 rounded-full border border-outline-variant/30">Tutorial</span>
-            <span className="text-on-surface-variant">• 10 min read</span>
-          </div>
-          <h1 className="font-display-lg text-display-lg text-on-surface leading-tight">Mastering Dark Mode in Tailwind CSS: A Comprehensive Guide</h1>
-          <p className="text-on-surface-variant text-lg">Learn how to implement a robust, system-aware dark mode using Tailwind CSS and semantic design tokens.</p>
-          
-          <div className="flex items-center gap-4 pt-4 border-t border-outline-variant/20 mt-stack-md">
-            <div className="w-10 h-10 rounded-full bg-surface-container-high overflow-hidden border border-outline-variant/30">
-              <img 
-                alt="Author Avatar" 
-                className="w-full h-full object-cover" 
-                src="https://lh3.googleusercontent.com/aida-public/AB6AXuAlq36IwEywzE4aiCctCIPEFBJwTec-Jm3SRfVwBgQxEtR_4V4yTkjuZSDdVPxlMphX2uAEZ4rIwZfBzOlKYMTHdHrdEXs_QWyU5a5e5CXfzDGh4s3xqdeZu135AVgekd1KbtEhaG7usckyRyfX0MwikCL041omXorPBFwcv4hGCUWpiVMQfZK3fdXBM3g0YiOph7yjhWEAMLHhqH3SBHuLAdpPH0sFJulCAp_w5vwvH6l63mnllgBFZYTymXvIFyG18qC21Bo5Kwk"
-              />
-            </div>
-            <div>
-              <p className="font-label-sm text-label-sm text-on-surface">Alex Mercer</p>
-              <p className="font-label-sm text-label-sm text-on-surface-variant font-normal">Senior Frontend Engineer</p>
-            </div>
-          </div>
-        </header>
+      {/* Header Banner */}
+      <div className="relative z-10 max-w-container-max mx-auto text-center py-8 mb-6">
+        <h1 className="text-display-lg font-display-lg text-on-surface tracking-tight mb-4">
+          Tech <span className="text-primary glow-text">Insights</span>
+        </h1>
+        <p className="font-body-base text-on-surface-variant max-w-xl mx-auto">
+          News, deep dives, and core configurations from the Tool Research development team.
+        </p>
+      </div>
 
-        <img 
-          alt="Coding on laptop" 
-          className="w-full h-auto rounded-xl border border-outline-variant/20 mb-stack-lg shadow-lg shadow-primary/10" 
-          src="https://lh3.googleusercontent.com/aida-public/AB6AXuCoR4OJt7eGHDN9cOD3rLaR9mJNwvVH1jpk4qKKQYXRWPPdasM3UTPOLFVVE-NpXfb-JWZjvuDqmgYtwBP9L4TVdHDh5wGdyTSUXkhTjyMP23g6LBZ0Wq3y3MmTTSNucvmyEesl8hwZ-O9fateCyv_R7NmTZ-VsMZ9DjuwUBPuAgVg6C7NdgMdp1TlrIWbFItE8kLXo1QvXCztIg2Iqf_DhFoaq3DX7xtg76YCEl6LvsvtXh4dGga947IfiT9ebonZnVLm04a2x_e0"
-        />
-
-        <section className="space-y-4" id="intro">
-          <p>Implementing dark mode is no longer an optional feature; it's a core expectation for modern web applications. In this guide, we'll walk through a structured approach to adding dark mode using Tailwind CSS.</p>
-          <p>We will focus on using a semantic color palette, ensuring that your application remains scalable and maintainable as your design system evolves.</p>
-        </section>
-
-        <section className="space-y-4" id="step1">
-          <h2 className="font-headline-md text-headline-md text-on-surface mt-stack-lg mb-stack-md">Step 1: Tailwind Configuration</h2>
-          <p>The first step is to tell Tailwind to rely on a CSS class for toggling dark mode rather than just the media query. This allows for manual overrides.</p>
-          
-          <div className="relative group mt-4 mb-6">
-            <div className="absolute right-2 top-2 opacity-0 group-hover:opacity-100 transition-opacity">
-              <button className="bg-surface-container-high text-on-surface-variant hover:text-primary px-3 py-1 rounded-md border border-outline-variant/30 flex items-center gap-1 font-label-sm text-label-sm">
-                <span className="material-symbols-outlined text-[16px]">content_copy</span> Copy
+      {/* Interactive Category Filter */}
+      <div className="relative z-10 max-w-container-max mx-auto mb-10">
+        <div className="flex justify-center gap-stack-sm flex-wrap">
+          {categories.map((cat) => {
+            const isActive = selectedCategory === cat;
+            return (
+              <button
+                key={cat}
+                onClick={() => handleCategorySelect(cat)}
+                className={`px-6 py-2 rounded-full font-label-sm text-label-sm liquid-glass transition-transform active:scale-95 duration-200 cursor-pointer ${
+                  isActive
+                    ? 'text-primary border-primary/50 shadow-[0_0_15px_rgba(195,192,255,0.3)] bg-primary-container/20'
+                    : 'text-on-surface hover:text-primary'
+                }`}
+              >
+                {cat}
               </button>
-            </div>
-            <pre className="bg-[#0A0A0A] p-6 rounded-xl border border-outline-variant/30 overflow-x-auto">
-              <code className="font-code-snippet text-code-snippet text-on-surface-variant">
-                <span className="text-tertiary">module</span>.exports = {'{\n'}
-                {'  '}<span className="text-primary-container">darkMode</span>: <span className="text-secondary">'class'</span>,{'\n'}
-                {'  '}<span className="text-primary-container">theme</span>: {'{\n'}
-                {'    '}<span className="text-primary-container">extend</span>: {'{\n'}
-                {'      '}<span className="text-outline">// Your semantic colors here</span>{'\n'}
-                {'    }\n'}
-                {'  }\n'}
-                {'}'}
-              </code>
-            </pre>
-          </div>
-        </section>
+            );
+          })}
+        </div>
+      </div>
 
-        <section className="space-y-4" id="step2">
-          <h2 className="font-headline-md text-headline-md text-on-surface mt-stack-lg mb-stack-md">Step 2: Semantic Tokens</h2>
-          <p>Instead of hardcoding generic colors like `bg-gray-900`, define semantic tokens like `surface-container-lowest`. This makes your HTML much cleaner.</p>
-          
-          <div className="glass-panel p-6 rounded-xl my-6 flex gap-4 items-start">
-            <span className="material-symbols-outlined text-primary mt-1" style={{ fontVariationSettings: "'FILL' 1" }}>lightbulb</span>
-            <div>
-              <h4 className="font-label-sm text-label-sm text-on-surface mb-2">Pro Tip</h4>
-              <p className="text-sm text-on-surface-variant">Always establish a clear naming convention for your color tokens before writing any UI code. A typical hierarchy includes background, surface, primary, and secondary roles.</p>
-            </div>
-          </div>
-        </section>
+      {/* 3-in-a-Row Normal Grid Layout */}
+      <div className="relative z-10 max-w-container-max mx-auto px-4 sm:px-6 lg:px-8 mb-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {filteredNodes.map((node) => (
+            <Link href={`/blog/${node.id}`} key={node.id} className="block no-underline">
+              <article
+                className="liquid-glass overflow-hidden flex flex-col h-full group cursor-pointer transition-all duration-300 hover:-translate-y-1.5"
+              >
+                {/* Card Cover Image */}
+                <div className="relative aspect-[16/10] w-full overflow-hidden border-b border-outline-variant/20 bg-surface-container">
+                  <img
+                    alt={node.title}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 opacity-80 group-hover:opacity-100"
+                    src={node.image}
+                  />
+                  <div className="absolute inset-0 bg-primary/5 mix-blend-overlay"></div>
+                </div>
 
-        <section className="space-y-4" id="conclusion">
-          <h2 className="font-headline-md text-headline-md text-on-surface mt-stack-lg mb-stack-md">Conclusion</h2>
-          <p>By leveraging Tailwind's class-based dark mode and semantic color configuration, you create a robust foundation for a premium, dual-theme user interface.</p>
-        </section>
-      </article>
-    </div>
+                {/* Card Main Body */}
+                <div className="p-6 sm:p-7 flex flex-col flex-grow">
+                  {/* Meta Text (PhishSkill styling: small text, inline, bold violet/primary) */}
+                  <div className="text-[11px] font-bold text-primary tracking-wider uppercase mb-3 flex items-center gap-1.5 flex-wrap">
+                    <span>{node.date}</span>
+                    <span>•</span>
+                    <span>{node.readTime} read</span>
+                    <span>•</span>
+                    <span>By {node.author.name}</span>
+                  </div>
+
+                  {/* Prominent Bold Title */}
+                  <h2 className="text-[19px] font-bold text-on-surface leading-snug mb-3 group-hover:text-primary transition-colors duration-300">
+                    {node.title}
+                  </h2>
+
+                  {/* Snippet Description */}
+                  <p className="text-[13px] text-on-surface-variant leading-relaxed mb-6 line-clamp-3">
+                    {node.description}
+                  </p>
+
+                  {/* Footer Link (PhishSkill styling: bold violet, dynamic hover) */}
+                  <div className="text-[12px] font-bold text-primary mt-auto pt-4 border-t border-outline-variant/20 flex items-center justify-between group/link">
+                    <span className="line-clamp-1 group-hover/link:underline">
+                      Read: {node.title}
+                    </span>
+                    <span className="material-symbols-outlined text-[16px] transform group-hover/link:translate-x-1 transition-transform">
+                      arrow_forward
+                    </span>
+                  </div>
+                </div>
+              </article>
+            </Link>
+          ))}
+        </div>
+      </div>
+
+      {/* Load More Button */}
+      <div className="relative z-10 mt-12 flex justify-center pb-8">
+        <button className="px-8 py-3 rounded-full border border-primary/30 text-primary font-label-sm text-label-sm liquid-glass hover:shadow-[0_0_20px_rgba(195,192,255,0.3)] transition-all duration-300 flex items-center gap-2 cursor-pointer">
+          <span className="material-symbols-outlined text-[16px]">add_circle</span> Load More Nodes
+        </button>
+      </div>
+    </main>
   );
 }
