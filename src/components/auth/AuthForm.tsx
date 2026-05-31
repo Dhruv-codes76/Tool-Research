@@ -30,6 +30,14 @@ export const AuthForm: React.FC<AuthFormProps> = ({ mode }) => {
   const searchParams = useSearchParams();
   const verified = searchParams?.get('verified');
 
+  // Auth state
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [fullName, setFullName] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
   useEffect(() => {
     if (verified === 'true') {
       setError('Your account has been successfully verified! You can now log in.');
@@ -47,13 +55,6 @@ export const AuthForm: React.FC<AuthFormProps> = ({ mode }) => {
     }
   }, [mode, router]);
 
-  // Auth state
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [fullName, setFullName] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   // Track mouse position relative to the container center (normalized -1 to 1)
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
@@ -91,8 +92,8 @@ export const AuthForm: React.FC<AuthFormProps> = ({ mode }) => {
         },
       });
       if (error) throw error;
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
       setLoading(false);
     }
   };
@@ -114,8 +115,8 @@ export const AuthForm: React.FC<AuthFormProps> = ({ mode }) => {
       });
       if (error) throw error;
       setError('Confirmation email resent! Please check your inbox.');
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
       setLoading(false);
     }
@@ -169,8 +170,8 @@ export const AuthForm: React.FC<AuthFormProps> = ({ mode }) => {
         if (error) throw error;
         setError('Confirmation email sent! Please check your inbox.');
       }
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
       setLoading(false);
     }

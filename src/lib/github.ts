@@ -42,8 +42,8 @@ export async function getRepoStats(owner: string, repo: string) {
       topics: data.topics || [],
       language: data.language || "",
     };
-  } catch (error: any) {
-    console.error(`Error fetching repo stats for ${owner}/${repo}:`, error.message);
+  } catch (error: unknown) {
+    console.error(`Error fetching repo stats for ${owner}/${repo}:`, error instanceof Error ? error.message : error);
     return null;
   }
 }
@@ -61,8 +61,8 @@ export async function getRepoReadme(owner: string, repo: string) {
       },
     });
     return data as unknown as string;
-  } catch (error: any) {
-    console.error(`Error fetching README for ${owner}/${repo}:`, error.message);
+  } catch (error: unknown) {
+    console.error(`Error fetching README for ${owner}/${repo}:`, error instanceof Error ? error.message : error);
     return "";
   }
 }

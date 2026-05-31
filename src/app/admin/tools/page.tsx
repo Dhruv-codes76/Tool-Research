@@ -1,10 +1,12 @@
 import React from 'react';
 import Link from 'next/link';
 import { getAdminStats, getAllToolsAdmin } from '@/app/actions/adminActions';
+import { Tool, Platform, ToolType } from '@prisma/client';
 
+type ToolWithCategories = Tool & { platforms: Platform[], toolTypes: ToolType[] };
 export default async function ManageToolsPage() {
   const stats = await getAdminStats();
-  const tools = await getAllToolsAdmin();
+  const tools = (await getAllToolsAdmin()) as ToolWithCategories[];
 
   return (
     <div className="flex flex-col gap-10">
@@ -64,7 +66,7 @@ export default async function ManageToolsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-outline-variant/10">
-              {tools.map((tool: any) => (
+              {tools.map((tool) => (
                 <tr key={tool.id} className="hover:bg-surface-container-high/30 transition-colors">
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
@@ -85,7 +87,7 @@ export default async function ManageToolsPage() {
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex flex-wrap gap-1">
-                      {tool.platforms.slice(0, 2).map((p: any) => (
+                      {tool.platforms.slice(0, 2).map((p) => (
                         <span key={p.id} className="px-2 py-1 bg-surface-container rounded-full font-label-sm text-[9px] text-on-surface uppercase tracking-wider border border-outline-variant/20">
                           {p.name}
                         </span>

@@ -26,7 +26,7 @@ export async function sendPasswordResetEmail(email: string, resetLink: string) {
     }
 
     return { success: true, data };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Exception sending reset email:', error);
     return { success: false, error };
   }
