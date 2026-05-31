@@ -288,15 +288,15 @@ export default config;`,
       description: "Instead of hardcoding generic utilities like bg-gray-900 or bg-white in your HTML structures, configure semantic design tokens like surface-container-lowest to abstract the themes cleanly.",
       code: `/* globals.css */
 @theme {
-  --color-background: #131313;
+  --color-background: #831599ff;
   --color-surface-container: #201f1f;
-  --color-primary: #c3c0ff;
+  --color-primary: #1b13b5ff;
   --color-on-surface: #e5e2e1;
 }
 
 /* These variables auto-swap values when the parent class is set to .dark */
 .dark {
-  --color-background: #090909;
+  --color-background: #77085fff;
   --color-surface-container: #121212;
 } `,
       lang: 'css'
@@ -310,15 +310,15 @@ export default function BlogPostPage({ params }: { params: Promise<{ id: string 
   // Safe param extraction for Next.js 16 Client Component
   const resolvedParams = params && 'then' in params ? use(params) : params;
   const postId = resolvedParams?.id || '';
-  
+
   const post = blogPostDataMap[postId] || fallbackPost;
-  
+
   const [copiedSection, setCopiedSection] = useState<string | null>(null);
   const [activeSection, setActiveSection] = useState<string>('intro');
 
   useEffect(() => {
     const sectionIds = ['intro', 'step1', 'step2', 'conclusion'];
-    
+
     const observerOptions = {
       root: null,
       rootMargin: '-15% 0px -55% 0px',
@@ -364,15 +364,14 @@ export default function BlogPostPage({ params }: { params: Promise<{ id: string 
             <span className="text-xs font-bold uppercase tracking-wider text-primary glow-text">Contents</span>
             <span className="material-symbols-outlined text-[16px] text-primary/80" style={{ fontVariationSettings: "'FILL' 1" }}>list_alt</span>
           </div>
-          
+
           {/* Introduction Box */}
-          <a 
-            href="#intro" 
-            className={`no-underline block transition-all duration-300 p-4 rounded-xl border ${
-              activeSection === 'intro'
-                ? 'neon-active-box'
-                : 'glass-panel border-outline-variant/15 text-on-surface-variant hover:border-primary/40 hover:text-primary hover:scale-[1.01] hover:translate-x-0.5'
-            }`}
+          <a
+            href="#intro"
+            className={`no-underline block transition-all duration-300 p-4 rounded-xl border ${activeSection === 'intro'
+              ? 'neon-active-box'
+              : 'glass-panel border-outline-variant/15 text-on-surface-variant hover:border-primary/40 hover:text-primary hover:scale-[1.01] hover:translate-x-0.5'
+              }`}
           >
             <div className="flex items-center gap-3">
               <span className="text-xs font-medium tracking-wide">Introduction</span>
@@ -380,13 +379,12 @@ export default function BlogPostPage({ params }: { params: Promise<{ id: string 
           </a>
 
           {/* Step 1 Box */}
-          <a 
-            href="#step1" 
-            className={`no-underline block transition-all duration-300 p-4 rounded-xl border ${
-              activeSection === 'step1'
-                ? 'neon-active-box'
-                : 'glass-panel border-outline-variant/15 text-on-surface-variant hover:border-primary/40 hover:text-primary hover:scale-[1.01] hover:translate-x-0.5'
-            }`}
+          <a
+            href="#step1"
+            className={`no-underline block transition-all duration-300 p-4 rounded-xl border ${activeSection === 'step1'
+              ? 'neon-active-box'
+              : 'glass-panel border-outline-variant/15 text-on-surface-variant hover:border-primary/40 hover:text-primary hover:scale-[1.01] hover:translate-x-0.5'
+              }`}
           >
             <div className="flex items-center gap-3">
               <span className="text-xs font-medium tracking-wide">{post.sections.setup.title.split(':')[0] || 'Step 1'}</span>
@@ -394,13 +392,12 @@ export default function BlogPostPage({ params }: { params: Promise<{ id: string 
           </a>
 
           {/* Step 2 Box */}
-          <a 
-            href="#step2" 
-            className={`no-underline block transition-all duration-300 p-4 rounded-xl border ${
-              activeSection === 'step2'
-                ? 'neon-active-box'
-                : 'glass-panel border-outline-variant/15 text-on-surface-variant hover:border-primary/40 hover:text-primary hover:scale-[1.01] hover:translate-x-0.5'
-            }`}
+          <a
+            href="#step2"
+            className={`no-underline block transition-all duration-300 p-4 rounded-xl border ${activeSection === 'step2'
+              ? 'neon-active-box'
+              : 'glass-panel border-outline-variant/15 text-on-surface-variant hover:border-primary/40 hover:text-primary hover:scale-[1.01] hover:translate-x-0.5'
+              }`}
           >
             <div className="flex items-center gap-3">
               <span className="text-xs font-medium tracking-wide">{post.sections.config.title.split(':')[0] || 'Step 2'}</span>
@@ -408,13 +405,12 @@ export default function BlogPostPage({ params }: { params: Promise<{ id: string 
           </a>
 
           {/* Conclusion Box */}
-          <a 
-            href="#conclusion" 
-            className={`no-underline block transition-all duration-300 p-4 rounded-xl border ${
-              activeSection === 'conclusion'
-                ? 'neon-active-box'
-                : 'glass-panel border-outline-variant/15 text-on-surface-variant hover:border-primary/40 hover:text-primary hover:scale-[1.01] hover:translate-x-0.5'
-            }`}
+          <a
+            href="#conclusion"
+            className={`no-underline block transition-all duration-300 p-4 rounded-xl border ${activeSection === 'conclusion'
+              ? 'neon-active-box'
+              : 'glass-panel border-outline-variant/15 text-on-surface-variant hover:border-primary/40 hover:text-primary hover:scale-[1.01] hover:translate-x-0.5'
+              }`}
           >
             <div className="flex items-center gap-3">
               <span className="material-symbols-outlined text-[18px]">verified</span>
@@ -426,11 +422,11 @@ export default function BlogPostPage({ params }: { params: Promise<{ id: string 
 
       {/* Blog Article */}
       <article className="flex-grow max-w-3xl mx-auto w-full space-y-stack-lg z-10">
-        
+
         {/* Breadcrumbs / Back button */}
         <div className="mb-4">
-          <Link 
-            href="/blog" 
+          <Link
+            href="/blog"
             className="inline-flex items-center gap-1.5 text-xs text-primary/80 hover:text-primary transition-colors font-semibold uppercase tracking-wider"
           >
             <span className="material-symbols-outlined text-[16px]">arrow_back</span>
@@ -455,9 +451,9 @@ export default function BlogPostPage({ params }: { params: Promise<{ id: string 
 
           <div className="flex items-center gap-4 pt-6 border-t border-outline-variant/20 mt-stack-md">
             <div className="w-11 h-11 rounded-full bg-surface-container-high overflow-hidden border border-outline-variant/30 shrink-0">
-              <img 
-                alt={post.author.name} 
-                className="w-full h-full object-cover" 
+              <img
+                alt={post.author.name}
+                className="w-full h-full object-cover"
                 src={post.author.avatar}
               />
             </div>
@@ -473,9 +469,9 @@ export default function BlogPostPage({ params }: { params: Promise<{ id: string 
 
         {/* Article Cover Image */}
         <div className="relative aspect-video w-full rounded-xl overflow-hidden border border-outline-variant/20 mb-stack-lg shadow-2xl">
-          <img 
-            alt={post.title} 
-            className="w-full h-full object-cover" 
+          <img
+            alt={post.title}
+            className="w-full h-full object-cover"
             src={post.coverImage}
           />
           <div className="absolute inset-0 bg-primary/5 mix-blend-overlay"></div>
@@ -498,13 +494,13 @@ export default function BlogPostPage({ params }: { params: Promise<{ id: string 
           {post.sections.setup.code && (
             <div className="relative group mt-4 mb-6">
               <div className="absolute right-3 top-3 opacity-0 group-hover:opacity-100 transition-opacity z-20">
-                <button 
+                <button
                   onClick={() => copyToClipboard(post.sections.setup.code || '', 'setup')}
                   className="bg-surface-container-high/90 backdrop-blur text-on-surface-variant hover:text-primary px-3 py-1.5 rounded-md border border-outline-variant/30 flex items-center gap-1 font-label-sm text-label-sm cursor-pointer shadow-md"
                 >
                   <span className="material-symbols-outlined text-[16px]">
                     {copiedSection === 'setup' ? 'check' : 'content_copy'}
-                  </span> 
+                  </span>
                   {copiedSection === 'setup' ? 'Copied' : 'Copy'}
                 </button>
               </div>
@@ -529,13 +525,13 @@ export default function BlogPostPage({ params }: { params: Promise<{ id: string 
           {post.sections.config.code && (
             <div className="relative group mt-4 mb-6">
               <div className="absolute right-3 top-3 opacity-0 group-hover:opacity-100 transition-opacity z-20">
-                <button 
+                <button
                   onClick={() => copyToClipboard(post.sections.config.code || '', 'config')}
                   className="bg-surface-container-high/90 backdrop-blur text-on-surface-variant hover:text-primary px-3 py-1.5 rounded-md border border-outline-variant/30 flex items-center gap-1 font-label-sm text-label-sm cursor-pointer shadow-md"
                 >
                   <span className="material-symbols-outlined text-[16px]">
                     {copiedSection === 'config' ? 'check' : 'content_copy'}
-                  </span> 
+                  </span>
                   {copiedSection === 'config' ? 'Copied' : 'Copy'}
                 </button>
               </div>
@@ -549,8 +545,8 @@ export default function BlogPostPage({ params }: { params: Promise<{ id: string 
 
           {/* Pro Tip Box */}
           <div className="glass-panel p-6 rounded-xl my-8 flex gap-4 items-start shadow-lg">
-            <span 
-              className="material-symbols-outlined text-primary mt-1 text-2xl shrink-0" 
+            <span
+              className="material-symbols-outlined text-primary mt-1 text-2xl shrink-0"
               style={{ fontVariationSettings: "'FILL' 1" }}
             >
               lightbulb
