@@ -74,7 +74,7 @@ export default async function HomePage() {
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {tools.length > 0 ? (
-            tools.map((tool) => (
+            tools.map((tool: any) => (
               <ToolCard key={tool.id} {...tool} />
             ))
           ) : (

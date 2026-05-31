@@ -1,5 +1,5 @@
-import { AuthForm } from '@/components/auth/AuthForm';
 import { Suspense } from 'react';
+import { AuthForm } from '@/components/auth/AuthForm';
 
 export const metadata = {
   title: 'Forgot Password | AI Tool Research',
