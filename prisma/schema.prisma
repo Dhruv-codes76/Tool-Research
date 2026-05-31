@@ -20,15 +20,17 @@ model User {
 }
 
 model Platform {
-  id    String @id @default(cuid())
-  name  String @unique
-  tools Tool[]
+  id          String  @id @default(cuid())
+  name        String  @unique
+  description String?
+  tools       Tool[]
 }
 
 model ToolType {
-  id    String @id @default(cuid())
-  name  String @unique
-  tools Tool[]
+  id          String  @id @default(cuid())
+  name        String  @unique
+  description String?
+  tools       Tool[]
 }
 
 
@@ -58,8 +60,10 @@ model Tool {
   features        String?  @default("[]")
 
   author          String?
+  authorUrl       String?
   since           String?
   websiteUrl      String?
+  downloadUrl     String?
 
   userId        String
   user          User       @relation(fields: [userId], references: [id])

@@ -1,6 +1,9 @@
 import { ToolForm } from "@/components/admin/ToolForm";
+import { getCategories } from "@/app/actions/adminActions";
 
-export default function NewToolPage() {
+export default async function NewToolPage() {
+  const { platforms, toolTypes } = await getCategories();
+
   return (
     <div className="flex flex-col gap-8 pb-20">
       <div>
@@ -13,7 +16,10 @@ export default function NewToolPage() {
         </div>
       </div>
       
-      <ToolForm />
+      <ToolForm
+        availablePlatforms={platforms.map((p: any) => p.name)}
+        availableToolTypes={toolTypes.map((t: any) => t.name)}
+      />
     </div>
   );
 }

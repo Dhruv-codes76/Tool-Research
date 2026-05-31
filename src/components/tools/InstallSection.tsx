@@ -40,73 +40,82 @@ export const InstallSection: React.FC<InstallSectionProps> = ({ toolName, instal
   };
 
   return (
-    <section className="rounded-xl bg-[#141621] border border-white/5 shadow-2xl overflow-hidden mt-8 max-w-full">
-      {/* Top Bar */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between px-4 py-3 border-b border-white/5 bg-[#0f111a] gap-4">
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2 shrink-0">
-            <div className="w-3 h-3 rounded-full bg-[#ff5f56]"></div>
-            <div className="w-3 h-3 rounded-full bg-[#ffbd2e]"></div>
-            <div className="w-3 h-3 rounded-full bg-[#27c93f]"></div>
-          </div>
-          {/* Static decoration tabs to match the screenshot vibe */}
-          <div className="hidden sm:flex items-center gap-3 ml-2">
-             <span className="bg-[#00f0ff] text-black text-[12px] font-bold px-3 py-1 rounded">One-liner</span>
-             <span className="text-gray-500 text-[12px] font-semibold px-2 py-1 cursor-not-allowed">npm</span>
-             <span className="text-gray-500 text-[12px] font-semibold px-2 py-1 cursor-not-allowed">Hackable</span>
-          </div>
-        </div>
+    <section className="glass-panel rounded-2xl border border-outline-variant/20 shadow-2xl overflow-hidden mt-8 max-w-full">
+      {/* Top Bar / Header */}
+      <div className="flex flex-row items-center justify-between px-4 py-2.5 border-b border-outline-variant/20 bg-surface-container-low/30 backdrop-blur-md">
         
-        <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
-          {/* OS Toggles */}
-          {commands.length > 1 ? (
-            <div className="flex items-center gap-1 bg-[#141621] p-1 rounded-lg border border-white/5">
-              {commands.map((cmd, idx) => (
+        {/* Left Side: Window Controls + OS Tabs */}
+        <div className="flex items-center gap-4 overflow-x-auto no-scrollbar scroll-smooth">
+          {/* OS Control Dots (Terminal Style) */}
+          <div className="flex items-center gap-1.5 shrink-0 pr-1.5 border-r border-outline-variant/20 mr-1">
+            <div className="w-2.5 h-2.5 rounded-full bg-[#ff5f56]/80 hover:bg-[#ff5f56] transition-colors cursor-pointer"></div>
+            <div className="w-2.5 h-2.5 rounded-full bg-[#ffbd2e]/80 hover:bg-[#ffbd2e] transition-colors cursor-pointer"></div>
+            <div className="w-2.5 h-2.5 rounded-full bg-[#27c93f]/80 hover:bg-[#27c93f] transition-colors cursor-pointer"></div>
+          </div>
+          
+          {/* Dynamic OS Filter Tabs */}
+          <div className="flex items-center gap-1.5">
+            {commands.map((cmd, idx) => {
+              const isActive = activeTab === idx;
+              return (
                 <button
                   key={idx}
                   onClick={() => setActiveTab(idx)}
-                  className={`px-4 py-1.5 rounded text-[12px] font-bold transition-all ${
-                    activeTab === idx 
-                      ? 'bg-[#ff2a5f] text-white shadow-md' 
-                      : 'text-gray-400 hover:text-gray-200 hover:bg-white/5'
+                  className={`px-3 py-1 rounded-md text-[12px] font-bold transition-all duration-300 relative cursor-pointer select-none whitespace-nowrap ${
+                    isActive 
+                      ? 'bg-primary-container/20 text-primary border border-primary/20 shadow-[0_0_12px_rgba(195,192,255,0.15)]' 
+                      : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high/40 border border-transparent'
                   }`}
                 >
                   {cmd.os}
                 </button>
-              ))}
-            </div>
-          ) : (
-            <div className="px-4 py-1.5 rounded text-[12px] font-bold bg-[#ff2a5f] text-white shadow-md">
-              {commands[0].os}
-            </div>
-          )}
-          
-          {/* Beta Badge */}
-          <span className="border border-white/10 text-gray-400 text-[11px] font-bold px-2 py-1 rounded flex items-center gap-1">
-            <span className="font-serif">β</span> BETA
-          </span>
+              );
+            })}
+          </div>
         </div>
+
+        {/* Right Side: Small Copy Button */}
+        <div className="flex items-center shrink-0 pl-2">
+          {/* Small Copy Button */}
+          <button 
+            onClick={copyToClipboard}
+            className={`flex items-center justify-center p-1.5 rounded-md transition-all duration-300 relative group/btn cursor-pointer ${
+              copied 
+                ? 'bg-primary-container/20 text-primary shadow-[0_0_12px_rgba(195,192,255,0.15)]' 
+                : 'bg-transparent text-on-surface-variant/80 hover:text-on-surface hover:bg-surface-container-highest/50'
+            }`}
+            title="Copy command"
+          >
+            <span className="material-symbols-outlined text-[15px]">
+              {copied ? 'check' : 'content_copy'}
+            </span>
+            
+            {/* Tooltip */}
+            <span className="absolute -top-8 left-1/2 -translate-x-1/2 bg-black text-on-surface text-[10px] font-sans font-bold px-2 py-1 rounded opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300 pointer-events-none whitespace-nowrap shadow-xl border border-outline-variant/30 z-20">
+              {copied ? 'Copied!' : 'Copy Command'}
+            </span>
+          </button>
+        </div>
+
       </div>
 
       {/* Terminal Body */}
-      <div className="p-6 font-mono text-[13px] md:text-[14px] relative group min-h-[120px] flex flex-col justify-center">
-        <div className="text-gray-400 mb-3 select-none">
-          # Works everywhere. Installs everything. You're welcome. 🚀
-        </div>
-        <div className="text-gray-200 whitespace-pre-wrap leading-relaxed pr-12">
-          <span className="text-[#ff2a5f] select-none">$</span> {activeCommand.command}
+      <div className="p-6 font-mono text-[13px] md:text-[14px] relative min-h-[100px] bg-surface-container-lowest/40 backdrop-blur-sm flex flex-col justify-center">
+        {/* Ambient background glow inside the terminal body */}
+        <div className="absolute top-0 right-0 w-[150px] h-[100px] bg-primary/5 blur-[50px] rounded-full pointer-events-none"></div>
+
+        {/* Comment line */}
+        <div className="text-on-surface-variant/50 mb-3 select-none flex items-center gap-1.5 text-xs font-sans italic">
+          <span className="text-primary/40">#</span> Run this command in your terminal to install {toolName}
         </div>
         
-        <button 
-          onClick={copyToClipboard}
-          className="absolute top-1/2 -translate-y-1/2 right-6 text-gray-400 hover:text-white bg-[#1f2233] border border-white/10 p-2.5 rounded-lg transition-all opacity-0 group-hover:opacity-100 flex items-center justify-center"
-          title="Copy install command"
-        >
-          <span className="material-symbols-outlined text-[18px]">
-            {copied ? 'check' : 'content_copy'}
-          </span>
-        </button>
+        {/* Terminal Line with Command */}
+        <div className="text-on-surface whitespace-pre-wrap leading-relaxed pr-4 select-all font-mono font-normal">
+          <span className="text-primary font-bold mr-2 select-none">$</span>
+          {activeCommand.command}
+        </div>
       </div>
     </section>
   );
 };
+

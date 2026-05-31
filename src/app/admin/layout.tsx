@@ -24,10 +24,16 @@ export default async function AdminLayout({
               <span className="font-label-sm text-sm">Analytics</span>
             </Link>
             
-            <Link href="/admin/tools" className="flex items-center gap-3 px-4 py-2.5 rounded-lg bg-primary-container/10 text-primary hover:bg-primary-container/20 transition-colors">
-              <span className="material-symbols-outlined text-[20px] text-primary">build</span>
+            <Link href="/admin/tools" className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors">
+              <span className="material-symbols-outlined text-[20px]">build</span>
               <span className="font-label-sm text-sm">Tools</span>
             </Link>
+
+            <Link href="/admin/categories" className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors">
+              <span className="material-symbols-outlined text-[20px]">category</span>
+              <span className="font-label-sm text-sm">Categories</span>
+            </Link>
+
             
             <Link href="/admin/blogs" className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors">
               <span className="material-symbols-outlined text-[20px]">article</span>
