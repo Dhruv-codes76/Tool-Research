@@ -4,9 +4,12 @@ import { ToolCard } from '@/components/ui/ToolCard';
 import { SearchBar } from '@/components/ui/SearchBar';
 import { CategoryChip } from '@/components/ui/CategoryChip';
 import { getTools } from '@/app/actions/toolActions';
+import { Tool, Platform, ToolType } from '@prisma/client';
+
+type ToolWithCategories = Tool & { platforms: Platform[], toolTypes: ToolType[] };
 
 // Helper function to match existing UI aesthetic defaults
-function mapToolToCard(dbTool: any, index: number) {
+function mapToolToCard(dbTool: ToolWithCategories, index: number) {
   // Dynamic distribution of preset colors to match previous static design feel
   const colors = ['text-primary', 'text-secondary', 'text-tertiary', 'text-primary-fixed'];
   const icons = ['terminal', 'smart_toy', 'video_camera_front', 'code', 'cloud', 'api', 'edit_note'];
@@ -21,8 +24,8 @@ function mapToolToCard(dbTool: any, index: number) {
 
   // Combine platforms and toolTypes for the UI tags array
   const tags = [
-    ...dbTool.platforms.map((p: any) => p.name),
-    ...dbTool.toolTypes.map((t: any) => t.name)
+    ...dbTool.platforms.map((p) => p.name),
+    ...dbTool.toolTypes.map((t) => t.name)
   ];
 
   return {
@@ -40,7 +43,7 @@ export default async function HomePage() {
   // FETCH DYNAMIC BACKEND DATA DIRECTLY IN THE COMPONENT!
   const toolsData = await getTools();
   
-  const tools = toolsData.map((item: any, index: number) => mapToolToCard(item, index));
+  const tools = toolsData.map((item: ToolWithCategories, index: number) => mapToolToCard(item, index));
 
   return (
     <main className="flex-grow pt-24 pb-32 max-w-container-max mx-auto px-gutter w-full">
@@ -74,7 +77,7 @@ export default async function HomePage() {
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {tools.length > 0 ? (
-            tools.map((tool: any) => (
+            tools.map((tool) => (
               <ToolCard key={tool.id} {...tool} />
             ))
           ) : (

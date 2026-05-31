@@ -1,10 +1,12 @@
 import React from 'react';
 import Link from 'next/link';
 import { getAdminStats, getAllToolsAdmin } from '@/app/actions/adminActions';
+import { Tool, Platform, ToolType } from '@prisma/client';
 
+type ToolWithCategories = Tool & { platforms: Platform[], toolTypes: ToolType[] };
 export default async function ManageToolsPage() {
   const stats = await getAdminStats();
-  const tools = await getAllToolsAdmin();
+  const tools = (await getAllToolsAdmin()) as ToolWithCategories[];
 
   return (
     <div className="flex flex-col gap-10">
