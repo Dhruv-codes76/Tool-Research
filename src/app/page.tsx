@@ -6,6 +6,9 @@ import { CategoryChip } from '@/components/ui/CategoryChip';
 import { getTools } from '@/app/actions/toolActions';
 import { Tool, Platform, ToolType } from '@prisma/client';
 
+// Prerender at build time, then refresh the data from the database every 5 minutes (ISR).
+export const revalidate = 300;
+
 type ToolWithCategories = Tool & { platforms: Platform[], toolTypes: ToolType[] };
 
 // Helper function to match existing UI aesthetic defaults
