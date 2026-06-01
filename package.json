@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@portabletext/react": "^6.2.0",
-    "@prisma/adapter-better-sqlite3": "^7.8.0",
+    "@prisma/adapter-pg": "^7.8.0",
     "@prisma/client": "^7.8.0",
     "@sanity/image-url": "^2.1.1",
     "@supabase/auth-helpers-nextjs": "^0.15.0",
@@ -23,7 +23,6 @@
     "@supabase/storage-js": "^2.105.4",
     "@supabase/supabase-js": "^2.105.4",
     "@tailwindcss/postcss": "^4.2.4",
-    "better-sqlite3": "^12.10.0",
     "clsx": "^2.1.1",
     "framer-motion": "^12.38.0",
     "lucide-react": "^1.14.0",
@@ -42,7 +41,6 @@
   "devDependencies": {
     "@tailwindcss/container-queries": "^0.1.1",
     "@tailwindcss/forms": "^0.5.11",
-    "@types/better-sqlite3": "^7.6.13",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
