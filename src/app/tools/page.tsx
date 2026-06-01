@@ -7,6 +7,9 @@ export const metadata = {
   description: 'Explore the complete index of curated open source excellence. Filter by platform or tool type.',
 };
 
+// Prerender at build time, then refresh the data from the database every 5 minutes (ISR).
+export const revalidate = 300;
+
 function mapToolToCard(dbTool: any, index: number) {
   const colors = ['text-primary', 'text-secondary', 'text-tertiary', 'text-primary-fixed'];
   const icons = ['terminal', 'smart_toy', 'video_camera_front', 'code', 'cloud', 'api', 'edit_note'];

@@ -2,6 +2,10 @@ import React from 'react';
 import Link from 'next/link';
 import { requireAdmin } from '@/lib/auth-guard';
 
+// Admin pages require auth and query the database, so they must render on
+// demand — never statically prerendered at build time.
+export const dynamic = 'force-dynamic';
+
 export default async function AdminLayout({
   children,
 }: {
