@@ -150,6 +150,21 @@
   text-shadow: 0 0 15px rgba(195, 192, 255, 0.5);
 }
 
+/* Lightweight entrance animation so server components get the About page's
+   motion feel without pulling in framer-motion / converting to a client component. */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.7s cubic-bezier(0.25, 0.8, 0.25, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-in-up { animation: none; }
+}
+
 .neon-active-box {
   background: 
     linear-gradient(135deg, rgba(20, 20, 30, 0.95), rgba(10, 15, 25, 0.95)) padding-box,

@@ -8,7 +8,9 @@ const Footer = () => {
         <div>
           <div className="flex items-center gap-2 mb-2">
             <Image src="/logo-v2.png" alt="Logo" width={32} height={30} className="object-contain" />
-            <div className="font-headline-md text-headline-md font-bold text-on-surface">AI Tool Research</div>
+            <div className="font-sans text-2xl font-black tracking-tighter leading-none text-white">
+              <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">ai</span>toolresearch
+            </div>
           </div>
           <p className="text-on-surface-variant text-sm">© 2026 AI Tool Research. Curated Excellence.</p>
         </div>

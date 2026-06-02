@@ -49,35 +49,52 @@ export default async function HomePage() {
   const tools = toolsData.map((item: ToolWithCategories, index: number) => mapToolToCard(item, index));
 
   return (
-    <main className="flex-grow pt-24 pb-32 max-w-container-max mx-auto px-gutter w-full">
-      {/* Hero Search Section */}
-      <section className="flex flex-col items-center justify-center py-20">
-        <h1 className="font-display-lg text-display-lg text-on-surface mb-stack-md text-center">
-          Curated Open-Source Excellence
-        </h1>
-        <p className="font-body-base text-body-base text-on-surface-variant mb-stack-lg text-center max-w-2xl">
-          Discover, deploy, and master the best tools built by the community. No noise, just signal.
-        </p>
-        
-        <SearchBar />
+    <main className="flex-grow overflow-x-hidden">
+      {/* Hero Search Section — premium glow + bold display, mirroring the About page */}
+      <section className="relative overflow-hidden px-gutter pt-32 pb-20 md:pt-40 md:pb-28">
+        {/* Ambient radial glow */}
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(195,192,255,0.12),transparent_60%)] pointer-events-none z-0" />
+        {/* Soft brand-gradient blob */}
+        <div className="absolute left-1/2 top-[15%] -translate-x-1/2 w-[420px] h-[420px] bg-gradient-to-br from-primary/20 via-secondary/10 to-tertiary/20 blur-[120px] rounded-full pointer-events-none z-0" />
 
-        {/* Categories */}
-        <div className="flex flex-wrap justify-center gap-3 mt-stack-lg">
-          {['All Tools', 'Android', 'Windows', 'macOS', 'MCP Servers', 'AI Tools', 'Developer Tools', 'Others'].map((cat, i) => (
-            <CategoryChip key={cat} label={cat} isActive={i === 0} />
-          ))}
+        <div className="relative z-10 max-w-container-max mx-auto flex flex-col items-center text-center">
+          <p className="animate-fade-in-up font-mono uppercase tracking-[0.3em] text-xs text-primary font-medium mb-6">
+            Curated Open Source
+          </p>
+
+          <h1 className="animate-fade-in-up [animation-delay:80ms] text-5xl md:text-7xl lg:text-8xl font-black tracking-tight text-white leading-[1.0] mb-6 max-w-4xl">
+            Curated Open-Source{' '}
+            <span className="bg-gradient-to-r from-primary via-secondary to-tertiary bg-clip-text text-transparent">
+              Excellence
+            </span>
+          </h1>
+
+          <p className="animate-fade-in-up [animation-delay:160ms] font-body-base text-on-surface-variant text-lg md:text-xl leading-relaxed mb-stack-lg max-w-2xl">
+            Discover, deploy, and master the best tools built by the community. No noise, just signal.
+          </p>
+
+          <div className="animate-fade-in-up [animation-delay:240ms] w-full flex flex-col items-center">
+            <SearchBar />
+
+            {/* Categories */}
+            <div className="flex flex-wrap justify-center gap-3 mt-stack-lg">
+              {['All Tools', 'Android', 'Windows', 'macOS', 'MCP Servers', 'AI Tools', 'Developer Tools', 'Others'].map((cat, i) => (
+                <CategoryChip key={cat} label={cat} isActive={i === 0} />
+              ))}
+            </div>
+          </div>
         </div>
       </section>
 
       {/* Tools Section */}
-      <section className="mb-20">
+      <section className="px-gutter pb-32 max-w-container-max mx-auto w-full">
         <div className="flex justify-between items-end mb-stack-md border-b border-outline-variant/20 pb-4">
-          <h2 className="font-headline-md text-headline-md text-on-surface">Tools</h2>
+          <h2 className="text-3xl md:text-4xl font-bold text-white tracking-tight">Tools</h2>
           <Link className="font-label-sm text-label-sm text-primary hover:text-primary-fixed transition-colors flex items-center gap-1" href="/tools">
             VIEW ALL <span className="material-symbols-outlined text-sm">arrow_forward</span>
           </Link>
         </div>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {tools.length > 0 ? (
             tools.map((tool) => (
@@ -88,6 +105,29 @@ export default async function HomePage() {
               No tools found in the database yet.
             </div>
           )}
+        </div>
+      </section>
+
+      {/* Closing CTA — echoes the About page's CTA language */}
+      <section className="relative px-gutter py-32 border-t border-outline-variant/10 overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(137,206,255,0.08),transparent_70%)] pointer-events-none z-0" />
+
+        <div className="relative z-10 max-w-3xl mx-auto text-center">
+          <h2 className="text-4xl md:text-6xl font-black text-white tracking-tight leading-[1.05] mb-6">
+            Find Your Next
+            <br />
+            Favorite Tool.
+          </h2>
+          <p className="text-on-surface-variant text-lg max-w-xl mx-auto mb-10">
+            Browse the full index of curated open-source software — filtered by platform,
+            type, and what actually matters.
+          </p>
+          <Link href="/tools">
+            <button className="group px-8 py-4 rounded-full bg-primary text-on-primary font-bold hover:scale-105 hover:bg-primary-fixed duration-300 shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all">
+              Explore All Tools
+              <span className="inline-block ml-2 group-hover:translate-x-1 transition-transform">→</span>
+            </button>
+          </Link>
         </div>
       </section>
 
