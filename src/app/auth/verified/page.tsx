@@ -10,10 +10,10 @@ export default function VerifiedPage() {
   const router = useRouter();
 
   useEffect(() => {
-    // Redirect to home after 4 seconds
+    // Redirect to login after 3 seconds
     const timer = setTimeout(() => {
-      router.push('/');
-    }, 4000);
+      router.push('/login?verified=true');
+    }, 3000);
 
     return () => clearTimeout(timer);
   }, [router]);
@@ -52,7 +52,7 @@ export default function VerifiedPage() {
 
           <div className="flex items-center gap-2 mt-4 text-sm text-[#918fa1]/70">
             <Loader2 className="w-4 h-4 animate-spin" />
-            <span>Redirecting to the website...</span>
+            <span>Redirecting to login...</span>
           </div>
         </motion.div>
       </div>
