@@ -109,6 +109,16 @@
   body {
     @apply bg-background text-on-surface font-sans antialiased min-h-screen flex flex-col;
   }
+
+  /* Override browser autofill styles to match dark theme */
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover, 
+  input:-webkit-autofill:focus, 
+  input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 30px var(--color-surface) inset !important;
+    -webkit-text-fill-color: var(--color-on-surface) !important;
+    transition: background-color 5000s ease-in-out 0s;
+  }
 }
 
 @layer components {
