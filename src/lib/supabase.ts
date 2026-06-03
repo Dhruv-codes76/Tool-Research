@@ -45,11 +45,14 @@ export const getSupabaseAdmin = () => {
  * @param file - The image file as a Buffer or Blob.
  * @param fileName - The name to save the file as.
  */
-export async function uploadToolImage(file: Buffer | Blob, fileName: string) {
+export async function uploadToolImage(file: File | Buffer | Blob, fileName: string) {
+  // Determine the correct MIME type from the file itself, fallback to octet-stream
+  const contentType = file instanceof File ? file.type : "application/octet-stream";
+
   const { error } = await supabase.storage
     .from("tool-screenshots")
     .upload(fileName, file, {
-      contentType: "image/png",
+      contentType,
       upsert: true,
     });
 
