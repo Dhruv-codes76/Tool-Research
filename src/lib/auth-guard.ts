@@ -21,9 +21,23 @@ export async function getCurrentAdmin() {
     where: { email: user.email },
   });
 
-  if (!dbUser || dbUser.role !== "ADMIN" || dbUser.status !== "ACTIVE") {
-    return null;
+  if (!dbUser || dbUser.role !== "ADMIN") return null;
+
+  // Lazy activation: a verified login by an INVITED admin completes acceptance.
+  // A successful Supabase auth (OAuth, password, or invite link) proves they
+  // control this email — the same attestation the invite link provides — so we
+  // promote them to ACTIVE here. This is what lets an admin who signs in with
+  // Google (instead of clicking the email link) actually reach the panel, and
+  // unblocks the seeded primary admin whose invite couldn't be re-sent.
+  if (dbUser.status === "INVITED") {
+    return prisma.user.update({
+      where: { id: dbUser.id },
+      data: { status: "ACTIVE", acceptedAt: new Date() },
+    });
   }
+
+  // DELETED (soft-removed) or any other non-active status stays locked out.
+  if (dbUser.status !== "ACTIVE") return null;
 
   return dbUser;
 }
