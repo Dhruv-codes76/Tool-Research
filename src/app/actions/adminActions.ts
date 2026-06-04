@@ -2,7 +2,14 @@
 
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth-guard";
+import { logAudit } from "@/lib/audit-log";
 import { revalidatePath } from "next/cache";
+import {
+  guessAssetLabel,
+  guessAssetOsArch,
+  isLikelyJunkAsset,
+  type DownloadAsset,
+} from "@/lib/install";
 
 export async function getAdminStats() {
   await requireAdmin();
@@ -33,13 +40,21 @@ export async function getAllToolsAdmin() {
 }
 
 export async function deleteTool(id: string) {
-  await requireAdmin();
-  
-  await prisma.tool.update({
+  const admin = await requireAdmin();
+
+  const tool = await prisma.tool.update({
     where: { id },
     data: { status: 'DELETED' }
   });
-  
+
+  await logAudit({
+    action: "tool.delete",
+    actor: admin,
+    targetType: "Tool",
+    targetId: id,
+    targetLabel: tool.name,
+  });
+
   revalidatePath("/admin/tools");
   revalidatePath("/tools");
 }
@@ -65,6 +80,7 @@ export type ToolAdminFormData = {
   since: string;
   websiteUrl: string;
   downloadUrl: string;
+  downloadAssets: string; // JSON string of curated DownloadAsset[]
   platforms: string[]; // array of names
   toolTypes: string[]; // array of names
 };
@@ -93,14 +109,23 @@ export async function createTool(data: ToolAdminFormData) {
     }
   });
 
+  await logAudit({
+    action: "tool.create",
+    actor: admin,
+    targetType: "Tool",
+    targetId: tool.id,
+    targetLabel: tool.name,
+    metadata: { repoUrl: tool.repoUrl, status: tool.status, platforms, toolTypes },
+  });
+
   revalidatePath("/admin/tools");
   revalidatePath("/tools");
   return tool;
 }
 
 export async function updateTool(id: string, data: ToolAdminFormData) {
-  await requireAdmin();
-  
+  const admin = await requireAdmin();
+
   const { platforms, toolTypes, ...toolData } = data;
 
   // We need to overwrite platforms and toolTypes. Prisma 'set' replaces existing connections.
@@ -123,6 +148,15 @@ export async function updateTool(id: string, data: ToolAdminFormData) {
         })),
       },
     }
+  });
+
+  await logAudit({
+    action: "tool.update",
+    actor: admin,
+    targetType: "Tool",
+    targetId: tool.id,
+    targetLabel: tool.name,
+    metadata: { status: tool.status, platforms, toolTypes },
   });
 
   revalidatePath("/admin/tools");
@@ -157,66 +191,108 @@ export async function getCategories() {
 }
 
 export async function createPlatform(name: string, description?: string) {
-  await requireAdmin();
+  const admin = await requireAdmin();
   const platform = await prisma.platform.create({ data: { name, description } });
+  await logAudit({
+    action: "platform.create",
+    actor: admin,
+    targetType: "Platform",
+    targetId: platform.id,
+    targetLabel: platform.name,
+  });
   revalidatePath("/admin/categories");
   return platform;
 }
 
 export async function deletePlatform(id: string) {
-  await requireAdmin();
-  
+  const admin = await requireAdmin();
+
   const platform = await prisma.platform.findUnique({
     where: { id },
     include: { _count: { select: { tools: true } } }
   });
-  
+
   if (platform && platform._count.tools > 0) {
     throw new Error("Cannot delete platform because it is associated with tools.");
   }
 
   await prisma.platform.delete({ where: { id } });
+  await logAudit({
+    action: "platform.delete",
+    actor: admin,
+    targetType: "Platform",
+    targetId: id,
+    targetLabel: platform?.name,
+  });
   revalidatePath("/admin/categories");
 }
 
 export async function updatePlatform(id: string, name: string, description?: string) {
-  await requireAdmin();
+  const admin = await requireAdmin();
   const platform = await prisma.platform.update({
     where: { id },
     data: { name, description }
+  });
+  await logAudit({
+    action: "platform.update",
+    actor: admin,
+    targetType: "Platform",
+    targetId: platform.id,
+    targetLabel: platform.name,
   });
   revalidatePath("/admin/categories");
   return platform;
 }
 
 export async function createToolType(name: string, description?: string) {
-  await requireAdmin();
+  const admin = await requireAdmin();
   const toolType = await prisma.toolType.create({ data: { name, description } });
+  await logAudit({
+    action: "toolType.create",
+    actor: admin,
+    targetType: "ToolType",
+    targetId: toolType.id,
+    targetLabel: toolType.name,
+  });
   revalidatePath("/admin/categories");
   return toolType;
 }
 
 export async function deleteToolType(id: string) {
-  await requireAdmin();
+  const admin = await requireAdmin();
 
   const toolType = await prisma.toolType.findUnique({
     where: { id },
     include: { _count: { select: { tools: true } } }
   });
-  
+
   if (toolType && toolType._count.tools > 0) {
     throw new Error("Cannot delete tool category because it is associated with tools.");
   }
 
   await prisma.toolType.delete({ where: { id } });
+  await logAudit({
+    action: "toolType.delete",
+    actor: admin,
+    targetType: "ToolType",
+    targetId: id,
+    targetLabel: toolType?.name,
+  });
   revalidatePath("/admin/categories");
 }
 
 export async function updateToolType(id: string, name: string, description?: string) {
-  await requireAdmin();
+  const admin = await requireAdmin();
   const toolType = await prisma.toolType.update({
     where: { id },
     data: { name, description }
+  });
+  await logAudit({
+    action: "toolType.update",
+    actor: admin,
+    targetType: "ToolType",
+    targetId: toolType.id,
+    targetLabel: toolType.name,
   });
   revalidatePath("/admin/categories");
   return toolType;
@@ -253,17 +329,24 @@ export async function fetchGitHubMetadata(repoUrl: string) {
     }
     const repoData = await repoRes.json();
 
-    const releaseRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/releases/latest`, { 
-      headers, 
-      cache: 'no-store' 
+    const releaseRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/releases/latest`, {
+      headers,
+      cache: 'no-store'
     });
     const releaseData = releaseRes.ok ? await releaseRes.json() : null;
 
-    const readmeRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/readme`, { 
-      headers: { ...headers, 'Accept': 'application/vnd.github.v3.raw' },
-      cache: 'no-store' 
-    });
-    const readmeData = readmeRes.ok ? await readmeRes.text() : '';
+    // Build curated download-asset suggestions from the latest release: drop
+    // obvious junk (checksums, signatures, source tarballs) and pre-label the
+    // rest. The admin can still edit / add / remove these in the form.
+    const downloadAssets: DownloadAsset[] = Array.isArray(releaseData?.assets)
+      ? releaseData.assets
+          .filter((a: { name?: string }) => a?.name && !isLikelyJunkAsset(a.name))
+          .map((a: { name: string; browser_download_url: string }) => ({
+            label: guessAssetLabel(a.name),
+            url: a.browser_download_url,
+            ...guessAssetOsArch(a.name),
+          }))
+      : [];
 
     return {
       name: repoData.name || '',
@@ -278,13 +361,89 @@ export async function fetchGitHubMetadata(repoUrl: string) {
       since: repoData.created_at ? new Date(repoData.created_at).getFullYear().toString() : '',
       websiteUrl: repoData.homepage || '',
       version: releaseData?.tag_name || '',
-      aboutText: readmeData || '',
-      topics: repoData.topics || [], 
+      downloadAssets,
+      topics: repoData.topics || [],
     };
 
   } catch (error: any) {
     console.error("GitHub fetch error:", error);
     throw new Error(error.message || "Failed to fetch GitHub metadata");
   }
+}
+
+// ---------------------------------------------------------------------------
+// Review queue — download-asset curation flagged by the refresh cron
+// ---------------------------------------------------------------------------
+
+export async function getPendingChanges() {
+  await requireAdmin();
+
+  return prisma.toolChange.findMany({
+    where: { status: "PENDING" },
+    include: { tool: true },
+    orderBy: { detectedAt: "desc" },
+  });
+}
+
+export async function getPendingChangeCount() {
+  await requireAdmin();
+  return prisma.toolChange.count({ where: { status: "PENDING" } });
+}
+
+/**
+ * Apply an admin-curated download-asset list to the tool and resolve the change.
+ * `curatedAssets` is the edited JSON string the admin confirmed in the review UI.
+ */
+export async function publishDownloadCuration(changeId: string, curatedAssets: string) {
+  const admin = await requireAdmin();
+
+  const change = await prisma.toolChange.findUnique({ where: { id: changeId }, include: { tool: true } });
+  if (!change) throw new Error("Change not found");
+
+  await prisma.$transaction([
+    prisma.tool.update({
+      where: { id: change.toolId },
+      data: { downloadAssets: curatedAssets },
+    }),
+    prisma.toolChange.update({
+      where: { id: changeId },
+      data: { status: "APPROVED", resolvedAt: new Date() },
+    }),
+  ]);
+
+  await logAudit({
+    action: "toolChange.publish",
+    actor: admin,
+    targetType: "Tool",
+    targetId: change.toolId,
+    targetLabel: change.tool?.name,
+    metadata: { changeId, field: change.field, oldValue: change.oldValue, newValue: curatedAssets },
+  });
+
+  revalidatePath("/");
+  revalidatePath("/tools");
+  revalidatePath(`/tools/${change.toolId}`);
+  revalidatePath("/admin/tools");
+  revalidatePath("/admin/review");
+}
+
+export async function rejectChange(changeId: string) {
+  const admin = await requireAdmin();
+
+  const change = await prisma.toolChange.update({
+    where: { id: changeId },
+    data: { status: "REJECTED", resolvedAt: new Date() },
+  });
+
+  await logAudit({
+    action: "toolChange.reject",
+    actor: admin,
+    targetType: "ToolChange",
+    targetId: changeId,
+    targetLabel: change.field,
+    metadata: { toolId: change.toolId },
+  });
+
+  revalidatePath("/admin/review");
 }
 

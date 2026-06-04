@@ -1,6 +1,8 @@
 import React from 'react';
 import Link from 'next/link';
-import { requireAdmin } from '@/lib/auth-guard';
+import { redirect } from 'next/navigation';
+import { getCurrentAdmin } from '@/lib/auth-guard';
+import { prisma } from '@/lib/prisma';
 
 // Admin pages require auth and query the database, so they must render on
 // demand — never statically prerendered at build time.
@@ -11,7 +13,10 @@ export default async function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const user = await requireAdmin();
+  const user = await getCurrentAdmin();
+  if (!user) redirect('/login?next=/admin');
+
+  const pendingCount = await prisma.toolChange.count({ where: { status: 'PENDING' } });
 
   return (
     <div className="flex min-h-screen bg-background">
@@ -38,7 +43,19 @@ export default async function AdminLayout({
               <span className="font-label-sm text-sm">Categories</span>
             </Link>
 
-            
+            <Link href="/admin/manage-admins" className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors">
+              <span className="material-symbols-outlined text-[20px]">admin_panel_settings</span>
+              <span className="font-label-sm text-sm">Manage Admins</span>
+            </Link>
+
+            {user.isPrimaryAdmin && (
+              <Link href="/admin/audit-log" className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors">
+                <span className="material-symbols-outlined text-[20px]">history</span>
+                <span className="font-label-sm text-sm">Audit Log</span>
+              </Link>
+            )}
+
+
             <Link href="/admin/blogs" className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors">
               <span className="material-symbols-outlined text-[20px]">article</span>
               <span className="font-label-sm text-sm">Blogs</span>

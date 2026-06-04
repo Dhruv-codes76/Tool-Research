@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { prisma } from '@/lib/prisma';
 import { AboutSection } from '@/components/tools/AboutSection';
 import { InstallSection } from '@/components/tools/InstallSection';
+import { DownloadButton } from '@/components/tools/DownloadButton';
 
 const glassStyle = {
   background: "rgba(28, 32, 37, 0.4)",
@@ -19,24 +20,67 @@ interface PageProps {
   params: Promise<{ id: string }>;
 }
 
-export default async function ToolDetailPage({ params }: PageProps) {
-  const resolvedParams = await params;
-  const toolId = resolvedParams.id;
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://aitoolresearch.com";
 
-  // Query tool dynamically from SQLite by ID (or case-insensitive name)
-  const dbTool = await prisma.tool.findFirst({
+async function findTool(toolId: string) {
+  return prisma.tool.findFirst({
     where: {
       OR: [
         { id: toolId },
         { name: { equals: toolId } },
-        { repoUrl: { contains: `/${toolId}` } }
-      ]
+        { repoUrl: { contains: `/${toolId}` } },
+      ],
     },
-    include: {
-      platforms: true,
-      toolTypes: true
-    }
+    include: { platforms: true, toolTypes: true },
   });
+}
+
+export async function generateMetadata({ params }: PageProps) {
+  const { id } = await params;
+  const tool = await findTool(id);
+
+  if (!tool) {
+    return {
+      title: "Tool Not Found | AI Tool Research",
+      robots: { index: false, follow: false },
+    };
+  }
+
+  const title = `${tool.name} — Open-Source AI Tool | AI Tool Research`;
+  const description = (tool.description || tool.aboutText || `Discover ${tool.name}, a curated open-source AI tool.`).slice(0, 160);
+  const image = tool.heroImageUrl || tool.imageUrl || undefined;
+  const canonical = `${SITE_URL}/tools/${tool.id}`;
+  // Only ACTIVE tools should be indexed; drafts/soft-deleted stay out of search.
+  const indexable = tool.status === "ACTIVE";
+
+  return {
+    title,
+    description,
+    alternates: { canonical },
+    robots: indexable ? undefined : { index: false, follow: false },
+    openGraph: {
+      title,
+      description,
+      url: canonical,
+      type: "website",
+      siteName: "AI Tool Research",
+      ...(image ? { images: [{ url: image }] } : {}),
+    },
+    twitter: {
+      card: image ? "summary_large_image" : "summary",
+      title,
+      description,
+      ...(image ? { images: [image] } : {}),
+    },
+  };
+}
+
+export default async function ToolDetailPage({ params }: PageProps) {
+  const resolvedParams = await params;
+  const toolId = resolvedParams.id;
+
+  // Query tool dynamically by ID (or name / repo slug)
+  const dbTool = await findTool(toolId);
 
   if (!dbTool) {
     return (
@@ -190,20 +234,12 @@ export default async function ToolDetailPage({ params }: PageProps) {
                   </div>
                 </a>
 
-                {/* Download Button (Conditional based on explicit field) */}
-                {downloadUrl && (
-                  <a 
-                    href={downloadUrl} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center justify-between gap-3 bg-primary text-on-primary pl-4 pr-1 py-1 rounded-full font-mono text-sm hover:scale-[1.02] transition-transform shadow-xl w-fit group"
-                  >
-                    <span className="tracking-wide lowercase font-bold">download</span>
-                    <div className="bg-black/20 text-on-primary w-7 h-7 rounded-full flex items-center justify-center group-hover:bg-black/30 transition-colors">
-                      <span className="material-symbols-outlined text-[16px]">download</span>
-                    </div>
-                  </a>
-                )}
+                {/* Download Button — single asset → direct link, multiple → chooser modal */}
+                <DownloadButton
+                  downloadUrl={downloadUrl}
+                  downloadAssets={dbTool.downloadAssets}
+                  repoUrl={dbTool.repoUrl}
+                />
               </div>
             </div>
           </div>

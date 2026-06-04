@@ -1,33 +1,21 @@
 'use client';
 
 import React, { useState } from 'react';
-
-interface InstallCommand {
-  os: string;
-  command: string;
-}
+import { parseInstallCommands, osIcon } from '@/lib/install';
 
 interface InstallSectionProps {
   toolName: string;
-  installCommand: string; // Could be a JSON string or a regular string
+  installCommand: string; // Canonical JSON string of { os, command }[] (or legacy bare string)
 }
 
 export const InstallSection: React.FC<InstallSectionProps> = ({ toolName, installCommand }) => {
   const [copied, setCopied] = useState(false);
   const [activeTab, setActiveTab] = useState(0);
 
-  let commands: InstallCommand[] = [];
-  try {
-    commands = JSON.parse(installCommand);
-    if (!Array.isArray(commands)) {
-      commands = [{ os: 'Universal', command: installCommand }];
-    }
-  } catch (e) {
-    commands = [{ os: 'Universal', command: installCommand }];
-  }
-
   // Filter out any commands that are entirely empty or just whitespace
-  commands = commands.filter(cmd => cmd.command && cmd.command.trim() !== '');
+  const commands = parseInstallCommands(installCommand).filter(
+    cmd => cmd.command && cmd.command.trim() !== ''
+  );
 
   if (commands.length === 0) return null;
 
@@ -61,12 +49,13 @@ export const InstallSection: React.FC<InstallSectionProps> = ({ toolName, instal
                 <button
                   key={idx}
                   onClick={() => setActiveTab(idx)}
-                  className={`px-3 py-1 rounded-md text-[12px] font-bold transition-all duration-300 relative cursor-pointer select-none whitespace-nowrap ${
-                    isActive 
-                      ? 'bg-primary-container/20 text-primary border border-primary/20 shadow-[0_0_12px_rgba(195,192,255,0.15)]' 
+                  className={`px-3 py-1 rounded-md text-[12px] font-bold transition-all duration-300 relative cursor-pointer select-none whitespace-nowrap flex items-center gap-1.5 ${
+                    isActive
+                      ? 'bg-primary-container/20 text-primary border border-primary/20 shadow-[0_0_12px_rgba(195,192,255,0.15)]'
                       : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high/40 border border-transparent'
                   }`}
                 >
+                  <span className="material-symbols-outlined text-[14px]">{osIcon(cmd.os)}</span>
                   {cmd.os}
                 </button>
               );
