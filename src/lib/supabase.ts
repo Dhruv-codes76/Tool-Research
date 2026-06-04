@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import { createBrowserClient } from "@supabase/ssr";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
@@ -22,8 +23,13 @@ if (!isValidUrl(supabaseUrl) || !supabaseAnonKey || supabaseAnonKey === 'your-su
   console.warn("Supabase is not properly configured. Using placeholder values to prevent runtime crashes.");
 }
 
-// Public client for browser-side usage (anon key)
-export const supabase = createClient(finalSupabaseUrl, finalSupabaseAnonKey);
+// Public client for browser-side usage (anon key).
+// IMPORTANT: uses @supabase/ssr's createBrowserClient so the session is stored in
+// COOKIES (not localStorage) and OAuth uses the PKCE *code* flow. This is what
+// lets the server (middleware + getCurrentAdmin) actually see the logged-in user.
+// A plain createClient here stores the session in localStorage + uses the implicit
+// (#access_token) flow, which the server can't read — breaking all admin access.
+export const supabase = createBrowserClient(finalSupabaseUrl, finalSupabaseAnonKey);
 
 /**
  * Admin client for server-side elevated tasks (service role).
