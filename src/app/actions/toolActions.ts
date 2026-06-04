@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { getRepoStats, parseGitHubUrl, detectCategories } from "@/lib/github";
+import { logAudit } from "@/lib/audit-log";
 
 /**
  * Server action to submit a new tool.
@@ -84,6 +85,15 @@ export async function submitTool(formData: FormData, userId: string) {
       platforms: true,
       toolTypes: true,
     }
+  });
+
+  await logAudit({
+    action: "tool.submit",
+    actor: { id: userId },
+    targetType: "Tool",
+    targetId: tool.id,
+    targetLabel: tool.name,
+    metadata: { repoUrl, platforms: platformNames, toolTypes: toolTypeNames },
   });
 
   revalidatePath("/");

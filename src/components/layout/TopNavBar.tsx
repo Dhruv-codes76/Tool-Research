@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { supabase } from '@/lib/supabase';
+import { logAuthEvent } from '@/app/actions/auditActions';
 import { useRouter } from 'next/navigation';
 import { LogOut, LogIn } from 'lucide-react';
 
@@ -26,6 +27,9 @@ const TopNavBar = () => {
   }, []);
 
   const handleLogout = async () => {
+    // Capture identity while the session is still valid, then sign out.
+    const { data: { session: current } } = await supabase.auth.getSession();
+    await logAuthEvent('auth.logout', current?.access_token).catch(() => {});
     await supabase.auth.signOut();
     router.push('/login');
   };

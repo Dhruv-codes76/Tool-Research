@@ -4,6 +4,14 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createTool, updateTool, fetchGitHubMetadata, ToolAdminFormData } from '@/app/actions/adminActions';
 import { uploadToolImage } from '@/lib/supabase';
+import { InstallSection } from '@/components/tools/InstallSection';
+import {
+  OS_OPTIONS,
+  parseInstallCommands,
+  parseDownloadAssets,
+  type InstallCommand,
+  type DownloadAsset,
+} from '@/lib/install';
 
 type Feature = { title: string; description: string; icon: string };
 
@@ -107,6 +115,15 @@ export function ToolForm({ initialData, availablePlatforms = [], availableToolTy
 
   const [features, setFeatures] = useState<Feature[]>(initialFeatures);
 
+  // Install commands and download assets are edited as proper state arrays
+  // (parsed once, serialized on submit) — the same pattern as `features`.
+  const [commands, setCommands] = useState<InstallCommand[]>(
+    parseInstallCommands(initialData?.installCommand)
+  );
+  const [assets, setAssets] = useState<DownloadAsset[]>(
+    parseDownloadAssets(initialData?.downloadAssets)
+  );
+
   const [formData, setFormData] = useState<ToolAdminFormData>({
     repoUrl: initialData?.repoUrl || '',
     name: initialData?.name || '',
@@ -128,6 +145,7 @@ export function ToolForm({ initialData, availablePlatforms = [], availableToolTy
     since: initialData?.since || '',
     websiteUrl: initialData?.websiteUrl || '',
     downloadUrl: initialData?.downloadUrl || '',
+    downloadAssets: initialData?.downloadAssets || '[]',
     platforms: initialData?.platforms?.map((p: any) => p.name) || [],
     toolTypes: initialData?.toolTypes?.map((t: any) => t.name) || [],
   });
@@ -176,11 +194,17 @@ export function ToolForm({ initialData, availablePlatforms = [], availableToolTy
         since: data.since || prev.since,
         websiteUrl: data.websiteUrl || prev.websiteUrl,
         version: data.version || prev.version,
-        aboutText: data.aboutText || prev.aboutText,
         platforms: Array.from(newPlatforms),
         toolTypes: Array.from(newTypes)
       }));
-      
+
+      // Pre-fill download assets from the latest release (already junk-filtered
+      // and pre-labeled by the server). Only overwrite when the fetch found some,
+      // so a manual curation isn't wiped by a release with no assets.
+      if (data.downloadAssets && data.downloadAssets.length > 0) {
+        setAssets(data.downloadAssets);
+      }
+
       if (data.heroImageUrl && logoTab !== 'link') {
          setLogoTab('link');
       }
@@ -205,6 +229,12 @@ export function ToolForm({ initialData, availablePlatforms = [], availableToolTy
         ...formData,
         status,
         features: JSON.stringify(features),
+        installCommand: JSON.stringify(
+          commands.filter(c => c.command && c.command.trim() !== '')
+        ),
+        downloadAssets: JSON.stringify(
+          assets.filter(a => a.url && a.url.trim() !== '')
+        ),
       };
 
       if (initialData?.id) {
@@ -343,7 +373,7 @@ export function ToolForm({ initialData, availablePlatforms = [], availableToolTy
           </div>
 
           <div className="flex flex-col gap-2">
-            <label className="font-label-sm text-[11px] text-on-surface-variant uppercase tracking-wider">Download URL (Direct App/Installer Link)</label>
+            <label className="font-label-sm text-[11px] text-on-surface-variant uppercase tracking-wider">Download URL (single-link fallback — e.g. Android APK)</label>
             <input type="text" placeholder="https://" className="w-full bg-surface-container-low border border-outline-variant/30 rounded-lg px-3 py-2 text-on-surface text-sm" value={formData.downloadUrl} onChange={e => setFormData({...formData, downloadUrl: e.target.value})} />
           </div>
 
@@ -432,97 +462,142 @@ export function ToolForm({ initialData, availablePlatforms = [], availableToolTy
       {/* Installation Commands */}
       <div className="glass-panel p-6 rounded-xl flex flex-col gap-4 border border-outline-variant/20">
         <div className="flex justify-between items-center">
-          <h2 className="font-label-sm text-sm text-on-surface uppercase tracking-wider">Installation Commands (Per OS)</h2>
-          <button 
-            onClick={() => {
-              try {
-                const current = JSON.parse(formData.installCommand || '[]');
-                const parsed = Array.isArray(current) ? current : [{ os: 'Universal', command: formData.installCommand }];
-                setFormData({...formData, installCommand: JSON.stringify([...parsed, { os: 'Windows', command: '' }])});
-              } catch(e) {
-                setFormData({...formData, installCommand: JSON.stringify([{ os: 'macOS & Linux', command: formData.installCommand }, { os: 'Windows', command: '' }])});
-              }
-            }}
-            className="text-[11px] font-bold tracking-wider uppercase bg-primary-container/10 px-3 py-1.5 rounded-lg text-primary hover:bg-primary-container/20 transition-colors border border-primary/20"
+          <div className="flex flex-col gap-1">
+            <h2 className="font-label-sm text-sm text-on-surface uppercase tracking-wider">Installation Commands (Per OS)</h2>
+            <p className="text-[11px] text-on-surface-variant">Terminal install only. GUI/Android tools: leave empty and use Download Assets below.</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setCommands([...commands, { os: 'Universal', command: '' }])}
+            className="shrink-0 text-[11px] font-bold tracking-wider uppercase bg-primary-container/10 px-3 py-1.5 rounded-lg text-primary hover:bg-primary-container/20 transition-colors border border-primary/20"
           >
             + Add OS Option
           </button>
         </div>
-        
-        {(() => {
-          let commands = [];
-          try {
-            commands = JSON.parse(formData.installCommand || '[]');
-            if (!Array.isArray(commands)) commands = [{ os: 'Universal', command: formData.installCommand }];
-          } catch(e) {
-            commands = [{ os: 'Universal', command: formData.installCommand }];
-          }
 
-          if (commands.length === 0) {
-             commands = [{ os: 'Universal', command: '' }];
-          }
+        {commands.length === 0 ? (
+          <p className="text-xs text-on-surface-variant italic px-1">No install commands — the public page will show the download options instead of a terminal.</p>
+        ) : (
+          <div className="flex flex-col gap-4">
+            {commands.map((cmd, idx) => (
+              <div key={idx} className="flex flex-col gap-3 p-4 bg-surface-container-lowest rounded-lg border border-outline-variant/20 relative group">
+                <button
+                  type="button"
+                  onClick={() => setCommands(commands.filter((_, i) => i !== idx))}
+                  className="absolute -top-3 -right-3 w-7 h-7 rounded-full bg-error/10 text-error flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity border border-error/20 hover:bg-error/20"
+                >
+                  <span className="material-symbols-outlined text-[14px]">close</span>
+                </button>
 
-          return (
-            <div className="flex flex-col gap-4">
-              {commands.map((cmd: any, idx: number) => (
-                <div key={idx} className="flex flex-col gap-3 p-4 bg-surface-container-lowest rounded-lg border border-outline-variant/20 relative group">
-                  
-                  {commands.length > 1 && (
-                    <button
-                      onClick={() => {
-                        const newCommands = commands.filter((_: any, i: number) => i !== idx);
-                        setFormData({...formData, installCommand: JSON.stringify(newCommands)});
+                <div className="flex flex-col gap-2">
+                  <label className="font-label-sm text-[10px] text-on-surface-variant uppercase tracking-wider">Target OS / Platform</label>
+                  <div className="relative w-full sm:w-1/2">
+                    <select
+                      className="w-full bg-surface-container-low border border-outline-variant/30 rounded-lg pl-3 pr-10 py-2 text-sm text-on-surface focus:border-primary appearance-none cursor-pointer"
+                      value={cmd.os}
+                      onChange={e => {
+                        const next = [...commands];
+                        next[idx] = { ...next[idx], os: e.target.value };
+                        setCommands(next);
                       }}
-                      className="absolute -top-3 -right-3 w-7 h-7 rounded-full bg-error/10 text-error flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity border border-error/20 hover:bg-error/20"
                     >
-                      <span className="material-symbols-outlined text-[14px]">close</span>
-                    </button>
-                  )}
-
-                  <div className="flex flex-col gap-2">
-                    <label className="font-label-sm text-[10px] text-on-surface-variant uppercase tracking-wider">Target OS / Platform</label>
-                    <div className="relative w-full sm:w-1/2">
-                      <select
-                        className="w-full bg-surface-container-low border border-outline-variant/30 rounded-lg pl-3 pr-10 py-2 text-sm text-on-surface focus:border-primary appearance-none cursor-pointer"
-                        value={cmd.os}
-                        onChange={e => {
-                          const newCommands = [...commands];
-                          newCommands[idx].os = e.target.value;
-                          setFormData({...formData, installCommand: JSON.stringify(newCommands)});
-                        }}
-                      >
-                        <option value="Universal">Universal</option>
-                        <option value="macOS">macOS</option>
-                        <option value="Windows">Windows</option>
-                        <option value="Linux">Linux</option>
-                        <option value="macOS & Linux">macOS & Linux</option>
-                        <option value="Docker">Docker</option>
-                      </select>
-                      <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-on-surface-variant">
-                        <span className="material-symbols-outlined text-[18px]">expand_more</span>
-                      </div>
+                      {OS_OPTIONS.map(opt => (
+                        <option key={opt.value} value={opt.value}>{opt.label}</option>
+                      ))}
+                    </select>
+                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-on-surface-variant">
+                      <span className="material-symbols-outlined text-[18px]">expand_more</span>
                     </div>
                   </div>
-                  
-                  <div className="flex flex-col gap-2">
-                    <label className="font-label-sm text-[10px] text-on-surface-variant uppercase tracking-wider">Shell Command</label>
-                    <textarea 
-                      placeholder="# e.g. curl -fsSL https://ollama.com/install.sh | sh"
-                      className="w-full bg-[#0d1117] border border-outline-variant/20 rounded-lg p-4 text-[#c9d1d9] font-mono-code text-[13px] focus:border-primary/50 resize-y"
-                      rows={2}
-                      value={cmd.command}
-                      onChange={e => {
-                        const newCommands = [...commands];
-                        newCommands[idx].command = e.target.value;
-                        setFormData({...formData, installCommand: JSON.stringify(newCommands)});
-                      }}
-                    />
-                  </div>
                 </div>
-              ))}
-            </div>
-          );
-        })()}
+
+                <div className="flex flex-col gap-2">
+                  <label className="font-label-sm text-[10px] text-on-surface-variant uppercase tracking-wider">Shell Command</label>
+                  <textarea
+                    placeholder="# e.g. curl -fsSL https://ollama.com/install.sh | sh"
+                    className="w-full bg-[#0d1117] border border-outline-variant/20 rounded-lg p-4 text-[#c9d1d9] font-mono-code text-[13px] focus:border-primary/50 resize-y"
+                    rows={2}
+                    value={cmd.command}
+                    onChange={e => {
+                      const next = [...commands];
+                      next[idx] = { ...next[idx], command: e.target.value };
+                      setCommands(next);
+                    }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Live preview — renders the exact public terminal so the editor and
+            output stay in sync. */}
+        {commands.some(c => c.command && c.command.trim() !== '') && (
+          <div className="flex flex-col gap-2 pt-2">
+            <label className="font-label-sm text-[10px] text-on-surface-variant uppercase tracking-wider">Live Preview (what users see)</label>
+            <InstallSection
+              toolName={formData.name || 'this tool'}
+              installCommand={JSON.stringify(commands.filter(c => c.command && c.command.trim() !== ''))}
+            />
+          </div>
+        )}
+      </div>
+
+      {/* Download Assets (multi-arch release files) */}
+      <div className="glass-panel p-6 rounded-xl flex flex-col gap-4 border border-outline-variant/20">
+        <div className="flex justify-between items-center">
+          <div className="flex flex-col gap-1">
+            <h2 className="font-label-sm text-sm text-on-surface uppercase tracking-wider">Download Assets (Per Architecture)</h2>
+            <p className="text-[11px] text-on-surface-variant">Auto-Fetch pre-fills these from the latest release. One asset → direct download; multiple → a chooser modal on the public page.</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setAssets([...assets, { label: '', url: '' }])}
+            className="shrink-0 text-[11px] font-bold tracking-wider uppercase bg-primary-container/10 px-3 py-1.5 rounded-lg text-primary hover:bg-primary-container/20 transition-colors border border-primary/20"
+          >
+            + Add Asset
+          </button>
+        </div>
+
+        {assets.length === 0 ? (
+          <p className="text-xs text-on-surface-variant italic px-1">No download assets. Use the single Download URL field above for a one-link download (e.g. an Android APK), or Auto-Fetch a release.</p>
+        ) : (
+          <div className="flex flex-col gap-3">
+            {assets.map((asset, idx) => (
+              <div key={idx} className="flex flex-col sm:flex-row gap-2 sm:items-center p-3 bg-surface-container-lowest rounded-lg border border-outline-variant/20 relative group">
+                <input
+                  type="text"
+                  placeholder="Label (e.g. macOS · Apple Silicon)"
+                  className="sm:w-1/3 bg-surface-container-low border border-outline-variant/30 rounded-lg px-3 py-2 text-on-surface text-sm focus:border-primary"
+                  value={asset.label}
+                  onChange={e => {
+                    const next = [...assets];
+                    next[idx] = { ...next[idx], label: e.target.value };
+                    setAssets(next);
+                  }}
+                />
+                <input
+                  type="text"
+                  placeholder="https://github.com/.../download/v1.2/app-arm64.dmg"
+                  className="flex-1 bg-surface-container-low border border-outline-variant/30 rounded-lg px-3 py-2 text-on-surface text-sm focus:border-primary font-mono-code text-[12px]"
+                  value={asset.url}
+                  onChange={e => {
+                    const next = [...assets];
+                    next[idx] = { ...next[idx], url: e.target.value };
+                    setAssets(next);
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setAssets(assets.filter((_, i) => i !== idx))}
+                  className="self-end sm:self-auto w-8 h-8 shrink-0 rounded-full bg-error/10 text-error flex items-center justify-center hover:bg-error/20 border border-error/20"
+                >
+                  <span className="material-symbols-outlined text-[16px]">close</span>
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Assets Manager */}

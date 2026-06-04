@@ -1,5 +1,6 @@
 import React from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 
 const Footer = () => {
   return (
@@ -15,10 +16,11 @@ const Footer = () => {
           <p className="text-on-surface-variant text-sm">© 2026 AI Tool Research. Curated Excellence.</p>
         </div>
         <div className="flex gap-6">
-          <a className="text-on-surface-variant hover:text-on-surface transition-colors" href="#">Mission</a>
+          <Link className="text-on-surface-variant hover:text-on-surface transition-colors" href="/about">Mission</Link>
           <a className="text-on-surface-variant hover:text-on-surface transition-colors" href="#">GitHub</a>
           <a className="text-on-surface-variant hover:text-on-surface transition-colors" href="#">Twitter</a>
-          <a className="text-on-surface-variant hover:text-on-surface transition-colors" href="#">Privacy</a>
+          <Link className="text-on-surface-variant hover:text-on-surface transition-colors" href="/privacy">Privacy</Link>
+          <Link className="text-on-surface-variant hover:text-on-surface transition-colors" href="/terms">Terms</Link>
         </div>
       </div>
     </footer>

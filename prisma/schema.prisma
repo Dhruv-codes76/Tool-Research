@@ -15,7 +15,16 @@ model User {
   email         String?   @unique
   emailVerified DateTime?
   image         String?
-  role          String    @default("USER")
+  role          String    @default("USER")   // USER | ADMIN
+
+  isPrimaryAdmin Boolean   @default(false)     // exactly one, protected from removal/demotion
+  status         String    @default("ACTIVE")  // INVITED | ACTIVE | DISABLED
+  invitedById    String?
+  invitedBy      User?     @relation("AdminInvites", fields: [invitedById], references: [id])
+  invitedAdmins  User[]    @relation("AdminInvites")
+  invitedAt      DateTime?
+  acceptedAt     DateTime?
+
   tools         Tool[]
 }
 
@@ -64,9 +73,58 @@ model Tool {
   since           String?
   websiteUrl      String?
   downloadUrl     String?
+  downloadAssets  String?  @default("[]")
 
   userId        String
   user          User       @relation(fields: [userId], references: [id])
   platforms     Platform[]
   toolTypes     ToolType[]
+  changes       ToolChange[]
+}
+
+model ToolChange {
+  id         String    @id @default(cuid())
+  toolId     String
+  tool       Tool      @relation(fields: [toolId], references: [id], onDelete: Cascade)
+  field      String                          // currently always "downloadAssets"
+  oldValue   String?                         // serialized current value
+  newValue   String                          // serialized proposed value
+  status     String    @default("PENDING")   // PENDING / APPROVED / REJECTED
+  source     String    @default("CRON")      // CRON / MANUAL
+  detectedAt DateTime  @default(now())
+  resolvedAt DateTime?
+
+  @@index([status])
+  @@index([toolId])
+}
+
+// Append-only audit trail: every authenticated mutation + auth event lands here
+// so we can answer "who did what, when, and from where" after the fact.
+// Actor is stored as a *snapshot* (id/email/role), NOT a FK relation — the log
+// must survive a user being soft-deleted and a write must never fail on a
+// constraint. Treat rows as immutable: insert only, never update/delete in code.
+model AuditLog {
+  id         String   @id @default(cuid())
+  createdAt  DateTime @default(now())
+
+  actorId    String?  // Prisma User.id at action time (null for unauthenticated/system)
+  actorEmail String?  // denormalized — survives email change / row removal
+  actorRole  String?  // USER | ADMIN snapshot
+
+  action     String   // dotted verb, e.g. "tool.create", "admin.invite", "auth.login"
+  status     String   @default("SUCCESS") // SUCCESS | FAILURE
+
+  targetType  String? // "Tool" | "Platform" | "ToolType" | "User" | "ToolChange"
+  targetId    String?
+  targetLabel String? // human-readable: tool name, admin email, category name
+
+  metadata   String?  // JSON-encoded details/diff (old→new), per the project's JSON-string convention
+
+  ip         String?  // best-effort from x-forwarded-for
+  userAgent  String?
+
+  @@index([createdAt])
+  @@index([actorId])
+  @@index([action])
+  @@index([targetType, targetId])
 }

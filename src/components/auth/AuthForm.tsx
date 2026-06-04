@@ -6,6 +6,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ObsidianMascot } from './ObsidianMascot';
 import { Eye, EyeOff, ArrowRight, Mail, Lock, User, AlertCircle, Loader2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { acceptInvite } from '@/app/actions/adminManagementActions';
+import { logAuthEvent } from '@/app/actions/auditActions';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 const GithubIcon = () => (
@@ -25,7 +27,7 @@ const GoogleIcon = () => (
 
 
 interface AuthFormProps {
-  mode: 'login' | 'signup' | 'forgot-password' | 'update-password';
+  mode: 'login' | 'signup' | 'forgot-password' | 'update-password' | 'accept-invite';
 }
 
 export const AuthForm: React.FC<AuthFormProps> = ({ mode }) => {
@@ -47,19 +49,19 @@ export const AuthForm: React.FC<AuthFormProps> = ({ mode }) => {
   const [loading, setLoading] = useState(false);
   const [githubLoading, setGithubLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(
+    verified === 'true' ? 'Your account has been successfully verified! You can now log in.' : null
+  );
 
   useEffect(() => {
-    if (verified === 'true') {
-      setError('Your account has been successfully verified! You can now log in.');
-    }
-  }, [verified]);
-
-  useEffect(() => {
-    if (mode === 'update-password') {
+    if (mode === 'update-password' || mode === 'accept-invite') {
       supabase.auth.getSession().then(({ data: { session } }) => {
         if (!session) {
-          setError('You must be logged in to update your password or use the link from your email.');
+          setError(
+            mode === 'accept-invite'
+              ? 'This invite link is invalid or has expired. Please ask an admin to re-send it.'
+              : 'You must be logged in to update your password or use the link from your email.'
+          );
           setTimeout(() => router.push('/login'), 3000);
         }
       });
@@ -160,16 +162,18 @@ export const AuthForm: React.FC<AuthFormProps> = ({ mode }) => {
         throw new Error("Password must be at least 6 characters long.");
       }
 
-      if ((isSignup || isUpdatePassword) && password !== confirmPassword) {
+      if ((isSignup || isUpdatePassword || isAcceptInvite) && password !== confirmPassword) {
         throw new Error("Passwords do not match.");
       }
 
       if (isLogin) {
-        const { error } = await supabase.auth.signInWithPassword({
+        const { data, error } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
         if (error) throw error;
+        // Best-effort audit trail; never block the redirect on it.
+        void logAuthEvent('auth.login', data.session?.access_token).catch(() => {});
         router.push('/');
       } else if (isForgotPassword) {
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
@@ -177,13 +181,20 @@ export const AuthForm: React.FC<AuthFormProps> = ({ mode }) => {
         });
         if (error) throw error;
         setError('Password reset link sent! Check your email.');
-      } else if (isUpdatePassword) {
+      } else if (isUpdatePassword || isAcceptInvite) {
         const { error } = await supabase.auth.updateUser({
           password: password,
         });
         if (error) throw error;
-        setError('Password updated successfully! Redirecting...');
-        setTimeout(() => router.push('/login'), 2000);
+        if (isAcceptInvite) {
+          // Promote the pending invite to an active admin, then enter the panel.
+          await acceptInvite();
+          setError('Account activated! Redirecting to the admin panel...');
+          setTimeout(() => router.push('/admin'), 1500);
+        } else {
+          setError('Password updated successfully! Redirecting...');
+          setTimeout(() => router.push('/login'), 2000);
+        }
       } else {
         const { error } = await supabase.auth.signUp({
           email,
@@ -209,6 +220,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({ mode }) => {
   const isForgotPassword = mode === 'forgot-password';
   const isUpdatePassword = mode === 'update-password';
   const isSignup = mode === 'signup';
+  const isAcceptInvite = mode === 'accept-invite';
 
   return (
     <div
@@ -261,7 +273,9 @@ export const AuthForm: React.FC<AuthFormProps> = ({ mode }) => {
                   ? 'Reset Password'
                   : isUpdatePassword
                     ? 'Security First'
-                    : 'Join the Vault'}
+                    : isAcceptInvite
+                      ? 'Accept Your Invite'
+                      : 'Join the Vault'}
             </h2>
             <p className="text-sm text-[#918fa1] max-w-xs">
               {isLogin
@@ -270,7 +284,9 @@ export const AuthForm: React.FC<AuthFormProps> = ({ mode }) => {
                   ? 'Don\'t worry, we\'ll help you get back in.'
                   : isUpdatePassword
                     ? 'Choose a strong new password to protect your account.'
-                    : 'Start discovering and curating premium open-source tools.'}
+                    : isAcceptInvite
+                      ? 'Set a password to activate your admin account.'
+                      : 'Start discovering and curating premium open-source tools.'}
             </p>
           </motion.div>
         </div>
@@ -317,7 +333,9 @@ export const AuthForm: React.FC<AuthFormProps> = ({ mode }) => {
                     ? 'Forgot Password'
                     : isUpdatePassword
                       ? 'Update Password'
-                      : 'Create Account'}
+                      : isAcceptInvite
+                        ? 'Activate Account'
+                        : 'Create Account'}
               </h1>
               <p className="text-sm text-[#918fa1]">
                 {isLogin
@@ -326,12 +344,14 @@ export const AuthForm: React.FC<AuthFormProps> = ({ mode }) => {
                     ? 'Enter your email and we\'ll send you a link to reset.'
                     : isUpdatePassword
                       ? 'Enter your new secure password below.'
-                      : 'Fill in your details to get started.'}
+                      : isAcceptInvite
+                        ? 'Choose a password to finish setting up your admin access.'
+                        : 'Fill in your details to get started.'}
               </p>
             </div>
 
             {/* OAuth Buttons */}
-            {!isForgotPassword && !isUpdatePassword && (
+            {!isForgotPassword && !isUpdatePassword && !isAcceptInvite && (
               <>
                 <div className="flex flex-col gap-3">
                   <motion.button
@@ -426,7 +446,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({ mode }) => {
               </AnimatePresence>
 
               {/* Email */}
-              {!isUpdatePassword && (
+              {!isUpdatePassword && !isAcceptInvite && (
                 <div className="relative">
                   <Mail
                     size={16}
@@ -456,7 +476,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({ mode }) => {
                   />
                   <input
                     type={showPassword ? 'text' : 'password'}
-                    placeholder={isUpdatePassword ? "New Password" : "Password"}
+                    placeholder={isUpdatePassword || isAcceptInvite ? "New Password" : "Password"}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     onFocus={() => setIsPasswordFocused(true)}
@@ -478,9 +498,9 @@ export const AuthForm: React.FC<AuthFormProps> = ({ mode }) => {
                 </div>
               )}
 
-              {/* Confirm Password (signup and update-password) */}
+              {/* Confirm Password (signup, update-password, accept-invite) */}
               <AnimatePresence>
-                {(isSignup || isUpdatePassword) && (
+                {(isSignup || isUpdatePassword || isAcceptInvite) && (
                   <motion.div
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: 'auto' }}
@@ -552,7 +572,9 @@ export const AuthForm: React.FC<AuthFormProps> = ({ mode }) => {
                         ? 'Send Reset Link'
                         : isUpdatePassword
                           ? 'Update Password'
-                          : 'Create Account'}
+                          : isAcceptInvite
+                            ? 'Activate Account'
+                            : 'Create Account'}
                     <ArrowRight size={16} />
                   </>
                 )}
@@ -576,7 +598,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({ mode }) => {
                     </button>
                   </span>
                 </>
-              ) : isForgotPassword || isUpdatePassword ? (
+              ) : isForgotPassword || isUpdatePassword || isAcceptInvite ? (
                 <>
                   Back to{' '}
                   <Link href="/login" className="text-[#c3c0ff] hover:text-[#e2dfff] font-medium transition-colors">

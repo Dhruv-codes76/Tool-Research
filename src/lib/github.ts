@@ -39,11 +39,43 @@ export async function getRepoStats(owner: string, repo: string) {
       issues: data.open_issues_count || 0,
       description: data.description || "",
       lastUpdate: data.updated_at,
+      license: data.license?.spdx_id || data.license?.name || "",
       topics: data.topics || [],
       language: data.language || "",
     };
   } catch (error: unknown) {
     console.error(`Error fetching repo stats for ${owner}/${repo}:`, error instanceof Error ? error.message : error);
+    return null;
+  }
+}
+
+export interface ReleaseAsset {
+  name: string;
+  browser_download_url: string;
+  size: number;
+}
+
+/**
+ * Fetches the latest published (non-prerelease, non-draft) release and its
+ * downloadable assets. Null-tolerant: repos with no releases return null
+ * rather than throwing (GitHub responds 404).
+ */
+export async function getLatestRelease(
+  owner: string,
+  repo: string,
+): Promise<{ version: string; assets: ReleaseAsset[] } | null> {
+  try {
+    const { data } = await octokit.rest.repos.getLatestRelease({ owner, repo });
+    return {
+      version: data.tag_name || "",
+      assets: (data.assets || []).map((a) => ({
+        name: a.name,
+        browser_download_url: a.browser_download_url,
+        size: a.size,
+      })),
+    };
+  } catch {
+    // 404 simply means the repo has no releases — not an error worth surfacing.
     return null;
   }
 }
