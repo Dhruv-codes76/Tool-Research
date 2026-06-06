@@ -175,6 +175,20 @@
   .animate-fade-in-up { animation: none; }
 }
 
+/* Snappy popover entrance for dropdowns — subtle rise + fade, compositor-only. */
+@keyframes popIn {
+  from { opacity: 0; transform: translateY(-6px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.animate-pop-in {
+  animation: popIn 0.16s cubic-bezier(0.25, 0.8, 0.25, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-pop-in { animation: none; }
+}
+
 .neon-active-box {
   background: 
     linear-gradient(135deg, rgba(20, 20, 30, 0.95), rgba(10, 15, 25, 0.95)) padding-box,

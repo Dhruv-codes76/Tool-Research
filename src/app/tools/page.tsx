@@ -1,16 +1,19 @@
 import React from 'react';
 import { getTools } from '@/app/actions/toolActions';
 import { ToolsListClient } from '@/components/tools/ToolsListClient';
+import { Tool, Platform, ToolType } from '@prisma/client';
+
+type ToolWithCategories = Tool & { platforms: Platform[]; toolTypes: ToolType[] };
 
 export const metadata = {
-  title: 'All Open Source Tools | AI Tool Research',
+  title: 'Open Source Directory | AI Tool Research',
   description: 'Explore the complete index of curated open source excellence. Filter by platform or tool type.',
 };
 
 // Prerender at build time, then refresh the data from the database every 5 minutes (ISR).
 export const revalidate = 300;
 
-function mapToolToCard(dbTool: any, index: number) {
+function mapToolToCard(dbTool: ToolWithCategories, index: number) {
   const colors = ['text-primary', 'text-secondary', 'text-tertiary', 'text-primary-fixed'];
   const icons = ['terminal', 'smart_toy', 'video_camera_front', 'code', 'cloud', 'api', 'edit_note'];
 
@@ -22,8 +25,8 @@ function mapToolToCard(dbTool: any, index: number) {
   };
 
   const tags = [
-    ...dbTool.platforms.map((p: any) => p.name),
-    ...dbTool.toolTypes.map((t: any) => t.name)
+    ...dbTool.platforms.map((p) => p.name),
+    ...dbTool.toolTypes.map((t) => t.name)
   ];
 
   return {
@@ -31,6 +34,7 @@ function mapToolToCard(dbTool: any, index: number) {
     name: dbTool.name,
     stars: formatStars(dbTool.stars),
     description: dbTool.description,
+    author: dbTool.author ?? '',
     tags,
     icon: icons[index % icons.length],
     color: colors[index % colors.length],
@@ -40,18 +44,18 @@ function mapToolToCard(dbTool: any, index: number) {
 export default async function ToolsPage() {
   // Fetch dynamic tools directly from SQLite using our Server Action
   const toolsData = await getTools();
-  
-  const tools = toolsData.map((item: any, index: number) => mapToolToCard(item, index));
 
-  // Extract distinct platforms and tool types for the filtering chips
-  const allPlatforms = Array.from(new Set(toolsData.flatMap((t: any) => t.platforms.map((p: any) => p.name))));
-  const allTypes = Array.from(new Set(toolsData.flatMap((t: any) => t.toolTypes.map((ty: any) => ty.name))));
+  const tools = toolsData.map((item: ToolWithCategories, index: number) => mapToolToCard(item, index));
+
+  // Only surface categories that actually have tools — derived from the tool set
+  const allPlatforms = Array.from(new Set(toolsData.flatMap((t: ToolWithCategories) => t.platforms.map((p) => p.name))));
+  const allTypes = Array.from(new Set(toolsData.flatMap((t: ToolWithCategories) => t.toolTypes.map((ty) => ty.name))));
 
   return (
     <main className="flex-grow pt-24 pb-32 max-w-container-max mx-auto px-gutter w-full">
       <header className="mb-12">
         <h1 className="font-display-lg text-display-lg text-on-surface mb-stack-md">
-          All Open Source Tools
+          Open Source Directory
         </h1>
         <p className="font-body-base text-body-base text-on-surface-variant max-w-2xl">
           Explore our complete index of curated community excellence. Filter by category, platforms, or search for specific tools.

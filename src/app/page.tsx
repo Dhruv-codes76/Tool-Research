@@ -1,8 +1,8 @@
 import React from 'react';
 import Link from 'next/link';
-import { ToolCard } from '@/components/ui/ToolCard';
-import { SearchBar } from '@/components/ui/SearchBar';
-import { CategoryChip } from '@/components/ui/CategoryChip';
+import { HeroSearchBar } from '@/components/ui/HeroSearchBar';
+import { ToolExplorer } from '@/components/ui/ToolExplorer';
+import { ToolFilterProvider } from '@/components/ui/ToolFilterContext';
 import { getTools } from '@/app/actions/toolActions';
 import { Tool, Platform, ToolType } from '@prisma/client';
 
@@ -36,6 +36,7 @@ function mapToolToCard(dbTool: ToolWithCategories, index: number) {
     name: dbTool.name,
     stars: formatStars(dbTool.stars),
     description: dbTool.description,
+    author: dbTool.author ?? '',
     tags,
     icon: icons[index % icons.length], // Cycles through consistent aesthetic icons
     color: colors[index % colors.length], // Cycles through valid tailwind design colors
@@ -49,6 +50,7 @@ export default async function HomePage() {
   const tools = toolsData.map((item: ToolWithCategories, index: number) => mapToolToCard(item, index));
 
   return (
+    <ToolFilterProvider>
     <main className="flex-grow overflow-x-hidden">
       {/* Hero Search Section — premium glow + bold display, mirroring the About page */}
       <section className="relative overflow-hidden px-gutter pt-32 pb-20 md:pt-40 md:pb-28">
@@ -74,39 +76,13 @@ export default async function HomePage() {
           </p>
 
           <div className="animate-fade-in-up [animation-delay:240ms] w-full flex flex-col items-center">
-            <SearchBar />
-
-            {/* Categories */}
-            <div className="flex flex-wrap justify-center gap-3 mt-stack-lg">
-              {['All Tools', 'Android', 'Windows', 'macOS', 'MCP Servers', 'AI Tools', 'Developer Tools', 'Others'].map((cat, i) => (
-                <CategoryChip key={cat} label={cat} isActive={i === 0} />
-              ))}
-            </div>
+            <HeroSearchBar />
           </div>
         </div>
       </section>
 
-      {/* Tools Section */}
-      <section className="px-gutter pb-32 max-w-container-max mx-auto w-full">
-        <div className="flex justify-between items-end mb-stack-md border-b border-outline-variant/20 pb-4">
-          <h2 className="text-3xl md:text-4xl font-bold text-white tracking-tight">Tools</h2>
-          <Link className="font-label-sm text-label-sm text-primary hover:text-primary-fixed transition-colors flex items-center gap-1" href="/tools">
-            VIEW ALL <span className="material-symbols-outlined text-sm">arrow_forward</span>
-          </Link>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {tools.length > 0 ? (
-            tools.map((tool) => (
-              <ToolCard key={tool.id} {...tool} />
-            ))
-          ) : (
-            <div className="col-span-full text-center py-10 text-on-surface-variant">
-              No tools found in the database yet.
-            </div>
-          )}
-        </div>
-      </section>
+      {/* Functional category filters + the tools grid they drive */}
+      <ToolExplorer tools={tools} />
 
       {/* Closing CTA — echoes the About page's CTA language */}
       <section className="relative px-gutter py-32 border-t border-outline-variant/10 overflow-hidden">
@@ -132,5 +108,6 @@ export default async function HomePage() {
       </section>
 
     </main>
+    </ToolFilterProvider>
   );
 }
