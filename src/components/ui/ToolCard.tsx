@@ -17,7 +17,7 @@ export const ToolCard: React.FC<ToolCardProps> = ({ id, name, stars, description
     <Link href={`/tools/${id}`} className="block h-full">
       <div className="bg-surface rounded-2xl border border-outline-variant/30 p-6 hover:scale-[1.02] hover:border-outline-variant/60 transition-all duration-300 group cursor-pointer flex flex-col h-full">
         <div className="flex items-center gap-4 mb-4">
-          <div className={`w-12 h-12 rounded-lg bg-surface-container-highest flex items-center justify-center overflow-hidden ${color}`}>
+          <div className={`w-12 h-12 rounded-lg border border-white/10 flex items-center justify-center overflow-hidden ${color}`}>
             {logoUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={logoUrl} alt={`${name} logo`} className="w-full h-full object-contain p-1.5" />
