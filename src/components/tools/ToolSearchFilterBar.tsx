@@ -132,8 +132,8 @@ export const ToolSearchFilterBar: React.FC<ToolSearchFilterBarProps> = ({
       />
 
       <div
-        className={`glass-panel relative rounded-3xl md:rounded-full p-2 flex flex-col md:flex-row md:items-stretch gap-1 md:gap-0 transition-shadow duration-300 ${
-          open ? 'z-[65] shadow-2xl shadow-primary/10' : 'z-0'
+        className={`glass-panel relative rounded-3xl md:rounded-full p-2 flex flex-col md:flex-row md:items-stretch gap-1 md:gap-0 shadow-[0_0_55px_-8px_rgba(79,70,229,0.55)] transition-shadow duration-300 ${
+          open ? 'z-[65]' : 'z-0'
         }`}
       >
         {/* Search — half the bar */}
