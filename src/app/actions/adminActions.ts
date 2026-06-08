@@ -39,6 +39,18 @@ export async function getAllToolsAdmin() {
   });
 }
 
+export async function getToolByIdAdmin(id: string) {
+  await requireAdmin();
+
+  return prisma.tool.findUnique({
+    where: { id },
+    include: {
+      platforms: true,
+      toolTypes: true,
+    }
+  });
+}
+
 export async function deleteTool(id: string) {
   const admin = await requireAdmin();
 

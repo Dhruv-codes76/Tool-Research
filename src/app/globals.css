@@ -156,6 +156,59 @@
   z-index: 10;
 }
 
+/* Shared hover for every button & filter across the site — a centered "pop"
+   that scales toward the viewer (no upward shift, so it grows in place) with a
+   soft primary glow and brighter border. Unlayered so it reliably governs the
+   hover transform/shadow over utilities. */
+.hover-lift {
+  transform-origin: center;
+  transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1),
+    box-shadow 0.3s cubic-bezier(0.25, 0.8, 0.25, 1),
+    border-color 0.3s ease, background-color 0.3s ease, color 0.3s ease;
+}
+
+.hover-lift:hover {
+  transform: scale(1.06);
+  box-shadow: 0 8px 24px 0 rgba(0, 0, 0, 0.3), 0 0 28px rgba(195, 192, 255, 0.25);
+  border-color: rgba(195, 192, 255, 0.4);
+}
+
+/* Single-hue (brand blue) glow that slowly sweeps across the search bar —
+   search → platform → type and back — reading as a soft premium light moving
+   behind the glass. Driven by transform (compositor-friendly), one colour with
+   only opacity falloff so it stays on-theme (blue / black / white). */
+@keyframes glowSweep {
+  from { transform: translate(-8%, -50%); }
+  to   { transform: translate(118%, -50%); }
+}
+
+.glow-flow::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 45%;
+  height: 150%;
+  border-radius: 9999px;
+  /* Brand primary (#c3c0ff) — the same blue used by the buttons & filter hover
+     glow — single hue, opacity falloff only. */
+  background: radial-gradient(
+    closest-side,
+    rgba(195, 192, 255, 0.8),
+    rgba(195, 192, 255, 0.2) 60%,
+    rgba(195, 192, 255, 0)
+  );
+  filter: blur(20px);
+  opacity: 0.5;
+  transform: translate(-8%, -50%);
+  animation: glowSweep 9s ease-in-out infinite alternate;
+  will-change: transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .glow-flow::before { animation: none; }
+}
+
 .glow-text {
   text-shadow: 0 0 15px rgba(195, 192, 255, 0.5);
 }

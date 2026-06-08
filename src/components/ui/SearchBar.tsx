@@ -39,7 +39,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
         />
         <button
           type="submit"
-          className="bg-primary-container text-on-primary-container px-6 py-2 rounded-full font-label-sm hover:bg-primary-container/80 transition-colors ml-4"
+          className="bg-primary-container text-on-primary-container px-6 py-2 rounded-full font-label-sm hover:bg-primary-container/80 hover-lift ml-4"
         >
           SEARCH
         </button>

@@ -36,8 +36,9 @@ function mapToolToCard(dbTool: ToolWithCategories, index: number) {
     description: dbTool.description,
     author: dbTool.author ?? '',
     tags,
-    icon: icons[index % icons.length],
+    icon: icons[index % icons.length], // Fallback when no logo was uploaded
     color: colors[index % colors.length],
+    logoUrl: dbTool.heroImageUrl ?? null, // Uploaded tool logo; takes precedence over the icon
   };
 }
 
