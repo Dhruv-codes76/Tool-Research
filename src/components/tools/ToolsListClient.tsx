@@ -1,15 +1,15 @@
 'use client';
 
-import React, { useState, useTransition } from 'react';
+import React, { useMemo, useState } from 'react';
 import { ToolCard } from '@/components/ui/ToolCard';
-import { SearchBar } from '@/components/ui/SearchBar';
-import { CategoryChip } from '@/components/ui/CategoryChip';
+import { ToolSearchFilterBar } from '@/components/tools/ToolSearchFilterBar';
 
 interface ToolItem {
   id: string;
   name: string;
   stars: string;
   description: string;
+  author: string;
   tags: string[];
   icon: string;
   color: string;
@@ -21,56 +21,95 @@ interface ToolsListClientProps {
   allTypes: string[];
 }
 
-export const ToolsListClient: React.FC<ToolsListClientProps> = ({ 
+// 4 cards per row × 4 rows = 16 tools per page.
+const PAGE_SIZE = 16;
+
+/**
+ * Build a compact page list with ellipses, e.g. [1, '…', 4, 5, 6, '…', 12].
+ * Always shows first/last and a window around the current page.
+ */
+function buildPageList(current: number, total: number): (number | 'ellipsis')[] {
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+
+  const pages: (number | 'ellipsis')[] = [1];
+  const start = Math.max(2, current - 1);
+  const end = Math.min(total - 1, current + 1);
+
+  if (start > 2) pages.push('ellipsis');
+  for (let p = start; p <= end; p++) pages.push(p);
+  if (end < total - 1) pages.push('ellipsis');
+
+  pages.push(total);
+  return pages;
+}
+
+export const ToolsListClient: React.FC<ToolsListClientProps> = ({
   initialTools,
   allPlatforms,
-  allTypes 
+  allTypes,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('All');
+  const [selectedPlatform, setSelectedPlatform] = useState('All');
+  const [selectedType, setSelectedType] = useState('All');
+  const [page, setPage] = useState(1);
 
-  // Categories list starting with 'All', then showing platforms and tool types
-  const categories = ['All', ...allTypes, ...allPlatforms];
+  // Filter tools dynamically on the client for instant, reactive responsiveness.
+  // Search spans tool name, author, and both category types (stored in `tags`);
+  // the two filters narrow by platform and tool type independently.
+  const filteredTools = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    return initialTools.filter((tool) => {
+      const matchesSearch =
+        !q ||
+        [tool.name, tool.author, ...tool.tags]
+          .filter(Boolean)
+          .some((field) => field.toLowerCase().includes(q));
 
-  // Filter tools dynamically on the client for instant, reactive responsiveness
-  const filteredTools = initialTools.filter(tool => {
-    const matchesSearch = 
-      tool.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      tool.description.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesPlatform = selectedPlatform === 'All' || tool.tags.includes(selectedPlatform);
+      const matchesType = selectedType === 'All' || tool.tags.includes(selectedType);
 
-    const matchesCategory = 
-      selectedCategory === 'All' || 
-      tool.tags.includes(selectedCategory);
+      return matchesSearch && matchesPlatform && matchesType;
+    });
+  }, [initialTools, searchQuery, selectedPlatform, selectedType]);
 
-    return matchesSearch && matchesCategory;
-  });
+  const totalPages = Math.max(1, Math.ceil(filteredTools.length / PAGE_SIZE));
+
+  // Snap back to the first page whenever the search/filter changes — done during
+  // render (React's recommended pattern) rather than in an effect to avoid an
+  // extra render pass. https://react.dev/learn/you-might-not-need-an-effect
+  const filterKey = `${searchQuery}|${selectedPlatform}|${selectedType}`;
+  const [prevFilterKey, setPrevFilterKey] = useState(filterKey);
+  if (filterKey !== prevFilterKey) {
+    setPrevFilterKey(filterKey);
+    setPage(1);
+  }
+
+  // Guard against a stale page index if the result set shrank.
+  const currentPage = Math.min(page, totalPages);
+  const pageTools = filteredTools.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+
+  const goTo = (p: number) => setPage(Math.min(Math.max(1, p), totalPages));
 
   return (
     <>
-      {/* Filter & Search Bar */}
-      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-8 mb-16">
-        <div className="w-full lg:max-w-md">
-          <SearchBar 
-            placeholder="Search tools dynamically..." 
-            onSearch={(query) => setSearchQuery(query)}
-          />
-        </div>
-        <div className="flex flex-wrap gap-2 max-w-full lg:max-w-xl">
-          {categories.map((cat) => (
-            <CategoryChip 
-              key={cat} 
-              label={cat} 
-              isActive={selectedCategory === cat} 
-              onClick={() => setSelectedCategory(cat)}
-            />
-          ))}
-        </div>
+      {/* Unified search + filter bar */}
+      <div className="mb-16">
+        <ToolSearchFilterBar
+          query={searchQuery}
+          onQueryChange={setSearchQuery}
+          platforms={allPlatforms}
+          selectedPlatform={selectedPlatform}
+          onPlatformChange={setSelectedPlatform}
+          types={allTypes}
+          selectedType={selectedType}
+          onTypeChange={setSelectedType}
+        />
       </div>
 
-      {/* Tools Grid */}
+      {/* Tools Grid — 4 per row */}
       {filteredTools.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {filteredTools.map((tool) => (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+          {pageTools.map((tool) => (
             <ToolCard key={tool.id} {...tool} />
           ))}
         </div>
@@ -84,27 +123,56 @@ export const ToolsListClient: React.FC<ToolsListClientProps> = ({
         </div>
       )}
 
-      {/* Pagination (Only show if multiple pages would exist, for premium UI placeholder compatibility) */}
-      {filteredTools.length > 6 && (
-        <div className="mt-20 flex justify-center">
-          <div className="flex gap-2">
-            {[1, 2, 3].map((page) => (
-              <button 
-                key={page} 
-                className={`w-10 h-10 rounded-full flex items-center justify-center font-label-sm border ${
-                  page === 1 
-                    ? 'bg-primary-container text-on-primary-container border-primary' 
-                    : 'border-outline-variant/30 text-on-surface-variant hover:border-primary'
-                }`}
-              >
-                {page}
-              </button>
-            ))}
-            <button className="w-10 h-10 rounded-full flex items-center justify-center font-label-sm border border-outline-variant/30 text-on-surface-variant hover:border-primary">
+      {/* Pagination — only when results span more than one page */}
+      {totalPages > 1 && (
+        <nav className="mt-20 flex justify-center" aria-label="Pagination">
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => goTo(currentPage - 1)}
+              disabled={currentPage === 1}
+              aria-label="Previous page"
+              className="w-10 h-10 rounded-full flex items-center justify-center border border-outline-variant/30 text-on-surface-variant transition-colors hover:border-primary disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:border-outline-variant/30"
+            >
+              <span className="material-symbols-outlined text-sm">chevron_left</span>
+            </button>
+
+            {buildPageList(currentPage, totalPages).map((p, i) =>
+              p === 'ellipsis' ? (
+                <span
+                  key={`e${i}`}
+                  className="w-10 h-10 flex items-center justify-center text-on-surface-variant/50 select-none"
+                >
+                  …
+                </span>
+              ) : (
+                <button
+                  key={p}
+                  type="button"
+                  onClick={() => goTo(p)}
+                  aria-current={p === currentPage ? 'page' : undefined}
+                  className={`w-10 h-10 rounded-full flex items-center justify-center font-label-sm border transition-colors ${
+                    p === currentPage
+                      ? 'bg-primary-container text-on-primary-container border-primary'
+                      : 'border-outline-variant/30 text-on-surface-variant hover:border-primary'
+                  }`}
+                >
+                  {p}
+                </button>
+              )
+            )}
+
+            <button
+              type="button"
+              onClick={() => goTo(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              aria-label="Next page"
+              className="w-10 h-10 rounded-full flex items-center justify-center border border-outline-variant/30 text-on-surface-variant transition-colors hover:border-primary disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:border-outline-variant/30"
+            >
               <span className="material-symbols-outlined text-sm">chevron_right</span>
             </button>
           </div>
-        </div>
+        </nav>
       )}
     </>
   );
