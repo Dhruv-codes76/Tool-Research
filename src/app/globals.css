@@ -190,13 +190,13 @@
   width: 45%;
   height: 150%;
   border-radius: 9999px;
-  /* Brand primary (#c3c0ff) — the same blue used by the buttons & filter hover
-     glow — single hue, opacity falloff only. */
+  /* Brand button blue (primary-container #4f46e5) — the exact fill of the
+     SEARCH button and active chips — single hue, opacity falloff only. */
   background: radial-gradient(
     closest-side,
-    rgba(195, 192, 255, 0.8),
-    rgba(195, 192, 255, 0.2) 60%,
-    rgba(195, 192, 255, 0)
+    rgba(79, 70, 229, 0.9),
+    rgba(79, 70, 229, 0.3) 60%,
+    rgba(79, 70, 229, 0)
   );
   filter: blur(20px);
   opacity: 0.5;
