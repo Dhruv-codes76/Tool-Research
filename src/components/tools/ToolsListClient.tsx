@@ -13,6 +13,7 @@ interface ToolItem {
   tags: string[];
   icon: string;
   color: string;
+  logoUrl?: string | null;
 }
 
 interface ToolsListClientProps {
@@ -132,7 +133,7 @@ export const ToolsListClient: React.FC<ToolsListClientProps> = ({
               onClick={() => goTo(currentPage - 1)}
               disabled={currentPage === 1}
               aria-label="Previous page"
-              className="w-10 h-10 rounded-full flex items-center justify-center border border-outline-variant/30 text-on-surface-variant transition-colors hover:border-primary disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:border-outline-variant/30"
+              className="w-10 h-10 rounded-full flex items-center justify-center border border-outline-variant/30 text-on-surface-variant hover-lift hover:border-primary disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:border-outline-variant/30"
             >
               <span className="material-symbols-outlined text-sm">chevron_left</span>
             </button>
@@ -151,7 +152,7 @@ export const ToolsListClient: React.FC<ToolsListClientProps> = ({
                   type="button"
                   onClick={() => goTo(p)}
                   aria-current={p === currentPage ? 'page' : undefined}
-                  className={`w-10 h-10 rounded-full flex items-center justify-center font-label-sm border transition-colors ${
+                  className={`w-10 h-10 rounded-full flex items-center justify-center font-label-sm border hover-lift ${
                     p === currentPage
                       ? 'bg-primary-container text-on-primary-container border-primary'
                       : 'border-outline-variant/30 text-on-surface-variant hover:border-primary'
@@ -167,7 +168,7 @@ export const ToolsListClient: React.FC<ToolsListClientProps> = ({
               onClick={() => goTo(currentPage + 1)}
               disabled={currentPage === totalPages}
               aria-label="Next page"
-              className="w-10 h-10 rounded-full flex items-center justify-center border border-outline-variant/30 text-on-surface-variant transition-colors hover:border-primary disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:border-outline-variant/30"
+              className="w-10 h-10 rounded-full flex items-center justify-center border border-outline-variant/30 text-on-surface-variant hover-lift hover:border-primary disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:border-outline-variant/30"
             >
               <span className="material-symbols-outlined text-sm">chevron_right</span>
             </button>

@@ -50,7 +50,7 @@ export const ToolSearchFilterBar: React.FC<ToolSearchFilterBarProps> = ({
         <button
           type="button"
           onClick={() => setOpen(isOpen ? null : key)}
-          className={`group w-full flex items-center justify-between gap-2 px-5 py-2.5 rounded-full text-left transition-colors duration-200 ${
+          className={`group w-full flex items-center justify-between gap-2 px-5 py-2.5 rounded-full text-left hover-lift ${
             isOpen ? 'bg-on-surface/[0.06]' : 'hover:bg-on-surface/[0.04]'
           }`}
         >
@@ -121,6 +121,14 @@ export const ToolSearchFilterBar: React.FC<ToolSearchFilterBarProps> = ({
         className={`fixed inset-0 z-[60] bg-background/25 backdrop-blur-[3px] transition-opacity duration-300 ${
           open ? 'opacity-100' : 'opacity-0 pointer-events-none'
         }`}
+      />
+
+      {/* Flowing "liquid light" glow behind the bar — sits under the bar (earlier
+          in DOM, no z-index) so its blurred, animated brand gradient reads as a
+          premium light radiating from the edges. */}
+      <div
+        aria-hidden
+        className="glow-flow pointer-events-none absolute -inset-[3px] rounded-3xl md:rounded-full"
       />
 
       <div

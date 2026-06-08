@@ -38,8 +38,9 @@ function mapToolToCard(dbTool: ToolWithCategories, index: number) {
     description: dbTool.description,
     author: dbTool.author ?? '',
     tags,
-    icon: icons[index % icons.length], // Cycles through consistent aesthetic icons
+    icon: icons[index % icons.length], // Fallback when no logo was uploaded
     color: colors[index % colors.length], // Cycles through valid tailwind design colors
+    logoUrl: dbTool.heroImageUrl ?? null, // Uploaded tool logo; takes precedence over the icon
   };
 }
 
@@ -99,7 +100,7 @@ export default async function HomePage() {
             type, and what actually matters.
           </p>
           <Link href="/tools">
-            <button className="group px-8 py-4 rounded-full bg-primary text-on-primary font-bold hover:scale-105 hover:bg-primary-fixed duration-300 shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all">
+            <button className="group px-8 py-4 rounded-full bg-primary text-on-primary font-bold hover:bg-primary-fixed shadow-lg shadow-primary/20 hover-lift">
               Explore All Tools
               <span className="inline-block ml-2 group-hover:translate-x-1 transition-transform">→</span>
             </button>
