@@ -10,7 +10,7 @@ interface DownloadButtonProps {
 }
 
 const pillClass =
-  'inline-flex items-center justify-between gap-3 bg-primary text-on-primary pl-4 pr-1 py-1 rounded-full font-mono text-sm hover:scale-[1.02] transition-transform shadow-xl w-fit group';
+  'inline-flex items-center justify-between gap-3 bg-white/20 backdrop-blur-md border border-white/30 text-white pl-4 pr-1 py-1 rounded-full font-mono text-sm hover:bg-white/30 hover:scale-[1.02] transition-all shadow-xl w-fit group drop-shadow-sm font-semibold';
 
 export const DownloadButton: React.FC<DownloadButtonProps> = ({ downloadUrl, downloadAssets, repoUrl }) => {
   const [open, setOpen] = useState(false);
