@@ -161,65 +161,71 @@ export default async function ToolDetailPage({ params }: PageProps) {
           
           {/* Hero Section */}
           <div 
-            className="relative rounded-xl overflow-hidden aspect-[16/9] lg:aspect-auto lg:h-[290px] mb-8 border border-white/5 bg-[#09090b]"
-            style={{
-              ...stellarGlowStyle,
-              ...(dbTool.heroImageUrl ? {
-                backgroundImage: `url(${dbTool.heroImageUrl})`,
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
-              } : {})
-            }}
+            className="relative rounded-xl overflow-hidden mb-8 border border-white/5 bg-[#09090b] min-h-[290px] flex flex-col"
+            style={stellarGlowStyle}
           >
+            {/* Blurred background image to simulate extracting colors from logo */}
+            {(dbTool.heroImageUrl || dbTool.imageUrl) && (
+              <div
+                className="absolute inset-0 opacity-40 blur-[80px] scale-150 saturate-150"
+                style={{
+                  backgroundImage: `url(${dbTool.heroImageUrl || dbTool.imageUrl})`,
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center',
+                }}
+              />
+            )}
+
             {/* Ambient bottom glow matching the reference image */}
             <div className="absolute -bottom-32 left-1/2 -translate-x-1/2 w-[80%] h-64 bg-indigo-500/15 blur-[80px] rounded-full pointer-events-none"></div>
             <div className="absolute -bottom-32 left-1/2 -translate-x-1/2 w-[40%] h-64 bg-purple-500/10 blur-[60px] rounded-full pointer-events-none"></div>
             
-            {/* Dark overlay for readability if using a hero image */}
-            {dbTool.heroImageUrl && <div className="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>}
+            {/* Dark overlay for readability */}
+            <div className="absolute inset-0 bg-[#09090b]/40 backdrop-blur-[2px]"></div>
 
-            <div className="absolute top-4 left-6 right-6 md:top-5 md:left-8 md:right-8 z-10">
+            <div className="relative p-6 md:p-8 z-10 flex-grow flex flex-col justify-start">
               <div className="flex flex-wrap items-center gap-3 mb-4">
-                <span className="bg-primary-container/10 text-primary-container px-3 py-1 rounded-full text-[10px] font-bold border border-primary-container/20 tracking-wider">
+                <span className="bg-white/20 backdrop-blur-md text-white px-3 py-1 rounded-full text-[10px] font-extrabold border border-white/30 tracking-wider drop-shadow-md">
                   {categoryLabel.toUpperCase()}
                 </span>
-                <span className="bg-on-surface-variant/10 text-on-surface-variant px-3 py-1 rounded-full text-[10px] font-bold border border-outline-variant/30 tracking-wider">
+                <span className="bg-white/10 backdrop-blur-md text-white/90 px-3 py-1 rounded-full text-[10px] font-extrabold border border-white/20 tracking-wider drop-shadow-md">
                   {tagLabel.toUpperCase()}
                 </span>
               </div>
-              <h1 className="font-display-lg text-3xl md:text-5xl text-on-surface mb-2 tracking-tight">
+              <h1 className="font-display-lg text-4xl md:text-6xl text-white mb-2 tracking-tight font-extrabold drop-shadow-md">
                 {dbTool.name}
               </h1>
-              <p className="text-on-surface-variant font-body-base max-w-2xl text-sm md:text-base leading-relaxed">
+              <p className="text-white/90 font-body-base max-w-2xl text-sm md:text-base leading-relaxed font-medium drop-shadow-md">
                 {dbTool.description}
               </p>
-              <div className="flex items-center gap-4 mt-4">
-                <span className="text-on-surface flex items-center gap-1.5 text-sm font-semibold">
-                  <span className="material-symbols-outlined text-primary text-base">star</span>
+              <div className="flex items-center gap-4 mt-4 bg-black/40 backdrop-blur-md w-fit px-4 py-2 rounded-full border border-white/10">
+                <span className="text-white flex items-center gap-1.5 text-sm font-bold drop-shadow-md">
+                  <span className="material-symbols-outlined text-yellow-400 text-base drop-shadow-md">star</span>
                   {formattedStars} Stars
                 </span>
-                <span className="text-on-surface flex items-center gap-1.5 text-sm font-semibold">
-                  <span className="material-symbols-outlined text-on-surface-variant text-base">fork_right</span>
+                <span className="text-white flex items-center gap-1.5 text-sm font-bold drop-shadow-md">
+                  <span className="material-symbols-outlined text-gray-300 text-base drop-shadow-md">fork_right</span>
                   {formattedForks} Forks
                 </span>
               </div>
               {version && (
-                <div className="mt-2 text-sm text-on-surface-variant flex items-center gap-1.5">
+                <div className="mt-3 text-sm text-white/90 flex items-center gap-1.5 font-medium drop-shadow-md">
                   <span className="material-symbols-outlined text-base">update</span>
-                  Version: <span className="text-on-surface font-semibold">{version}</span>
+                  Version: <span className="text-white font-bold">{version}</span>
                 </div>
               )}
               
               {/* Action Buttons */}
-              <div className="flex flex-wrap items-center gap-3 mt-4">
+              {/* Action Buttons */}
+              <div className="flex flex-wrap items-center gap-3 mt-auto pt-8">
                 {/* View Repo Button */}
                 <a 
                   href={dbTool.repoUrl} 
                   target="_blank" 
                   rel="noopener noreferrer"
-                  className="inline-flex items-center justify-between gap-4 bg-[#181922] text-gray-200 pl-4 pr-1 py-1 rounded-full font-mono text-sm hover:scale-[1.02] transition-transform shadow-xl w-fit group"
+                  className="inline-flex items-center justify-between gap-4 bg-white/10 backdrop-blur-md border border-white/20 text-white pl-4 pr-1 py-1 rounded-full font-mono text-sm hover:bg-white/20 hover:scale-[1.02] transition-all shadow-xl w-fit group"
                 >
-                  <span className="tracking-wide lowercase">view repo</span>
+                  <span className="tracking-wide lowercase font-semibold drop-shadow-sm">view repo</span>
                   <div className="bg-[#ffa6ff] text-black w-7 h-7 rounded-full flex items-center justify-center group-hover:bg-[#ffb3ff] transition-colors">
                     <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
                       <circle cx="2" cy="7" r="1.2" />
