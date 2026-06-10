@@ -27,6 +27,8 @@ const TopNavBar = () => {
 
     if (data && data.role === 'admin') {
       setIsAdmin(true);
+    } else {
+      setIsAdmin(false);
     }
   };
 
@@ -35,6 +37,8 @@ const TopNavBar = () => {
       setSession(session);
       if (session?.user?.id) {
         checkRole(session.user.id);
+      } else {
+        setIsAdmin(false);
       }
     });
 
@@ -44,6 +48,8 @@ const TopNavBar = () => {
       setSession(session);
       if (session?.user?.id) {
         checkRole(session.user.id);
+      } else {
+        setIsAdmin(false);
       }
     });
 
@@ -137,7 +143,7 @@ const TopNavBar = () => {
                 aria-label="Account menu"
                 aria-haspopup="menu"
                 aria-expanded={menuOpen}
-                className="hover-lift flex items-center justify-center w-10 h-10 rounded-full bg-blue-300 text-blue-900 font-semibold text-sm select-none ring-1 ring-white/10"
+                className="hover-lift flex items-center justify-center w-9 h-9 rounded-full bg-blue-300 text-blue-900 font-extrabold text-base select-none ring-1 ring-white/10"
               >
                 {initial}
               </button>
@@ -145,7 +151,7 @@ const TopNavBar = () => {
               {menuOpen && (
                 <div
                   role="menu"
-                  className="animate-pop-in absolute right-0 mt-3 w-64 rounded-2xl overflow-hidden shadow-2xl shadow-black/40 origin-top-right bg-surface-container/60 backdrop-blur-3xl border border-white/10 before:absolute before:inset-0 before:bg-gradient-to-b before:from-white/10 before:to-transparent before:pointer-events-none"
+                  className="animate-pop-in absolute right-0 mt-3 w-64 rounded-2xl overflow-hidden shadow-2xl shadow-black/40 origin-top-right bg-surface-container/95 backdrop-blur-3xl border border-white/10 before:absolute before:inset-0 before:bg-gradient-to-b before:from-white/10 before:to-transparent before:pointer-events-none"
                 >
                   {/* Identity header */}
                   <div className="flex items-center gap-3 px-4 py-4 border-b border-white/5">
