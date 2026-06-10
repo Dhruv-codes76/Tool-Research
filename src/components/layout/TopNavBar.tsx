@@ -3,6 +3,27 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+
+const AVATAR_COLORS = [
+  'bg-red-500 text-white',
+  'bg-blue-500 text-white',
+  'bg-green-500 text-white',
+  'bg-yellow-500 text-yellow-950',
+  'bg-purple-500 text-white',
+  'bg-pink-500 text-white',
+  'bg-indigo-500 text-white',
+  'bg-teal-500 text-white',
+];
+
+function getAvatarColor(identifier: string) {
+  let hash = 0;
+  for (let i = 0; i < identifier.length; i++) {
+    hash = identifier.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const index = Math.abs(hash) % AVATAR_COLORS.length;
+  return AVATAR_COLORS[index];
+}
+
 import { supabase } from '@/lib/supabase';
 import { logAuthEvent } from '@/app/actions/auditActions';
 import { useRouter } from 'next/navigation';
@@ -94,6 +115,7 @@ const TopNavBar = () => {
   const fullName: string = session?.user?.user_metadata?.full_name ?? '';
   const displayName = fullName || email || 'Account';
   const initial = (fullName || email || '?').trim().charAt(0).toUpperCase();
+  const avatarColorClass = getAvatarColor(email || fullName || 'default');
 
   return (
     <nav className="fixed top-0 w-full z-50 bg-surface/80 dark:bg-surface/80 backdrop-blur-md border-b border-outline-variant/20">
@@ -143,7 +165,7 @@ const TopNavBar = () => {
                 aria-label="Account menu"
                 aria-haspopup="menu"
                 aria-expanded={menuOpen}
-                className="hover-lift flex items-center justify-center w-9 h-9 rounded-full bg-blue-300 text-blue-900 font-extrabold text-base select-none ring-1 ring-white/10"
+                className={`hover-lift flex items-center justify-center w-8 h-8 rounded-full ${avatarColorClass} font-extrabold text-sm select-none ring-1 ring-white/10`}
               >
                 {initial}
               </button>
@@ -151,11 +173,11 @@ const TopNavBar = () => {
               {menuOpen && (
                 <div
                   role="menu"
-                  className="animate-pop-in absolute right-0 mt-3 w-64 rounded-2xl overflow-hidden shadow-2xl shadow-black/40 origin-top-right bg-surface-container/95 backdrop-blur-3xl border border-white/10 before:absolute before:inset-0 before:bg-gradient-to-b before:from-white/10 before:to-transparent before:pointer-events-none"
+                  className="animate-pop-in absolute right-0 mt-3 w-64 rounded-2xl overflow-hidden shadow-2xl shadow-black/60 origin-top-right bg-surface border border-outline-variant/30"
                 >
                   {/* Identity header */}
-                  <div className="flex items-center gap-3 px-4 py-4 border-b border-white/5">
-                    <span className="flex items-center justify-center w-10 h-10 shrink-0 rounded-full bg-blue-300 text-blue-900 font-semibold text-sm select-none">
+                  <div className="flex items-center gap-3 px-4 py-4 border-b border-outline-variant/20 bg-surface-container-low">
+                    <span className={`flex items-center justify-center w-10 h-10 shrink-0 rounded-full ${avatarColorClass} font-bold text-base select-none`}>
                       {initial}
                     </span>
                     <div className="min-w-0">
@@ -167,7 +189,7 @@ const TopNavBar = () => {
                   </div>
 
                   {/* Role and Status Label */}
-                  <div className="px-4 py-3 border-b border-white/5 flex items-center justify-between">
+                  <div className="px-4 py-3 border-b border-outline-variant/20 flex items-center justify-between bg-surface">
                      <span className="text-xs tracking-widest text-on-surface-variant font-mono uppercase font-semibold">
                         {isAdmin ? 'Admin' : 'Curated Open Source'}
                      </span>

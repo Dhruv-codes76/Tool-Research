@@ -167,7 +167,7 @@ export default async function ToolDetailPage({ params }: PageProps) {
             {/* Blurred background image to simulate extracting colors from logo */}
             {(dbTool.heroImageUrl || dbTool.imageUrl) && (
               <div
-                className="absolute inset-0 opacity-40 blur-[80px] scale-150 saturate-150"
+                className="absolute inset-0 opacity-60 blur-[100px] scale-150 saturate-200 brightness-50 mix-blend-screen"
                 style={{
                   backgroundImage: `url(${dbTool.heroImageUrl || dbTool.imageUrl})`,
                   backgroundSize: 'cover',
@@ -181,7 +181,7 @@ export default async function ToolDetailPage({ params }: PageProps) {
             <div className="absolute -bottom-32 left-1/2 -translate-x-1/2 w-[40%] h-64 bg-purple-500/10 blur-[60px] rounded-full pointer-events-none"></div>
             
             {/* Dark overlay for readability */}
-            <div className="absolute inset-0 bg-[#09090b]/40 backdrop-blur-[2px]"></div>
+            <div className="absolute inset-0 bg-[#09090b]/70 backdrop-blur-[10px]"></div>
 
             <div className="relative p-6 md:p-8 z-10 flex-grow flex flex-col justify-start">
               <div className="flex flex-wrap items-center gap-3 mb-4 absolute top-6 right-6">
@@ -192,13 +192,13 @@ export default async function ToolDetailPage({ params }: PageProps) {
                   {tagLabel.toUpperCase()}
                 </span>
               </div>
-              <h1 className="font-display-lg text-4xl md:text-6xl text-white mb-2 tracking-tight font-extrabold drop-shadow-md">
+              <h1 className="font-sans text-5xl md:text-7xl text-white mb-2 tracking-tighter font-black drop-shadow-xl">
                 {dbTool.name}
               </h1>
-              <p className="text-white/90 font-body-base max-w-2xl text-sm md:text-base leading-relaxed font-medium drop-shadow-md">
+              <p className="text-white font-sans max-w-2xl text-base md:text-lg leading-relaxed font-semibold drop-shadow-xl">
                 {dbTool.description}
               </p>
-              <div className="flex items-center gap-4 mt-4 bg-black/40 backdrop-blur-md w-fit px-4 py-2 rounded-full border border-white/10">
+              <div className="flex items-center gap-4 mt-4 bg-black/60 backdrop-blur-xl w-fit px-5 py-2.5 rounded-full border border-white/20 shadow-lg">
                 <span className="text-white flex items-center gap-1.5 text-sm font-bold drop-shadow-md">
                   <span className="material-symbols-outlined text-yellow-400 text-base drop-shadow-md">star</span>
                   {formattedStars} Stars
@@ -223,7 +223,7 @@ export default async function ToolDetailPage({ params }: PageProps) {
                   href={dbTool.repoUrl} 
                   target="_blank" 
                   rel="noopener noreferrer"
-                  className="inline-flex items-center justify-between gap-4 bg-white/10 backdrop-blur-md border border-white/20 text-white pl-4 pr-1 py-1 rounded-full font-mono text-sm hover:bg-white/20 hover:scale-[1.02] transition-all shadow-xl w-fit group"
+                  className="inline-flex items-center justify-between gap-4 bg-white/20 backdrop-blur-xl border border-white/30 text-white pl-5 pr-2 py-2 rounded-full font-sans font-bold text-sm hover:bg-white/30 hover:scale-[1.02] transition-all shadow-2xl w-fit group"
                 >
                   <span className="tracking-wide lowercase font-semibold drop-shadow-sm">view repo</span>
                   <div className="bg-[#ffa6ff] text-black w-7 h-7 rounded-full flex items-center justify-center group-hover:bg-[#ffb3ff] transition-colors">
