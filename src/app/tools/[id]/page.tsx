@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { AboutSection } from '@/components/tools/AboutSection';
 import { InstallSection } from '@/components/tools/InstallSection';
 import { DownloadButton } from '@/components/tools/DownloadButton';
+import { ImageGallery } from '@/components/tools/ImageGallery';
 
 const glassStyle = {
   background: "rgba(28, 32, 37, 0.4)",
@@ -261,35 +262,7 @@ export default async function ToolDetailPage({ params }: PageProps) {
                 Gallery
               </h3>
 
-              <div className={`grid gap-3 transition-all duration-500 ease-in-out ${
-                imageRatio === '9:16' 
-                  ? 'grid-cols-4' 
-                  : (images.length === 1 ? 'grid-cols-1' : 'grid-cols-2')
-              }`}>
-                {images.map((imgUrl, i) => {
-                  const processedImgUrl = imageRatio === '9:16'
-                    ? imgUrl.replace('fit=crop&w=800&q=80', 'fit=crop&w=600&h=1067&q=80')
-                    : imgUrl;
-
-                  return (
-                    <div 
-                      key={i} 
-                      className={`rounded-xl overflow-hidden border border-outline-variant/30 relative group cursor-pointer transition-all duration-500 ${
-                        imageRatio === '9:16' ? 'aspect-[9/16]' : 'aspect-square'
-                      }`}
-                    >
-                      <img 
-                        alt={`${dbTool.name} preview ${i + 1}`}
-                        src={processedImgUrl}
-                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                      />
-                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center backdrop-blur-[1px]">
-                        <span className="material-symbols-outlined text-on-surface text-lg">zoom_in</span>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+              <ImageGallery images={images} imageRatio={imageRatio} toolName={dbTool.name} />
             </section>
           )}
 

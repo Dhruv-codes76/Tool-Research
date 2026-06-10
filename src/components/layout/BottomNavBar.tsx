@@ -9,14 +9,14 @@ const BottomNavBar = () => {
           <span className="material-symbols-outlined">home</span>
           <span>Home</span>
         </Link>
-        <Link href="/" className="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-high rounded-lg p-2 transition-colors">
+        <Link href="/tools" className="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-high rounded-lg p-2 transition-colors">
           <span className="material-symbols-outlined">grid_view</span>
           <span>Tools</span>
         </Link>
-        <button className="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-high rounded-lg p-2 transition-colors">
+        <Link href="/tools" className="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-high rounded-lg p-2 transition-colors">
           <span className="material-symbols-outlined">search</span>
           <span>Search</span>
-        </button>
+        </Link>
       </div>
     </nav>
   );
