@@ -184,7 +184,7 @@ export default async function ToolDetailPage({ params }: PageProps) {
             <div className="absolute inset-0 bg-[#09090b]/40 backdrop-blur-[2px]"></div>
 
             <div className="relative p-6 md:p-8 z-10 flex-grow flex flex-col justify-start">
-              <div className="flex flex-wrap items-center gap-3 mb-4">
+              <div className="flex flex-wrap items-center gap-3 mb-4 absolute top-6 right-6">
                 <span className="bg-white/20 backdrop-blur-md text-white px-3 py-1 rounded-full text-[10px] font-extrabold border border-white/30 tracking-wider drop-shadow-md">
                   {categoryLabel.toUpperCase()}
                 </span>
@@ -305,7 +305,7 @@ export default async function ToolDetailPage({ params }: PageProps) {
             {/* Metadata Card */}
             <div 
               className="p-6 rounded-2xl flex flex-col justify-between space-y-4"
-              style={{ ...glassStyle, ...stellarGlowStyle }}
+              style={{ ...glassStyle, ...stellarGlowStyle, backgroundColor: "rgba(10, 10, 15, 0.7)" }}
             >
               {author && (
                 <div className="flex justify-between items-center py-2 border-b border-outline-variant/30 text-sm">
@@ -342,7 +342,7 @@ export default async function ToolDetailPage({ params }: PageProps) {
             </div>
 
             {/* Capability Card */}
-            <div className="p-6 rounded-2xl space-y-4" style={glassStyle}>
+            <div className="p-6 rounded-2xl space-y-4" style={{ ...glassStyle, backgroundColor: "rgba(10, 10, 15, 0.7)" }}>
               <h3 className="font-headline-md text-on-surface text-lg">Capability</h3>
               <div className="flex flex-col gap-4">
                 {features.map((feature, i) => (

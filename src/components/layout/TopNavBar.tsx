@@ -145,7 +145,7 @@ const TopNavBar = () => {
               {menuOpen && (
                 <div
                   role="menu"
-                  className="glass-panel animate-pop-in absolute right-0 mt-3 w-64 rounded-2xl overflow-hidden shadow-2xl shadow-black/40 origin-top-right"
+                  className="animate-pop-in absolute right-0 mt-3 w-64 rounded-2xl overflow-hidden shadow-2xl shadow-black/40 origin-top-right bg-surface-container/60 backdrop-blur-3xl border border-white/10 before:absolute before:inset-0 before:bg-gradient-to-b before:from-white/10 before:to-transparent before:pointer-events-none"
                 >
                   {/* Identity header */}
                   <div className="flex items-center gap-3 px-4 py-4 border-b border-white/5">
@@ -174,7 +174,7 @@ const TopNavBar = () => {
                       <Link
                         href="/blog"
                         onClick={() => setMenuOpen(false)}
-                        className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm font-medium text-on-surface-variant hover:text-on-surface hover:bg-white/5 transition-colors duration-150"
+                        className="relative flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm font-medium text-on-surface-variant hover:text-white hover:bg-white/10 transition-all duration-300 overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-r before:from-white/5 before:to-transparent before:opacity-0 hover:before:opacity-100"
                       >
                         <FileText size={18} />
                         Blog
@@ -182,7 +182,7 @@ const TopNavBar = () => {
                       <Link
                         href="/about"
                         onClick={() => setMenuOpen(false)}
-                        className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm font-medium text-on-surface-variant hover:text-on-surface hover:bg-white/5 transition-colors duration-150"
+                        className="relative flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm font-medium text-on-surface-variant hover:text-white hover:bg-white/10 transition-all duration-300 overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-r before:from-white/5 before:to-transparent before:opacity-0 hover:before:opacity-100"
                       >
                         <Info size={18} />
                         About
@@ -195,7 +195,7 @@ const TopNavBar = () => {
                         setMenuOpen(false);
                         setConfirmOpen(true);
                       }}
-                      className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm font-medium text-on-surface-variant hover:text-on-surface hover:bg-white/5 transition-colors duration-150"
+                      className="relative flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm font-medium text-on-surface-variant hover:text-white hover:bg-white/10 transition-all duration-300 overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-r before:from-white/5 before:to-transparent before:opacity-0 hover:before:opacity-100"
                     >
                       <LogOut size={18} />
                       Logout
