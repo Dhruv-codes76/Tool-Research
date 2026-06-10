@@ -185,7 +185,7 @@ export default async function ToolDetailPage({ params }: PageProps) {
             <div className="absolute inset-0 bg-[#09090b]/70 backdrop-blur-[10px]"></div>
 
             <div className="relative p-6 md:p-8 z-10 flex-grow flex flex-col justify-start">
-              <div className="flex flex-wrap items-center gap-3 mb-4 absolute top-6 right-6">
+              <div className="flex flex-wrap items-center gap-2 mb-4 md:absolute md:top-8 md:right-8">
                 <span className="bg-white/20 backdrop-blur-md text-white px-3 py-1 rounded-full text-[10px] font-extrabold border border-white/30 tracking-wider drop-shadow-md">
                   {categoryLabel.toUpperCase()}
                 </span>
@@ -193,7 +193,7 @@ export default async function ToolDetailPage({ params }: PageProps) {
                   {tagLabel.toUpperCase()}
                 </span>
               </div>
-              <h1 className="font-sans text-5xl md:text-7xl text-white mb-2 tracking-tighter font-black drop-shadow-xl">
+              <h1 className="font-sans text-4xl md:text-7xl text-white mb-2 tracking-tighter font-black drop-shadow-xl md:mt-0 mt-2 pr-2">
                 {dbTool.name}
               </h1>
               <p className="text-white font-sans max-w-2xl text-base md:text-lg leading-relaxed font-semibold drop-shadow-xl">
