@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { AboutSection } from '@/components/tools/AboutSection';
 import { InstallSection } from '@/components/tools/InstallSection';
 import { DownloadButton } from '@/components/tools/DownloadButton';
+import { ImageGallery } from '@/components/tools/ImageGallery';
 
 const glassStyle = {
   background: "rgba(28, 32, 37, 0.4)",
@@ -160,22 +161,27 @@ export default async function ToolDetailPage({ params }: PageProps) {
           
           {/* Hero Section */}
           <div 
-            className="relative rounded-xl overflow-hidden aspect-[16/9] lg:aspect-auto lg:h-[290px] mb-8 border border-white/5 bg-[#09090b]"
-            style={{
-              ...stellarGlowStyle,
-              ...(dbTool.heroImageUrl ? {
-                backgroundImage: `url(${dbTool.heroImageUrl})`,
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
-              } : {})
-            }}
+            className="relative rounded-xl overflow-hidden mb-8 border border-white/5 bg-[#09090b] min-h-[290px] flex flex-col"
+            style={stellarGlowStyle}
           >
+            {/* Blurred background image to simulate extracting colors from logo */}
+            {(dbTool.heroImageUrl || dbTool.imageUrl) && (
+              <div
+                className="absolute inset-0 opacity-60 blur-[100px] scale-150 saturate-200 brightness-50 mix-blend-screen"
+                style={{
+                  backgroundImage: `url(${dbTool.heroImageUrl || dbTool.imageUrl})`,
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center',
+                }}
+              />
+            )}
+
             {/* Ambient bottom glow matching the reference image */}
             <div className="absolute -bottom-32 left-1/2 -translate-x-1/2 w-[80%] h-64 bg-indigo-500/15 blur-[80px] rounded-full pointer-events-none"></div>
             <div className="absolute -bottom-32 left-1/2 -translate-x-1/2 w-[40%] h-64 bg-purple-500/10 blur-[60px] rounded-full pointer-events-none"></div>
             
-            {/* Dark overlay for readability if using a hero image */}
-            {dbTool.heroImageUrl && <div className="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>}
+            {/* Dark overlay for readability */}
+            <div className="absolute inset-0 bg-[#09090b]/70 backdrop-blur-[10px]"></div>
 
             <div className="absolute top-4 left-6 right-6 md:top-5 md:left-8 md:right-8 z-10">
               <div className="flex flex-wrap items-center gap-3 mb-4">
@@ -188,39 +194,40 @@ export default async function ToolDetailPage({ params }: PageProps) {
                   </span>
                 ))}
               </div>
-              <h1 className="font-display-lg text-3xl md:text-5xl text-on-surface mb-2 tracking-tight">
+              <h1 className="font-sans text-4xl md:text-7xl text-white mb-2 tracking-tighter font-black drop-shadow-xl md:mt-0 mt-2 pr-2">
                 {dbTool.name}
               </h1>
-              <p className="text-on-surface-variant font-body-base max-w-2xl text-sm md:text-base leading-relaxed">
+              <p className="text-white font-sans max-w-2xl text-base md:text-lg leading-relaxed font-semibold drop-shadow-xl">
                 {dbTool.description}
               </p>
-              <div className="flex items-center gap-4 mt-4">
-                <span className="text-on-surface flex items-center gap-1.5 text-sm font-semibold">
-                  <span className="material-symbols-outlined text-primary text-base">star</span>
+              <div className="flex items-center gap-4 mt-4 bg-black/60 backdrop-blur-xl w-fit px-5 py-2.5 rounded-full border border-white/20 shadow-lg">
+                <span className="text-white flex items-center gap-1.5 text-sm font-bold drop-shadow-md">
+                  <span className="material-symbols-outlined text-yellow-400 text-base drop-shadow-md">star</span>
                   {formattedStars} Stars
                 </span>
-                <span className="text-on-surface flex items-center gap-1.5 text-sm font-semibold">
-                  <span className="material-symbols-outlined text-on-surface-variant text-base">fork_right</span>
+                <span className="text-white flex items-center gap-1.5 text-sm font-bold drop-shadow-md">
+                  <span className="material-symbols-outlined text-gray-300 text-base drop-shadow-md">fork_right</span>
                   {formattedForks} Forks
                 </span>
               </div>
               {version && (
-                <div className="mt-2 text-sm text-on-surface-variant flex items-center gap-1.5">
+                <div className="mt-3 text-sm text-white/90 flex items-center gap-1.5 font-medium drop-shadow-md">
                   <span className="material-symbols-outlined text-base">update</span>
-                  Version: <span className="text-on-surface font-semibold">{version}</span>
+                  Version: <span className="text-white font-bold">{version}</span>
                 </div>
               )}
               
               {/* Action Buttons */}
-              <div className="flex flex-wrap items-center gap-3 mt-4">
+              {/* Action Buttons */}
+              <div className="flex flex-wrap items-center gap-3 mt-auto pt-8">
                 {/* View Repo Button */}
                 <a 
                   href={dbTool.repoUrl} 
                   target="_blank" 
                   rel="noopener noreferrer"
-                  className="inline-flex items-center justify-between gap-4 bg-[#181922] text-gray-200 pl-4 pr-1 py-1 rounded-full font-mono text-sm hover:scale-[1.02] transition-transform shadow-xl w-fit group"
+                  className="inline-flex items-center justify-between gap-4 bg-white/20 backdrop-blur-xl border border-white/30 text-white pl-5 pr-2 py-2 rounded-full font-sans font-bold text-sm hover:bg-white/30 hover:scale-[1.02] transition-all shadow-2xl w-fit group"
                 >
-                  <span className="tracking-wide lowercase">view repo</span>
+                  <span className="tracking-wide lowercase font-semibold drop-shadow-sm">view repo</span>
                   <div className="bg-[#ffa6ff] text-black w-7 h-7 rounded-full flex items-center justify-center group-hover:bg-[#ffb3ff] transition-colors">
                     <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
                       <circle cx="2" cy="7" r="1.2" />
@@ -256,35 +263,7 @@ export default async function ToolDetailPage({ params }: PageProps) {
                 Gallery
               </h3>
 
-              <div className={`grid gap-3 transition-all duration-500 ease-in-out ${
-                imageRatio === '9:16' 
-                  ? 'grid-cols-4' 
-                  : (images.length === 1 ? 'grid-cols-1' : 'grid-cols-2')
-              }`}>
-                {images.map((imgUrl, i) => {
-                  const processedImgUrl = imageRatio === '9:16'
-                    ? imgUrl.replace('fit=crop&w=800&q=80', 'fit=crop&w=600&h=1067&q=80')
-                    : imgUrl;
-
-                  return (
-                    <div 
-                      key={i} 
-                      className={`rounded-xl overflow-hidden border border-outline-variant/30 relative group cursor-pointer transition-all duration-500 ${
-                        imageRatio === '9:16' ? 'aspect-[9/16]' : 'aspect-square'
-                      }`}
-                    >
-                      <img 
-                        alt={`${dbTool.name} preview ${i + 1}`}
-                        src={processedImgUrl}
-                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                      />
-                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center backdrop-blur-[1px]">
-                        <span className="material-symbols-outlined text-on-surface text-lg">zoom_in</span>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+              <ImageGallery images={images} imageRatio={imageRatio} toolName={dbTool.name} />
             </section>
           )}
 
@@ -300,7 +279,7 @@ export default async function ToolDetailPage({ params }: PageProps) {
             {/* Metadata Card */}
             <div 
               className="p-6 rounded-2xl flex flex-col justify-between space-y-4"
-              style={{ ...glassStyle, ...stellarGlowStyle }}
+              style={{ ...glassStyle, ...stellarGlowStyle, backgroundColor: "rgba(10, 10, 15, 0.7)" }}
             >
               {author && (
                 <div className="flex justify-between items-center py-2 border-b border-outline-variant/30 text-sm">
@@ -350,7 +329,7 @@ export default async function ToolDetailPage({ params }: PageProps) {
             </div>
 
             {/* Capability Card */}
-            <div className="p-6 rounded-2xl space-y-4" style={glassStyle}>
+            <div className="p-6 rounded-2xl space-y-4" style={{ ...glassStyle, backgroundColor: "rgba(10, 10, 15, 0.7)" }}>
               <h3 className="font-headline-md text-on-surface text-lg">Capability</h3>
               <div className="flex flex-col gap-4">
                 {features.map((feature, i) => (

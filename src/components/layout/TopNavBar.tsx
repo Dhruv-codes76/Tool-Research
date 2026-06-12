@@ -3,32 +3,81 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+
+const AVATAR_COLORS = [
+  'bg-red-500 text-white',
+  'bg-blue-500 text-white',
+  'bg-green-500 text-white',
+  'bg-yellow-500 text-yellow-950',
+  'bg-purple-500 text-white',
+  'bg-pink-500 text-white',
+  'bg-indigo-500 text-white',
+  'bg-teal-500 text-white',
+];
+
+function getAvatarColor(identifier: string) {
+  let hash = 0;
+  for (let i = 0; i < identifier.length; i++) {
+    hash = identifier.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const index = Math.abs(hash) % AVATAR_COLORS.length;
+  return AVATAR_COLORS[index];
+}
+
 import { supabase } from '@/lib/supabase';
 import { logAuthEvent } from '@/app/actions/auditActions';
 import { useRouter } from 'next/navigation';
-import { LogOut, User } from 'lucide-react';
+import { LogOut, User, Info, FileText } from 'lucide-react';
+import { type Session } from '@supabase/supabase-js';
 
 const TopNavBar = () => {
-  const [session, setSession] = useState<any>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
+
+  const checkRole = async (userId: string) => {
+    const { data } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', userId)
+      .single();
+
+    if (data && data.role === 'admin') {
+      setIsAdmin(true);
+    } else {
+      setIsAdmin(false);
+    }
+  };
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
+      if (session?.user?.id) {
+        checkRole(session.user.id);
+      } else {
+        setIsAdmin(false);
+      }
     });
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
+      if (session?.user?.id) {
+        checkRole(session.user.id);
+      } else {
+        setIsAdmin(false);
+      }
     });
 
     return () => subscription.unsubscribe();
   }, []);
+
+
 
   // Close the account dropdown on outside-click or Escape.
   useEffect(() => {
@@ -66,6 +115,7 @@ const TopNavBar = () => {
   const fullName: string = session?.user?.user_metadata?.full_name ?? '';
   const displayName = fullName || email || 'Account';
   const initial = (fullName || email || '?').trim().charAt(0).toUpperCase();
+  const avatarColorClass = getAvatarColor(email || fullName || 'default');
 
   return (
     <nav className="fixed top-0 w-full z-50 bg-surface/80 dark:bg-surface/80 backdrop-blur-md border-b border-outline-variant/20">
@@ -115,7 +165,7 @@ const TopNavBar = () => {
                 aria-label="Account menu"
                 aria-haspopup="menu"
                 aria-expanded={menuOpen}
-                className="hover-lift flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-br from-primary to-secondary text-on-primary font-semibold text-sm select-none ring-1 ring-white/10"
+                className={`hover-lift flex items-center justify-center w-8 h-8 rounded-full ${avatarColorClass} font-extrabold text-sm select-none ring-1 ring-white/10`}
               >
                 {initial}
               </button>
@@ -123,11 +173,11 @@ const TopNavBar = () => {
               {menuOpen && (
                 <div
                   role="menu"
-                  className="glass-panel animate-pop-in absolute right-0 mt-3 w-64 rounded-2xl overflow-hidden shadow-2xl shadow-black/40 origin-top-right"
+                  className="animate-pop-in absolute right-0 mt-3 w-64 rounded-2xl overflow-hidden shadow-2xl shadow-black/60 origin-top-right bg-surface border border-outline-variant/30"
                 >
                   {/* Identity header */}
-                  <div className="flex items-center gap-3 px-4 py-4 border-b border-white/5">
-                    <span className="flex items-center justify-center w-10 h-10 shrink-0 rounded-full bg-gradient-to-br from-primary to-secondary text-on-primary font-semibold text-sm select-none">
+                  <div className="flex items-center gap-3 px-4 py-4 border-b border-outline-variant/20 bg-surface-container-low">
+                    <span className={`flex items-center justify-center w-10 h-10 shrink-0 rounded-full ${avatarColorClass} font-bold text-base select-none`}>
                       {initial}
                     </span>
                     <div className="min-w-0">
@@ -138,15 +188,42 @@ const TopNavBar = () => {
                     </div>
                   </div>
 
+                  {/* Role and Status Label */}
+                  <div className="px-4 py-3 border-b border-outline-variant/20 flex items-center justify-between bg-surface">
+                     <span className="text-xs tracking-widest text-on-surface-variant font-mono uppercase font-semibold">
+                        {isAdmin ? 'Admin' : 'Curated Open Source'}
+                     </span>
+                  </div>
+
                   {/* Actions */}
                   <div className="p-2">
+                    {/* Mobile Links */}
+                    <div className="md:hidden border-b border-white/5 mb-2 pb-2">
+                      <Link
+                        href="/blog"
+                        onClick={() => setMenuOpen(false)}
+                        className="relative flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm font-medium text-on-surface-variant hover:text-white hover:bg-white/10 transition-all duration-300 overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-r before:from-white/5 before:to-transparent before:opacity-0 hover:before:opacity-100"
+                      >
+                        <FileText size={18} />
+                        Blog
+                      </Link>
+                      <Link
+                        href="/about"
+                        onClick={() => setMenuOpen(false)}
+                        className="relative flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm font-medium text-on-surface-variant hover:text-white hover:bg-white/10 transition-all duration-300 overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-r before:from-white/5 before:to-transparent before:opacity-0 hover:before:opacity-100"
+                      >
+                        <Info size={18} />
+                        About
+                      </Link>
+                    </div>
+
                     <button
                       role="menuitem"
                       onClick={() => {
                         setMenuOpen(false);
                         setConfirmOpen(true);
                       }}
-                      className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm font-medium text-on-surface-variant hover:text-on-surface hover:bg-white/5 transition-colors duration-150"
+                      className="relative flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm font-medium text-on-surface-variant hover:text-white hover:bg-white/10 transition-all duration-300 overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-r before:from-white/5 before:to-transparent before:opacity-0 hover:before:opacity-100"
                     >
                       <LogOut size={18} />
                       Logout
