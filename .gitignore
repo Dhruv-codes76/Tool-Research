@@ -49,3 +49,8 @@ next-env.d.ts
 *.sqlite3
 *.db-journal
 docker-compose.yml
+
+# Supabase local CLI artifacts
+supabase/.branches
+supabase/.temp
+supabase/snippets
