@@ -125,7 +125,6 @@ export default async function ToolDetailPage({ params }: PageProps) {
     : dbTool.forks.toString();
 
   const categoryLabel = dbTool.toolTypes[0]?.name || 'OPEN SOURCE TOOL';
-  const tagLabel = dbTool.platforms[0]?.name || 'V1.0 STABLE';
 
   // Parse JSON fields
   let features: {title: string, description: string, icon: string}[] = [];
@@ -184,14 +183,16 @@ export default async function ToolDetailPage({ params }: PageProps) {
             {/* Dark overlay for readability */}
             <div className="absolute inset-0 bg-[#09090b]/70 backdrop-blur-[10px]"></div>
 
-            <div className="relative p-6 md:p-8 z-10 flex-grow flex flex-col justify-start">
-              <div className="flex flex-wrap items-center gap-2 mb-4 md:absolute md:top-8 md:right-8">
-                <span className="bg-white/20 backdrop-blur-md text-white px-3 py-1 rounded-full text-[10px] font-extrabold border border-white/30 tracking-wider drop-shadow-md">
-                  {categoryLabel.toUpperCase()}
-                </span>
-                <span className="bg-white/10 backdrop-blur-md text-white/90 px-3 py-1 rounded-full text-[10px] font-extrabold border border-white/20 tracking-wider drop-shadow-md">
-                  {tagLabel.toUpperCase()}
-                </span>
+            <div className="absolute top-4 left-6 right-6 md:top-5 md:left-8 md:right-8 z-10">
+              <div className="flex flex-wrap items-center gap-3 mb-4">
+                {(dbTool.toolTypes.length > 0
+                  ? dbTool.toolTypes.map(t => t.name)
+                  : [categoryLabel]
+                ).map(name => (
+                  <span key={name} className="bg-primary-container/10 text-primary-container px-3 py-1 rounded-full text-[10px] font-bold border border-primary-container/20 tracking-wider">
+                    {name.toUpperCase()}
+                  </span>
+                ))}
               </div>
               <h1 className="font-sans text-4xl md:text-7xl text-white mb-2 tracking-tighter font-black drop-shadow-xl md:mt-0 mt-2 pr-2">
                 {dbTool.name}
@@ -299,6 +300,19 @@ export default async function ToolDetailPage({ params }: PageProps) {
                 </div>
               )}
               
+              {dbTool.platforms.length > 0 && (
+                <div className="flex justify-between items-start gap-3 py-2 border-b border-outline-variant/30 text-sm">
+                  <span className="text-on-surface-variant shrink-0 pt-0.5">OS</span>
+                  <div className="flex flex-wrap justify-end gap-1.5">
+                    {dbTool.platforms.map(p => (
+                      <span key={p.name} className="bg-on-surface-variant/10 text-on-surface-variant px-2.5 py-0.5 rounded-full text-[10px] font-bold border border-outline-variant/30 tracking-wider">
+                        {p.name.toUpperCase()}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {website && (
                 <div className="flex justify-between items-center py-2 text-sm">
                   <span className="text-on-surface-variant">Website</span>
