@@ -183,7 +183,7 @@ export default async function ToolDetailPage({ params }: PageProps) {
             {/* Dark overlay for readability */}
             <div className="absolute inset-0 bg-[#09090b]/70 backdrop-blur-[10px]"></div>
 
-            <div className="absolute top-4 left-6 right-6 md:top-5 md:left-8 md:right-8 z-10">
+            <div className="relative p-6 md:p-8 z-10 flex-grow flex flex-col justify-start">
               <div className="flex flex-wrap items-center gap-3 mb-4">
                 {(dbTool.toolTypes.length > 0
                   ? dbTool.toolTypes.map(t => t.name)
