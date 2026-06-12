@@ -124,7 +124,6 @@ export default async function ToolDetailPage({ params }: PageProps) {
     : dbTool.forks.toString();
 
   const categoryLabel = dbTool.toolTypes[0]?.name || 'OPEN SOURCE TOOL';
-  const tagLabel = dbTool.platforms[0]?.name || 'V1.0 STABLE';
 
   // Parse JSON fields
   let features: {title: string, description: string, icon: string}[] = [];
@@ -180,12 +179,14 @@ export default async function ToolDetailPage({ params }: PageProps) {
 
             <div className="absolute top-4 left-6 right-6 md:top-5 md:left-8 md:right-8 z-10">
               <div className="flex flex-wrap items-center gap-3 mb-4">
-                <span className="bg-primary-container/10 text-primary-container px-3 py-1 rounded-full text-[10px] font-bold border border-primary-container/20 tracking-wider">
-                  {categoryLabel.toUpperCase()}
-                </span>
-                <span className="bg-on-surface-variant/10 text-on-surface-variant px-3 py-1 rounded-full text-[10px] font-bold border border-outline-variant/30 tracking-wider">
-                  {tagLabel.toUpperCase()}
-                </span>
+                {(dbTool.toolTypes.length > 0
+                  ? dbTool.toolTypes.map(t => t.name)
+                  : [categoryLabel]
+                ).map(name => (
+                  <span key={name} className="bg-primary-container/10 text-primary-container px-3 py-1 rounded-full text-[10px] font-bold border border-primary-container/20 tracking-wider">
+                    {name.toUpperCase()}
+                  </span>
+                ))}
               </div>
               <h1 className="font-display-lg text-3xl md:text-5xl text-on-surface mb-2 tracking-tight">
                 {dbTool.name}
@@ -320,6 +321,19 @@ export default async function ToolDetailPage({ params }: PageProps) {
                 </div>
               )}
               
+              {dbTool.platforms.length > 0 && (
+                <div className="flex justify-between items-start gap-3 py-2 border-b border-outline-variant/30 text-sm">
+                  <span className="text-on-surface-variant shrink-0 pt-0.5">OS</span>
+                  <div className="flex flex-wrap justify-end gap-1.5">
+                    {dbTool.platforms.map(p => (
+                      <span key={p.name} className="bg-on-surface-variant/10 text-on-surface-variant px-2.5 py-0.5 rounded-full text-[10px] font-bold border border-outline-variant/30 tracking-wider">
+                        {p.name.toUpperCase()}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {website && (
                 <div className="flex justify-between items-center py-2 text-sm">
                   <span className="text-on-surface-variant">Website</span>
