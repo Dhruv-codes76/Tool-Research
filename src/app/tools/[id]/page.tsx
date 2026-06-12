@@ -194,9 +194,18 @@ export default async function ToolDetailPage({ params }: PageProps) {
                   </span>
                 ))}
               </div>
-              <h1 className="font-sans text-4xl md:text-7xl text-white mb-2 tracking-tighter font-black drop-shadow-xl md:mt-0 mt-2 pr-2">
-                {dbTool.name}
-              </h1>
+              <div className="flex items-center gap-3 md:gap-4 mb-2 mt-2 md:mt-0">
+                {(dbTool.heroImageUrl || dbTool.imageUrl) && (
+                  <img
+                    src={dbTool.heroImageUrl || dbTool.imageUrl || ''}
+                    alt={`${dbTool.name} logo`}
+                    className="h-10 md:h-16 w-auto object-contain rounded-lg drop-shadow-xl shrink-0"
+                  />
+                )}
+                <h1 className="font-sans text-4xl md:text-7xl text-white tracking-tighter font-black drop-shadow-xl pr-2">
+                  {dbTool.name}
+                </h1>
+              </div>
               <p className="text-white font-sans max-w-2xl text-base md:text-lg leading-relaxed font-semibold drop-shadow-xl">
                 {dbTool.description}
               </p>
