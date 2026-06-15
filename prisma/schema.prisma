@@ -60,6 +60,7 @@ model Tool {
   lastFetchedAt DateTime   @default(now())
   
   aboutText       String?
+  metaDescription String?                       // optional SEO meta-description override; falls back to `description`
   version         String?
   license         String?
   installCommand  String?

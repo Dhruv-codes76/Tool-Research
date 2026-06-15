@@ -133,6 +133,7 @@ export function ToolForm({ initialData, availablePlatforms = [], availableToolTy
     issues: initialData?.issues || 0,
     status: initialData?.status || 'ACTIVE',
     aboutText: initialData?.aboutText || '',
+    metaDescription: initialData?.metaDescription || '',
     version: initialData?.version || '',
     license: initialData?.license || '',
     installCommand: initialData?.installCommand || '',
@@ -337,6 +338,23 @@ export function ToolForm({ initialData, availablePlatforms = [], availableToolTy
               value={formData.aboutText}
               onChange={e => setFormData({...formData, aboutText: e.target.value})}
             />
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <label className="font-label-sm text-[11px] text-on-surface-variant uppercase tracking-wider">
+              SEO Meta Description <span className="normal-case text-on-surface-variant/60">(optional — falls back to Description)</span>
+            </label>
+            <textarea
+              rows={2}
+              maxLength={160}
+              placeholder="The search-result snippet for this tool. ~120–160 chars, lead with the key term."
+              className="w-full bg-surface-container-low border border-outline-variant/30 rounded-lg p-4 text-on-surface text-sm focus:border-primary/50 resize-y leading-relaxed"
+              value={formData.metaDescription}
+              onChange={e => setFormData({...formData, metaDescription: e.target.value})}
+            />
+            <span className="text-[10px] text-on-surface-variant/60 self-end">
+              {formData.metaDescription.length}/160
+            </span>
           </div>
         </div>
 

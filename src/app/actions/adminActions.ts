@@ -80,6 +80,7 @@ export type ToolAdminFormData = {
   issues: number;
   status: string;
   aboutText: string;
+  metaDescription: string;
   version: string;
   license: string;
   installCommand: string;

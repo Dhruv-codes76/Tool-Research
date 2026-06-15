@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "prisma generate && node scripts/deploy-db.js && next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "seo:audit": "node scripts/audit-seo.mjs"
   },
   "dependencies": {
     "@portabletext/react": "^6.2.0",

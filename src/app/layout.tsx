@@ -3,6 +3,16 @@ import { Plus_Jakarta_Sans, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/Providers";
 import { ConditionalLayout } from "@/components/layout/ConditionalLayout";
+import { JsonLd } from "@/components/seo/JsonLd";
+import {
+  SITE_URL,
+  SITE_NAME,
+  DEFAULT_TITLE,
+  DEFAULT_DESCRIPTION,
+  organizationSchema,
+  websiteSchema,
+  graph,
+} from "@/lib/seo";
 
 const plusJakartaSans = Plus_Jakarta_Sans({
   variable: "--font-sans",
@@ -15,8 +25,25 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "AI Tool Research | Open Source Tool Index",
-  description: "A premium index of curated open source tools for developers and researchers.",
+  // metadataBase makes every relative canonical/OG/Twitter URL resolve to an
+  // absolute one. Without it, social cards and canonicals silently break.
+  metadataBase: new URL(SITE_URL),
+  // Plain default, no template: buildMetadata() already returns the full
+  // "Page | AI Tool Research" title, so a template here would double the brand.
+  title: DEFAULT_TITLE,
+  description: DEFAULT_DESCRIPTION,
+  applicationName: SITE_NAME,
+  openGraph: {
+    type: "website",
+    siteName: SITE_NAME,
+    title: DEFAULT_TITLE,
+    description: DEFAULT_DESCRIPTION,
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: DEFAULT_TITLE,
+    description: DEFAULT_DESCRIPTION,
+  },
 };
 
 export default function RootLayout({
@@ -30,6 +57,8 @@ export default function RootLayout({
         <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
       </head>
       <body className="bg-background text-on-surface antialiased">
+        {/* Sitewide structured data — identifies the brand to Google + AI assistants */}
+        <JsonLd data={graph(organizationSchema(), websiteSchema())} />
         <Providers>
           <ConditionalLayout>
             {children}

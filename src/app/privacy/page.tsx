@@ -1,11 +1,13 @@
 import React from 'react';
 import Link from 'next/link';
+import { buildMetadata } from '@/lib/seo';
 
-export const metadata = {
-  title: 'Privacy Policy | AI Tool Research',
+export const metadata = buildMetadata({
+  title: 'Privacy Policy',
   description:
     'How AI Tool Research collects, uses, and protects your data. Privacy is the default — we curate openness, and we treat your information the same way.',
-};
+  path: '/privacy',
+});
 
 const LAST_UPDATED = 'June 4, 2026';
 
