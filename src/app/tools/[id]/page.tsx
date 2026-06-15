@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { AboutSection } from '@/components/tools/AboutSection';
 import { InstallSection } from '@/components/tools/InstallSection';
 import { DownloadButton } from '@/components/tools/DownloadButton';
+import { ShareButton } from '@/components/tools/ShareButton';
 import { ImageGallery } from '@/components/tools/ImageGallery';
 import { JsonLd } from '@/components/seo/JsonLd';
 import { buildMetadata, graph, breadcrumbSchema, softwareApplicationSchema } from '@/lib/seo';
@@ -188,6 +189,11 @@ export default async function ToolDetailPage({ params }: PageProps) {
             
             {/* Dark overlay for readability */}
             <div className="absolute inset-0 bg-[#09090b]/70 backdrop-blur-[10px]"></div>
+
+            {/* Share — top-right of the hero card */}
+            <div className="absolute top-4 right-4 md:top-6 md:right-6 z-20">
+              <ShareButton title={dbTool.name} text={dbTool.description} />
+            </div>
 
             <div className="relative p-6 md:p-8 z-10 flex-grow flex flex-col justify-start">
               <div className="flex flex-wrap items-center gap-3 mb-4">
