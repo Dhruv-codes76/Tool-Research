@@ -52,7 +52,9 @@ export function buildMetadata({
       : title
     : DEFAULT_TITLE;
   const desc = (description || DEFAULT_DESCRIPTION).slice(0, 160);
-  const ogImage = image || DEFAULT_OG_IMAGE;
+  // Pass image: null to omit og:image here and let a file-based
+  // opengraph-image.tsx generate it (correct 1200×630 with dimensions).
+  const ogImage = image === null ? undefined : image || DEFAULT_OG_IMAGE;
 
   return {
     title: fullTitle,
@@ -65,13 +67,13 @@ export function buildMetadata({
       url: path,
       siteName: SITE_NAME,
       type,
-      images: [{ url: ogImage, width: 1200, height: 630 }],
+      ...(ogImage ? { images: [{ url: ogImage }] } : {}),
     },
     twitter: {
-      card: "summary_large_image",
+      card: ogImage ? "summary_large_image" : "summary",
       title: fullTitle,
       description: desc,
-      images: [ogImage],
+      ...(ogImage ? { images: [ogImage] } : {}),
       ...(TWITTER_HANDLE ? { site: TWITTER_HANDLE, creator: TWITTER_HANDLE } : {}),
     },
   };
