@@ -80,10 +80,9 @@ export function ShareButton({ title, text }: { title: string; text?: string }) {
         aria-haspopup="menu"
         aria-expanded={open}
         aria-label={`Share ${title}`}
-        className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-xl border border-white/30 text-white px-3.5 py-2 rounded-full font-sans font-bold text-xs hover:bg-white/30 hover:scale-[1.02] transition-all shadow-2xl"
+        className="inline-flex items-center justify-center w-8 h-8 bg-white/15 backdrop-blur-xl border border-white/25 text-white rounded-full hover:bg-white/25 hover:scale-[1.05] transition-all shadow-xl"
       >
-        <span className="material-symbols-outlined text-base drop-shadow-sm">ios_share</span>
-        <span className="tracking-wide drop-shadow-sm hidden sm:inline">Share</span>
+        <span className="material-symbols-outlined text-[17px] drop-shadow-sm">ios_share</span>
       </button>
 
       {open && (
