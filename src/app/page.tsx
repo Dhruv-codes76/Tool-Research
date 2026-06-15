@@ -5,9 +5,16 @@ import { ToolExplorer } from '@/components/ui/ToolExplorer';
 import { ToolFilterProvider } from '@/components/ui/ToolFilterContext';
 import { getTools } from '@/app/actions/toolActions';
 import { Tool, Platform, ToolType } from '@prisma/client';
+import { buildMetadata } from '@/lib/seo';
 
 // Prerender at build time, then refresh the data from the database every 5 minutes (ISR).
 export const revalidate = 300;
+
+export const metadata = buildMetadata({
+  description:
+    "Discover the best open-source AI tools, hand-curated with live GitHub stats, install commands, and honest detail pages. Filter by platform and tool type.",
+  path: "/",
+});
 
 type ToolWithCategories = Tool & { platforms: Platform[], toolTypes: ToolType[] };
 

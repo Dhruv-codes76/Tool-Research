@@ -2,13 +2,19 @@ import React from 'react';
 import { getTools } from '@/app/actions/toolActions';
 import { ToolsListClient } from '@/components/tools/ToolsListClient';
 import { Tool, Platform, ToolType } from '@prisma/client';
+import { JsonLd } from '@/components/seo/JsonLd';
+import { buildMetadata, graph, breadcrumbSchema, collectionPageSchema } from '@/lib/seo';
 
 type ToolWithCategories = Tool & { platforms: Platform[]; toolTypes: ToolType[] };
 
-export const metadata = {
-  title: 'Open Source Directory | AI Tool Research',
-  description: 'Explore the complete index of curated open source excellence. Filter by platform or tool type.',
-};
+const PAGE_DESCRIPTION =
+  'Browse the complete index of curated open-source AI tools. Filter by platform or tool type to find exactly what you need.';
+
+export const metadata = buildMetadata({
+  title: 'Open-Source AI Tool Directory',
+  description: PAGE_DESCRIPTION,
+  path: '/tools',
+});
 
 // Prerender at build time, then refresh the data from the database every 5 minutes (ISR).
 export const revalidate = 300;
@@ -54,6 +60,19 @@ export default async function ToolsPage() {
 
   return (
     <main className="flex-grow pt-24 pb-32 max-w-container-max mx-auto px-gutter w-full">
+      <JsonLd
+        data={graph(
+          collectionPageSchema({
+            name: 'Open-Source AI Tool Directory',
+            description: PAGE_DESCRIPTION,
+            path: '/tools',
+          }),
+          breadcrumbSchema([
+            { name: 'Home', path: '/' },
+            { name: 'Tools', path: '/tools' },
+          ]),
+        )}
+      />
       <header className="mb-12">
         <h1 className="font-display-lg text-display-lg text-on-surface mb-stack-md">
           Open Source Directory

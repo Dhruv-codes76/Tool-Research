@@ -4,7 +4,10 @@ import { prisma } from '@/lib/prisma';
 import { AboutSection } from '@/components/tools/AboutSection';
 import { InstallSection } from '@/components/tools/InstallSection';
 import { DownloadButton } from '@/components/tools/DownloadButton';
+import { ShareButton } from '@/components/tools/ShareButton';
 import { ImageGallery } from '@/components/tools/ImageGallery';
+import { JsonLd } from '@/components/seo/JsonLd';
+import { buildMetadata, graph, breadcrumbSchema, softwareApplicationSchema } from '@/lib/seo';
 
 const glassStyle = {
   background: "rgba(28, 32, 37, 0.4)",
@@ -20,8 +23,6 @@ const stellarGlowStyle = {
 interface PageProps {
   params: Promise<{ id: string }>;
 }
-
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://aitoolresearch.com";
 
 async function findTool(toolId: string) {
   return prisma.tool.findFirst({
@@ -41,39 +42,25 @@ export async function generateMetadata({ params }: PageProps) {
   const tool = await findTool(id);
 
   if (!tool) {
-    return {
-      title: "Tool Not Found | AI Tool Research",
-      robots: { index: false, follow: false },
-    };
+    return buildMetadata({
+      title: "Tool Not Found",
+      index: false,
+    });
   }
 
-  const title = `${tool.name} — Open-Source AI Tool | AI Tool Research`;
-  const description = (tool.description || tool.aboutText || `Discover ${tool.name}, a curated open-source AI tool.`).slice(0, 160);
-  const image = tool.heroImageUrl || tool.imageUrl || undefined;
-  const canonical = `${SITE_URL}/tools/${tool.id}`;
-  // Only ACTIVE tools should be indexed; drafts/soft-deleted stay out of search.
-  const indexable = tool.status === "ACTIVE";
-
-  return {
-    title,
-    description,
-    alternates: { canonical },
-    robots: indexable ? undefined : { index: false, follow: false },
-    openGraph: {
-      title,
-      description,
-      url: canonical,
-      type: "website",
-      siteName: "AI Tool Research",
-      ...(image ? { images: [{ url: image }] } : {}),
-    },
-    twitter: {
-      card: image ? "summary_large_image" : "summary",
-      title,
-      description,
-      ...(image ? { images: [image] } : {}),
-    },
-  };
+  return buildMetadata({
+    title: `${tool.name} — Open-Source AI Tool`,
+    // Curator override first, then the short description, then about text.
+    description:
+      tool.metaDescription ||
+      tool.description ||
+      tool.aboutText ||
+      `Discover ${tool.name}, a curated open-source AI tool.`,
+    path: `/tools/${tool.id}`,
+    image: tool.heroImageUrl || tool.imageUrl,
+    // Only ACTIVE tools should be indexed; drafts/soft-deleted stay out of search.
+    index: tool.status === "ACTIVE",
+  });
 }
 
 export default async function ToolDetailPage({ params }: PageProps) {
@@ -154,6 +141,26 @@ export default async function ToolDetailPage({ params }: PageProps) {
 
   return (
     <main className="max-w-[1280px] mx-auto px-4 md:px-6 pt-24 pb-12">
+      {dbTool.status === 'ACTIVE' && (
+        <JsonLd
+          data={graph(
+            softwareApplicationSchema({
+              name: dbTool.name,
+              description: dbTool.metaDescription || dbTool.description,
+              path: `/tools/${dbTool.id}`,
+              image: dbTool.heroImageUrl || dbTool.imageUrl,
+              operatingSystems: dbTool.platforms.map((p) => p.name),
+              category: dbTool.toolTypes[0]?.name,
+              repoUrl: dbTool.repoUrl,
+            }),
+            breadcrumbSchema([
+              { name: 'Home', path: '/' },
+              { name: 'Tools', path: '/tools' },
+              { name: dbTool.name, path: `/tools/${dbTool.id}` },
+            ]),
+          )}
+        />
+      )}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         
         {/* Left Column (Main) */}
@@ -182,6 +189,11 @@ export default async function ToolDetailPage({ params }: PageProps) {
             
             {/* Dark overlay for readability */}
             <div className="absolute inset-0 bg-[#09090b]/70 backdrop-blur-[10px]"></div>
+
+            {/* Share — top-right of the hero card */}
+            <div className="absolute top-4 right-4 md:top-6 md:right-6 z-20">
+              <ShareButton title={dbTool.name} text={dbTool.description} />
+            </div>
 
             <div className="relative p-6 md:p-8 z-10 flex-grow flex flex-col justify-start">
               <div className="flex flex-wrap items-center gap-3 mb-4">

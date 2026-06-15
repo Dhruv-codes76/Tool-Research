@@ -1,11 +1,13 @@
 import React from 'react';
 import Link from 'next/link';
+import { buildMetadata } from '@/lib/seo';
 
-export const metadata = {
-  title: 'Terms of Service | AI Tool Research',
+export const metadata = buildMetadata({
+  title: 'Terms of Service',
   description:
     'The terms that govern your use of AI Tool Research — a manually curated dictionary of open-source AI tools. Clear, fair, and written in plain language.',
-};
+  path: '/terms',
+});
 
 const LAST_UPDATED = 'June 4, 2026';
 
