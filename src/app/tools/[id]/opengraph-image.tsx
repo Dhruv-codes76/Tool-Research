@@ -1,8 +1,6 @@
 import { ImageResponse } from "next/og";
 import { prisma } from "@/lib/prisma";
 
-// Branded 1200×630 share card per tool, mirroring the detail-page hero card.
-// Next wires this to og:image / twitter:image with correct dimensions.
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 export const alt = "AI Tool Research — open-source AI tool";
@@ -28,7 +26,7 @@ export default async function OgImage({
   const description = (tool?.description ?? "A curated index of open-source AI tools.").slice(0, 120);
   const logo = tool?.heroImageUrl || tool?.imageUrl || null;
   const category = (tool?.toolTypes?.[0]?.name ?? "Open Source").toUpperCase();
-  const version = tool?.version ?? null;
+  const version = tool?.version ?? "v1.0.0"; // default for preview if none
 
   return new ImageResponse(
     (
@@ -38,77 +36,72 @@ export default async function OgImage({
           height: "100%",
           display: "flex",
           padding: 40,
-          // page background
-          background:
-            "radial-gradient(900px 500px at 85% 0%, rgba(99,102,241,0.20), transparent 60%), radial-gradient(700px 500px at 10% 110%, rgba(168,85,247,0.18), transparent 60%), #0a0a0c",
+          background: "#050505",
           fontFamily: "sans-serif",
         }}
       >
-        {/* The glass card panel (fills the 1200×630 frame) */}
         <div
           style={{
-            position: "relative",
             flex: 1,
             display: "flex",
             flexDirection: "column",
-            justifyContent: "center",
-            gap: 30,
-            padding: "60px 68px",
+            padding: "48px 56px",
             borderRadius: 36,
-            border: "1px solid rgba(255,255,255,0.08)",
-            background:
-              "radial-gradient(600px 320px at 50% 130%, rgba(99,102,241,0.18), transparent 70%), #0c0d10",
-            boxShadow: "0 0 60px rgba(62,166,255,0.10)",
+            background: "linear-gradient(to bottom right, #1a1010, #0a0a0c)",
+            border: "1px solid rgba(255,255,255,0.05)",
             color: "#fff",
           }}
         >
-          {/* Wordmark */}
-          <div
-            style={{
-              position: "absolute",
-              top: 34,
-              right: 44,
-              display: "flex",
-              fontSize: 26,
-              fontWeight: 700,
-              opacity: 0.8,
-            }}
-          >
-            <span style={{ color: "#a5b4fc" }}>ai</span>
-            <span>toolresearch</span>
-          </div>
-
-          {/* Category pill */}
-          <div
-            style={{
-              display: "flex",
-              alignSelf: "flex-start",
-              fontSize: 22,
-              fontWeight: 700,
-              letterSpacing: 3,
-              color: "#c4b5fd",
-              border: "1px solid rgba(196,181,253,0.32)",
-              background: "rgba(196,181,253,0.08)",
-              borderRadius: 999,
-              padding: "9px 20px",
-            }}
-          >
-            {category}
+          {/* Top section: Category and Share icon */}
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%" }}>
+            <div
+              style={{
+                display: "flex",
+                background: "rgba(76, 29, 149, 0.3)",
+                border: "1px solid rgba(139, 92, 246, 0.3)",
+                color: "#a78bfa",
+                borderRadius: 999,
+                padding: "8px 24px",
+                fontSize: 20,
+                fontWeight: 700,
+                letterSpacing: 1.5,
+              }}
+            >
+              {category}
+            </div>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: 56,
+                height: 56,
+                borderRadius: 28,
+                background: "rgba(255,255,255,0.1)",
+                border: "1px solid rgba(255,255,255,0.15)",
+              }}
+            >
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+                <polyline points="16 6 12 2 8 6" />
+                <line x1="12" y1="2" x2="12" y2="15" />
+              </svg>
+            </div>
           </div>
 
           {/* Logo + name */}
-          <div style={{ display: "flex", alignItems: "center", gap: 28 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 32, marginTop: 40 }}>
             {logo ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={logo} alt="" width={108} height={108} style={{ objectFit: "contain", borderRadius: 18 }} />
+              <img src={logo} alt="" width={100} height={100} style={{ objectFit: "contain", borderRadius: 20 }} />
             ) : null}
-            <div style={{ display: "flex", fontSize: 104, fontWeight: 800, letterSpacing: -3, lineHeight: 1 }}>
+            <div style={{ display: "flex", fontSize: 96, fontWeight: 800, letterSpacing: -2, lineHeight: 1 }}>
               {name}
             </div>
           </div>
 
           {/* Description */}
-          <div style={{ display: "flex", fontSize: 34, fontWeight: 600, color: "rgba(255,255,255,0.85)", maxWidth: 920, lineHeight: 1.25 }}>
+          <div style={{ display: "flex", fontSize: 36, fontWeight: 500, color: "rgba(255,255,255,0.85)", marginTop: 32, maxWidth: 960, lineHeight: 1.4 }}>
             {description}
           </div>
 
@@ -117,28 +110,27 @@ export default async function OgImage({
             style={{
               display: "flex",
               alignItems: "center",
-              gap: 30,
-              alignSelf: "flex-start",
-              background: "rgba(0,0,0,0.5)",
-              border: "1px solid rgba(255,255,255,0.18)",
+              gap: 40,
+              marginTop: 48,
+              background: "#000",
+              border: "1px solid rgba(255,255,255,0.15)",
               borderRadius: 999,
-              padding: "14px 28px",
-              fontSize: 28,
-              fontWeight: 700,
+              padding: "16px 40px",
+              alignSelf: "flex-start",
             }}
           >
-            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <svg width="30" height="30" viewBox="0 0 24 24" fill="#facc15">
+            <div style={{ display: "flex", alignItems: "center", gap: 16, fontSize: 32, fontWeight: 700 }}>
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="#facc15">
                 <path d="M12 2l2.9 6.26 6.9.6-5.2 4.52 1.55 6.74L12 17.27 5.85 20.6l1.55-6.74L2.2 8.86l6.9-.6z" />
               </svg>
               {fmt(tool?.stars ?? 0)} Stars
             </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 12, color: "rgba(255,255,255,0.9)" }}>
-              <svg width="26" height="26" viewBox="0 0 24 24">
-                <circle cx="6" cy="5" r="2.6" fill="#cbd5e1" />
-                <circle cx="6" cy="19" r="2.6" fill="#cbd5e1" />
-                <circle cx="18" cy="6" r="2.6" fill="#cbd5e1" />
-                <rect x="4.7" y="5" width="2.6" height="14" fill="#cbd5e1" />
+            <div style={{ display: "flex", alignItems: "center", gap: 16, fontSize: 32, fontWeight: 700 }}>
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="6" y1="3" x2="6" y2="15" />
+                <circle cx="18" cy="6" r="3" />
+                <circle cx="6" cy="18" r="3" />
+                <path d="M18 9a9 9 0 0 1-9 9" />
               </svg>
               {fmt(tool?.forks ?? 0)} Forks
             </div>
@@ -146,10 +138,91 @@ export default async function OgImage({
 
           {/* Version */}
           {version ? (
-            <div style={{ display: "flex", fontSize: 26, color: "rgba(255,255,255,0.7)" }}>
-              Version:&nbsp;<span style={{ color: "#fff", fontWeight: 700 }}>{version}</span>
+            <div style={{ display: "flex", alignItems: "center", gap: 16, marginTop: 40, fontSize: 28, color: "rgba(255,255,255,0.7)" }}>
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.8)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 8v4l3 3" />
+                <circle cx="12" cy="12" r="10" />
+              </svg>
+              <div style={{ display: "flex", alignItems: "center" }}>
+                Version:&nbsp;<span style={{ color: "#fff", fontWeight: 700 }}>{version}</span>
+              </div>
             </div>
           ) : null}
+
+          {/* Bottom Buttons */}
+          <div style={{ display: "flex", alignItems: "center", gap: 24, marginTop: "auto", paddingTop: 40 }}>
+            {/* view repo button */}
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 16,
+                background: "rgba(255,255,255,0.15)",
+                borderRadius: 999,
+                padding: "12px 12px 12px 32px",
+                fontSize: 28,
+                fontWeight: 600,
+                color: "#fff",
+              }}
+            >
+              view repo
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  background: "#f472b6",
+                  borderRadius: 30,
+                  width: 48,
+                  height: 48,
+                  marginLeft: 8,
+                }}
+              >
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="#000">
+                  <circle cx="12" cy="12" r="2" />
+                  <circle cx="12" cy="5" r="2" />
+                  <circle cx="12" cy="19" r="2" />
+                  <circle cx="5" cy="12" r="2" />
+                  <circle cx="19" cy="12" r="2" />
+                </svg>
+              </div>
+            </div>
+
+            {/* download button */}
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 16,
+                background: "rgba(255,255,255,0.15)",
+                borderRadius: 999,
+                padding: "12px 12px 12px 32px",
+                fontSize: 28,
+                fontWeight: 600,
+                color: "#fff",
+              }}
+            >
+              download
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  background: "rgba(0,0,0,0.4)",
+                  borderRadius: 30,
+                  width: 48,
+                  height: 48,
+                  marginLeft: 8,
+                }}
+              >
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="7 10 12 15 17 10" />
+                  <line x1="12" y1="15" x2="12" y2="3" />
+                </svg>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     ),
