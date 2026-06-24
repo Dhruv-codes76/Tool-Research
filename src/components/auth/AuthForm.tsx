@@ -614,6 +614,43 @@ export const AuthForm: React.FC<AuthFormProps> = ({ mode }) => {
                 </>
               )}
             </div>
+
+            {/* ── DEV BYPASS ── only visible in development ── */}
+            {process.env.NODE_ENV === 'development' && (
+              <div className="mt-6 pt-5 border-t border-dashed border-[#464555]/40">
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="text-[10px] font-bold tracking-widest uppercase text-orange-400 bg-orange-400/10 border border-orange-400/20 rounded px-1.5 py-0.5">
+                    DEV
+                  </span>
+                  <span className="text-xs text-[#918fa1]">Quick login — dev only, never in production</span>
+                </div>
+                <div className="flex gap-2">
+                  <a
+                    href="/api/dev-login?role=admin"
+                    className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg
+                               border border-orange-400/30 bg-orange-400/5 text-orange-400 text-xs font-medium
+                               hover:bg-orange-400/10 hover:border-orange-400/50 transition-all duration-200"
+                  >
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                    </svg>
+                    Login as Admin
+                  </a>
+                  <a
+                    href="/api/dev-login?role=user"
+                    className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg
+                               border border-sky-400/30 bg-sky-400/5 text-sky-400 text-xs font-medium
+                               hover:bg-sky-400/10 hover:border-sky-400/50 transition-all duration-200"
+                  >
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+                    </svg>
+                    Login as User
+                  </a>
+                </div>
+              </div>
+            )}
+            {/* ── END DEV BYPASS ── */}
           </motion.div>
 
           {/* Terms text */}
@@ -625,3 +662,4 @@ export const AuthForm: React.FC<AuthFormProps> = ({ mode }) => {
     </div>
   );
 };
+

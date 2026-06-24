@@ -10,20 +10,24 @@ import {
   isLikelyJunkAsset,
   type DownloadAsset,
 } from "@/lib/install";
+import {
+  sendSubmissionApprovedEmail,
+  sendSubmissionRejectedEmail,
+} from "@/lib/email";
 
 export async function getAdminStats() {
   await requireAdmin();
   
-  const [total, active, draft] = await Promise.all([
-    prisma.tool.count(),
+  const [total, active, pending] = await Promise.all([
+    prisma.tool.count({ where: { status: { not: 'DELETED' } } }),
     prisma.tool.count({ where: { status: 'ACTIVE' } }),
-    prisma.tool.count({ where: { status: 'DRAFT' } })
+    prisma.tool.count({ where: { status: 'PENDING' } }),
   ]);
   
   return {
     total,
     active,
-    pending: draft
+    pending,
   };
 }
 
@@ -460,3 +464,92 @@ export async function rejectChange(changeId: string) {
   revalidatePath("/admin/review");
 }
 
+// ---------------------------------------------------------------------------
+// User-submission review queue
+// ---------------------------------------------------------------------------
+
+/**
+ * Returns all tools submitted by users that are awaiting admin review.
+ * Ordered newest-first so the admin sees the most recent submissions at the top.
+ */
+export async function getPendingSubmissions() {
+  await requireAdmin();
+
+  return prisma.tool.findMany({
+    where: { status: 'PENDING' },
+    orderBy: { createdAt: 'desc' },
+    select: {
+      id: true,
+      name: true,
+      description: true,
+      repoUrl: true,
+      submittedByEmail: true,
+      createdAt: true,
+    },
+  });
+}
+
+/**
+ * Approve a user-submitted tool.
+ * Sets status → DRAFT so the admin can enrich details before publishing live.
+ * Sends an approval email to the submitter (best-effort, never throws).
+ */
+export async function approveSubmission(toolId: string) {
+  const admin = await requireAdmin();
+
+  const tool = await prisma.tool.update({
+    where: { id: toolId },
+    data: { status: 'DRAFT' },
+  });
+
+  // Fire-and-forget email — captured in a void so the action never awaits it
+  if (tool.submittedByEmail) {
+    void sendSubmissionApprovedEmail(tool.submittedByEmail, tool.name);
+  }
+
+  await logAudit({
+    action: 'tool.approve',
+    actor: admin,
+    targetType: 'Tool',
+    targetId: tool.id,
+    targetLabel: tool.name,
+    metadata: { submittedByEmail: tool.submittedByEmail },
+  });
+
+  revalidatePath('/admin/submissions');
+  revalidatePath('/admin/tools');
+
+  return { editUrl: `/admin/tools/${tool.id}/edit` };
+}
+
+/**
+ * Reject a user-submitted tool.
+ * Sets status → REJECTED and optionally stores the admin's reason.
+ * Sends a rejection email to the submitter (best-effort, never throws).
+ */
+export async function rejectSubmission(toolId: string, reason?: string) {
+  const admin = await requireAdmin();
+
+  const tool = await prisma.tool.update({
+    where: { id: toolId },
+    data: {
+      status: 'REJECTED',
+      rejectionReason: reason ?? null,
+    },
+  });
+
+  if (tool.submittedByEmail) {
+    void sendSubmissionRejectedEmail(tool.submittedByEmail, tool.name, reason);
+  }
+
+  await logAudit({
+    action: 'tool.reject',
+    actor: admin,
+    targetType: 'Tool',
+    targetId: tool.id,
+    targetLabel: tool.name,
+    metadata: { reason, submittedByEmail: tool.submittedByEmail },
+  });
+
+  revalidatePath('/admin/submissions');
+}

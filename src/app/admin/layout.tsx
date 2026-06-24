@@ -16,7 +16,11 @@ export default async function AdminLayout({
   const user = await getCurrentAdmin();
   if (!user) redirect('/login?next=/admin');
 
-  const pendingCount = await prisma.toolChange.count({ where: { status: 'PENDING' } });
+  const [changeCount, submissionCount] = await Promise.all([
+    prisma.toolChange.count({ where: { status: 'PENDING' } }),
+    prisma.tool.count({ where: { status: 'PENDING' } }),
+  ]);
+  const totalPending = changeCount + submissionCount;
 
   return (
     <div className="flex min-h-screen bg-background">
@@ -36,6 +40,16 @@ export default async function AdminLayout({
             <Link href="/admin/tools" className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors">
               <span className="material-symbols-outlined text-[20px]">build</span>
               <span className="font-label-sm text-sm">Tools</span>
+            </Link>
+
+            <Link href="/admin/submissions" className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors">
+              <span className="material-symbols-outlined text-[20px]">inbox</span>
+              <span className="font-label-sm text-sm">Submissions</span>
+              {submissionCount > 0 && (
+                <span className="ml-auto px-2 py-0.5 bg-primary text-on-primary rounded-full text-[10px] font-bold leading-none">
+                  {submissionCount}
+                </span>
+              )}
             </Link>
 
             <Link href="/admin/categories" className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors">
