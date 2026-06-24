@@ -197,7 +197,11 @@ export async function submitFullTool(data: ToolAdminFormData, userId: string, su
   if (githubInfo) {
     const fetchedStats = await getRepoStats(githubInfo.owner, githubInfo.repo);
     if (fetchedStats) {
-      stats = fetchedStats;
+      stats = {
+        stars: fetchedStats.stars,
+        forks: fetchedStats.forks,
+        issues: fetchedStats.issues,
+      };
     }
   }
 
