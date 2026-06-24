@@ -27,12 +27,13 @@ function getAvatarColor(identifier: string) {
 import { supabase } from '@/lib/supabase';
 import { logAuthEvent } from '@/app/actions/auditActions';
 import { useRouter } from 'next/navigation';
-import { LogOut, User, Info, FileText } from 'lucide-react';
+import { LogOut, User, Info, FileText, Menu, X } from 'lucide-react';
 import { type Session } from '@supabase/supabase-js';
 
 const TopNavBar = () => {
   const [session, setSession] = useState<Session | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -156,7 +157,15 @@ const TopNavBar = () => {
           </Link>
         </div>
 
-        <div className="flex items-center">
+        <div className="flex items-center gap-3">
+          <button
+            className="md:hidden p-2 text-on-surface-variant hover:text-white transition-colors"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-label="Toggle mobile menu"
+          >
+            {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+          </button>
+
           {session ? (
             // Logged in — avatar button that opens the account menu.
             <div className="relative" ref={menuRef}>
@@ -244,6 +253,28 @@ const TopNavBar = () => {
           )}
         </div>
       </div>
+
+      {/* Mobile Menu Dropdown */}
+      {mobileMenuOpen && (
+        <div className="md:hidden absolute top-full right-4 mt-2 w-48 rounded-2xl bg-surface border border-outline-variant/30 shadow-2xl shadow-black/60 p-2 flex flex-col animate-pop-in z-50 origin-top-right">
+          <Link
+            href="/blog"
+            className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-on-surface-variant hover:text-white hover:bg-white/10 transition-all duration-300 text-sm font-medium"
+            onClick={() => setMobileMenuOpen(false)}
+          >
+            <FileText size={18} />
+            Blog
+          </Link>
+          <Link
+            href="/about"
+            className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-on-surface-variant hover:text-white hover:bg-white/10 transition-all duration-300 text-sm font-medium"
+            onClick={() => setMobileMenuOpen(false)}
+          >
+            <Info size={18} />
+            About
+          </Link>
+        </div>
+      )}
 
       {/* Logout confirmation modal */}
       {confirmOpen && (
