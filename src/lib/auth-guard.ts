@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { createServerClient } from "@/lib/supabase-server";
+import { cookies } from "next/headers";
 
 /**
  * Resolves the currently authenticated admin, or null.
@@ -12,6 +13,30 @@ import { createServerClient } from "@/lib/supabase-server";
  * Use in Server Components / layouts (returns null so the caller can redirect).
  */
 export async function getCurrentAdmin() {
+  // ─── DEV BYPASS ──────────────────────────────────────────────────────────
+  // Lets developers skip Supabase auth by hitting /api/dev-login?role=admin.
+  // Completely inert in production.
+  if (process.env.NODE_ENV !== "production") {
+    const cookieStore = await cookies();
+    const devBypass = cookieStore.get("x-dev-bypass")?.value;
+    if (devBypass === "admin") {
+      // Return a mock object that satisfies the shape callers expect.
+      return {
+        id: "dev-admin-id",
+        email: "dev@admin.local",
+        name: "Dev Admin",
+        role: "ADMIN" as const,
+        status: "ACTIVE" as const,
+        isPrimaryAdmin: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        acceptedAt: new Date(),
+        invitedById: null,
+      };
+    }
+  }
+  // ─────────────────────────────────────────────────────────────────────────
+
   const supabase = await createServerClient();
   const { data: { user } } = await supabase.auth.getUser();
 
@@ -40,6 +65,40 @@ export async function getCurrentAdmin() {
   if (dbUser.status !== "ACTIVE") return null;
 
   return dbUser;
+}
+
+/**
+ * Resolves the currently authenticated user (any role), or null.
+ * Returns a minimal { id, email } object — enough for user-gated pages.
+ *
+ * In development, the x-dev-bypass=user cookie satisfies this check so
+ * you can access user-protected routes without a real Supabase session.
+ */
+export async function getCurrentUser() {
+  // ─── DEV BYPASS ──────────────────────────────────────────────────────────
+  if (process.env.NODE_ENV !== "production") {
+    const cookieStore = await cookies();
+    const devBypass = cookieStore.get("x-dev-bypass")?.value;
+    if (devBypass === "admin" || devBypass === "user") {
+      return {
+        id: devBypass === "admin" ? "dev-admin-id" : "dev-user-id",
+        email: devBypass === "admin" ? "dev@admin.local" : "dev@user.local",
+      };
+    }
+  }
+  // ─────────────────────────────────────────────────────────────────────────
+
+  const supabase = await createServerClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user?.email) return null;
+
+  const dbUser = await prisma.user.findUnique({
+    where: { email: user.email },
+    select: { id: true, email: true },
+  });
+
+  return dbUser ?? null;
 }
 
 /**

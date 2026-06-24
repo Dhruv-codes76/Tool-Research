@@ -11,6 +11,17 @@ import { createServerClient } from "@supabase/ssr";
  * admin layout and `requireAdmin()` in every admin Server Action.
  */
 export async function middleware(request: NextRequest) {
+  // ─── DEV BYPASS ────────────────────────────────────────────────────────────
+  // In development, a quick-login cookie skips the Supabase JWT check so you
+  // can reach the admin panel without a real session. Never runs in production.
+  if (process.env.NODE_ENV !== "production") {
+    const devBypass = request.cookies.get("x-dev-bypass")?.value;
+    if (devBypass === "admin" || devBypass === "user") {
+      return NextResponse.next();
+    }
+  }
+  // ─────────────────────────────────────────────────────────────────────────
+
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 

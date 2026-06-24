@@ -76,6 +76,9 @@ model Tool {
   downloadUrl     String?
   downloadAssets  String?  @default("[]")
 
+  submittedByEmail String?  // snapshot of submitter email at time of submission
+  rejectionReason  String?  // admin-written explanation when rejecting
+
   userId        String
   user          User       @relation(fields: [userId], references: [id])
   platforms     Platform[]
