@@ -28,15 +28,15 @@ const faqs = [
 
 export const SlidingSearchFaq = () => {
   const [activeIndex, setActiveIndex] = useState(0);
-  const [direction, setDirection] = useState(1);
+  const [isTyping, setIsTyping] = useState(true);
 
   const nextFaq = () => {
-    setDirection(1);
+    setIsTyping(true);
     setActiveIndex((prev) => (prev + 1) % faqs.length);
   };
 
   const prevFaq = () => {
-    setDirection(-1);
+    setIsTyping(true);
     setActiveIndex((prev) => (prev - 1 + faqs.length) % faqs.length);
   };
 
@@ -48,24 +48,21 @@ export const SlidingSearchFaq = () => {
     return () => clearInterval(timer);
   }, []);
 
-  const slideVariants = {
-    enter: (dir: number) => ({
-      x: dir > 0 ? 50 : -50,
-      opacity: 0,
-      filter: "blur(4px)"
-    }),
+  const containerVariants = {
+    enter: { opacity: 0 },
     center: {
-      zIndex: 1,
-      x: 0,
       opacity: 1,
-      filter: "blur(0px)"
+      transition: {
+        staggerChildren: 0.08,
+      }
     },
-    exit: (dir: number) => ({
-      zIndex: 0,
-      x: dir < 0 ? 50 : -50,
-      opacity: 0,
-      filter: "blur(4px)"
-    })
+    exit: { opacity: 0, transition: { duration: 0.2 } }
+  };
+
+  const wordVariants = {
+    enter: { opacity: 0, y: 10, filter: "blur(4px)" },
+    center: { opacity: 1, y: 0, filter: "blur(0px)", transition: { duration: 0.3 } },
+    exit: { opacity: 0, filter: "blur(4px)", transition: { duration: 0.2 } }
   };
 
   return (
@@ -106,20 +103,25 @@ export const SlidingSearchFaq = () => {
                   search
                 </span>
 
-                {/* Sliding Question */}
-                <div className="flex-grow overflow-hidden relative min-h-[28px] md:h-7 md:min-h-[auto] flex items-center">
-                  <AnimatePresence initial={false} custom={direction} mode="popLayout">
+                {/* Typing Question */}
+                <div className="flex-grow overflow-hidden relative min-h-[28px] flex items-center">
+                  <AnimatePresence mode="wait">
                     <motion.div
                       key={activeIndex}
-                      custom={direction}
-                      variants={slideVariants}
+                      variants={containerVariants}
                       initial="enter"
                       animate="center"
                       exit="exit"
-                      transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                      className="w-full md:absolute text-white text-base sm:text-lg md:truncate font-medium leading-snug break-words pr-2 md:pr-0"
+                      onAnimationComplete={(definition) => {
+                        if (definition === 'center') setIsTyping(false);
+                      }}
+                      className="w-full text-white text-base sm:text-lg font-medium leading-snug break-words pr-2 md:pr-0"
                     >
-                      {faqs[activeIndex].question}
+                      {faqs[activeIndex].question.split(" ").map((word, i) => (
+                        <motion.span key={i} variants={wordVariants} className="inline-block mr-[0.25em]">
+                          {word}
+                        </motion.span>
+                      ))}
                     </motion.div>
                   </AnimatePresence>
                 </div>
@@ -166,21 +168,23 @@ export const SlidingSearchFaq = () => {
           </div>
           <div className="w-full max-w-2xl mt-5 md:mt-8">
             <AnimatePresence mode="wait">
-              <motion.div
-                key={activeIndex}
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -15 }}
-                transition={{ duration: 0.3 }}
-                className="px-6 md:px-8 pt-6 pb-2 relative"
-              >
-                {/* Result metadata mimicking a search engine removed per user request */}
-                
-                <p className="text-on-surface-variant text-base md:text-lg leading-relaxed text-center">
-                  {faqs[activeIndex].answer}
-                </p>
-                
-              </motion.div>
+              {!isTyping && (
+                <motion.div
+                  key={activeIndex}
+                  initial={{ opacity: 0, y: 15 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -15 }}
+                  transition={{ duration: 0.3 }}
+                  className="px-6 md:px-8 pt-6 pb-2 relative"
+                >
+                  {/* Result metadata mimicking a search engine removed per user request */}
+                  
+                  <p className="text-on-surface-variant text-base md:text-lg leading-relaxed text-center">
+                    {faqs[activeIndex].answer}
+                  </p>
+                  
+                </motion.div>
+              )}
             </AnimatePresence>
           </div>
 
@@ -190,7 +194,7 @@ export const SlidingSearchFaq = () => {
               <button
                 key={idx}
                 onClick={() => {
-                  setDirection(idx > activeIndex ? 1 : -1);
+                  setIsTyping(true);
                   setActiveIndex(idx);
                 }}
                 className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
