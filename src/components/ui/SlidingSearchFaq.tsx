@@ -95,56 +95,76 @@ export const SlidingSearchFaq = () => {
             {/* Flowing liquid light glow behind the bar */}
             <div
               aria-hidden
-              className="glow-flow pointer-events-none absolute -inset-[2px] rounded-full opacity-80"
+              className="glow-flow pointer-events-none absolute -inset-[2px] rounded-[32px] md:rounded-full opacity-80"
             />
             
-            <div className="relative z-10 flex items-center bg-[#1a1a1a] border border-outline-variant/20 rounded-full px-6 py-4 shadow-[0_0_55px_-8px_rgba(79,70,229,0.55)] hover:shadow-[0_0_65px_-8px_rgba(79,70,229,0.7)] hover:border-primary/50 transition-all duration-300">
-              
-              {/* Google-style Search Icon */}
-              <span className="material-symbols-outlined text-on-surface-variant mr-4 text-[22px]">
-                search
-              </span>
+            <div className="relative z-10 group drop-shadow-[0_0_20px_rgba(79,70,229,0.3)] hover:drop-shadow-[0_0_30px_rgba(79,70,229,0.5)] md:drop-shadow-none md:hover:drop-shadow-none transition-all duration-300">
+              {/* Main Input Area */}
+              <div className="relative z-10 flex items-center bg-[#1a1a1a] border border-outline-variant/20 group-hover:border-primary/50 rounded-[28px] md:rounded-full px-5 py-3 md:px-6 md:py-4 md:shadow-[0_0_55px_-8px_rgba(79,70,229,0.55)] md:group-hover:shadow-[0_0_65px_-8px_rgba(79,70,229,0.7)] transition-colors duration-300">
+                {/* Google-style Search Icon */}
+                <span className="material-symbols-outlined text-on-surface-variant mr-4 text-[22px] flex-shrink-0">
+                  search
+                </span>
 
-              {/* Sliding Question */}
-              <div className="flex-grow overflow-hidden relative h-7 flex items-center">
-                <AnimatePresence initial={false} custom={direction} mode="popLayout">
-                  <motion.div
-                    key={activeIndex}
-                    custom={direction}
-                    variants={slideVariants}
-                    initial="enter"
-                    animate="center"
-                    exit="exit"
-                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                    className="absolute w-full text-white text-lg truncate font-medium"
+                {/* Sliding Question */}
+                <div className="flex-grow overflow-hidden relative min-h-[28px] md:h-7 md:min-h-[auto] flex items-center">
+                  <AnimatePresence initial={false} custom={direction} mode="popLayout">
+                    <motion.div
+                      key={activeIndex}
+                      custom={direction}
+                      variants={slideVariants}
+                      initial="enter"
+                      animate="center"
+                      exit="exit"
+                      transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                      className="w-full md:absolute text-white text-base sm:text-lg md:truncate font-medium leading-snug break-words pr-2 md:pr-0"
+                    >
+                      {faqs[activeIndex].question}
+                    </motion.div>
+                  </AnimatePresence>
+                </div>
+
+                {/* Desktop Controls (hidden on mobile) */}
+                <div className="hidden md:flex items-center gap-3 ml-4">
+                  <button 
+                    onClick={prevFaq}
+                    className="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center text-on-surface-variant hover:text-white hover:bg-outline-variant/20 active:scale-95 transition-all"
+                    aria-label="Previous question"
                   >
-                    {faqs[activeIndex].question}
-                  </motion.div>
-                </AnimatePresence>
+                    <span className="material-symbols-outlined text-[18px]">chevron_left</span>
+                  </button>
+                  <button 
+                    onClick={nextFaq}
+                    className="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center text-on-surface-variant hover:text-white hover:bg-outline-variant/20 active:scale-95 transition-all"
+                    aria-label="Next question"
+                  >
+                    <span className="material-symbols-outlined text-[18px]">chevron_right</span>
+                  </button>
+                </div>
               </div>
 
-              {/* Controls / End icons */}
-              <div className="flex items-center gap-3 ml-4">
-                <button 
-                  onClick={prevFaq}
-                  className="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center text-on-surface-variant hover:text-white hover:bg-outline-variant/20 transition-colors"
-                  aria-label="Previous question"
-                >
-                  <span className="material-symbols-outlined text-[18px]">chevron_left</span>
-                </button>
-                <button 
-                  onClick={nextFaq}
-                  className="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center text-on-surface-variant hover:text-white hover:bg-outline-variant/20 transition-colors"
-                  aria-label="Next question"
-                >
-                  <span className="material-symbols-outlined text-[18px]">chevron_right</span>
-                </button>
-              </div>
             </div>
           </div>
 
-          {/* Search Result / Answer Box */}
-          <div className="w-full max-w-2xl mt-8">
+          {/* Separated Mobile Controls */}
+          <div className="md:hidden mt-4 flex items-center bg-[#1a1a1a] border border-outline-variant/20 rounded-full py-1 px-1.5 shadow-[0_0_20px_-5px_rgba(79,70,229,0.3)]">
+            <button 
+              onClick={prevFaq}
+              className="w-10 h-8 flex items-center justify-center text-on-surface-variant hover:text-white active:scale-95 transition-all rounded-full hover:bg-white/5"
+              aria-label="Previous question"
+            >
+              <span className="material-symbols-outlined text-[18px]">chevron_left</span>
+            </button>
+            <div className="w-[1px] h-4 bg-outline-variant/20 mx-1" />
+            <button 
+              onClick={nextFaq}
+              className="w-10 h-8 flex items-center justify-center text-on-surface-variant hover:text-white active:scale-95 transition-all rounded-full hover:bg-white/5"
+              aria-label="Next question"
+            >
+              <span className="material-symbols-outlined text-[18px]">chevron_right</span>
+            </button>
+          </div>
+          <div className="w-full max-w-2xl mt-5 md:mt-8">
             <AnimatePresence mode="wait">
               <motion.div
                 key={activeIndex}
@@ -165,7 +185,7 @@ export const SlidingSearchFaq = () => {
           </div>
 
           {/* Dots Indicator */}
-          <div className="flex justify-center gap-2 mt-12">
+          <div className="flex justify-center gap-2 mt-12 mb-6">
             {faqs.map((_, idx) => (
               <button
                 key={idx}
@@ -182,7 +202,6 @@ export const SlidingSearchFaq = () => {
               />
             ))}
           </div>
-
         </div>
       </div>
     </section>

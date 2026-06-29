@@ -134,14 +134,7 @@ export default async function HomePage() {
                 <span className="inline-block ml-2 group-hover:translate-x-1 transition-transform">→</span>
               </button>
             </Link>
-            <Link
-              href="/tools/submit"
-              className="group inline-flex items-center gap-1.5 mt-4 font-label-sm text-sm text-on-surface-variant hover:text-on-surface transition-colors"
-            >
-              <span className="material-symbols-outlined text-[16px]">add_circle</span>
-              Know a great tool? Submit it
-              <span className="group-hover:translate-x-0.5 transition-transform">→</span>
-            </Link>
+
           </div>
         </section>
       </ScrollFadeSection>
