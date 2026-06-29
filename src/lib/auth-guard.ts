@@ -20,10 +20,27 @@ export async function getCurrentAdmin() {
     const cookieStore = await cookies();
     const devBypass = cookieStore.get("x-dev-bypass")?.value;
     if (devBypass === "admin") {
+      const id = "dev-admin-id";
+      const email = "dev@admin.local";
+
+      // Ensure the user exists in DB to satisfy foreign keys
+      await prisma.user.upsert({
+        where: { id },
+        update: {},
+        create: {
+          id,
+          email,
+          name: "Dev Admin",
+          role: "ADMIN",
+          status: "ACTIVE",
+          isPrimaryAdmin: true,
+        }
+      });
+
       // Return a mock object that satisfies the shape callers expect.
       return {
-        id: "dev-admin-id",
-        email: "dev@admin.local",
+        id,
+        email,
         name: "Dev Admin",
         role: "ADMIN" as const,
         status: "ACTIVE" as const,
@@ -80,10 +97,24 @@ export async function getCurrentUser() {
     const cookieStore = await cookies();
     const devBypass = cookieStore.get("x-dev-bypass")?.value;
     if (devBypass === "admin" || devBypass === "user") {
-      return {
-        id: devBypass === "admin" ? "dev-admin-id" : "dev-user-id",
-        email: devBypass === "admin" ? "dev@admin.local" : "dev@user.local",
-      };
+      const id = devBypass === "admin" ? "dev-admin-id" : "dev-user-id";
+      const email = devBypass === "admin" ? "dev@admin.local" : "dev@user.local";
+      
+      // Ensure the user exists in DB to satisfy foreign keys
+      await prisma.user.upsert({
+        where: { id },
+        update: {},
+        create: {
+          id,
+          email,
+          name: `Dev ${devBypass === "admin" ? "Admin" : "User"}`,
+          role: devBypass === "admin" ? "ADMIN" : "USER",
+          status: "ACTIVE",
+          isPrimaryAdmin: devBypass === "admin",
+        }
+      });
+
+      return { id, email };
     }
   }
   // ─────────────────────────────────────────────────────────────────────────

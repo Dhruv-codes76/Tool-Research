@@ -92,7 +92,7 @@ export function ToolExplorer({ tools }: { tools: CardTool[] }) {
               No tools found in the database yet.
             </div>
           ) : filtered.length > 0 ? (
-            filtered.map((tool) => <ToolCard key={tool.id} {...tool} />)
+            filtered.slice(0, 8).map((tool) => <ToolCard key={tool.id} {...tool} />)
           ) : (
             <div className="col-span-full text-center py-10 text-on-surface-variant">
               {query.trim()

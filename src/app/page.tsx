@@ -2,6 +2,10 @@ import React from 'react';
 import Link from 'next/link';
 import { HeroSearchBar } from '@/components/ui/HeroSearchBar';
 import { ToolExplorer } from '@/components/ui/ToolExplorer';
+import { ResearchCycle } from '@/components/ui/ResearchCycle';
+import { HowToContribute } from '@/components/ui/HowToContribute';
+import { SlidingSearchFaq } from '@/components/ui/SlidingSearchFaq';
+import { ScrollFadeSection } from '@/components/ui/ScrollFadeSection';
 import { ToolFilterProvider } from '@/components/ui/ToolFilterContext';
 import { getTools } from '@/app/actions/toolActions';
 import { Tool, Platform, ToolType } from '@prisma/client';
@@ -90,38 +94,57 @@ export default async function HomePage() {
       </section>
 
       {/* Functional category filters + the tools grid they drive */}
-      <ToolExplorer tools={tools} />
+      <ScrollFadeSection>
+        <ToolExplorer tools={tools} />
+      </ScrollFadeSection>
+
+      {/* Research Cycle Section */}
+      <ScrollFadeSection>
+        <ResearchCycle />
+      </ScrollFadeSection>
+
+      {/* How To Contribute Section */}
+      <ScrollFadeSection>
+        <HowToContribute />
+      </ScrollFadeSection>
+
+      {/* Sliding Search FAQ */}
+      <ScrollFadeSection>
+        <SlidingSearchFaq />
+      </ScrollFadeSection>
 
       {/* Closing CTA — echoes the About page's CTA language */}
-      <section className="relative px-gutter py-32 border-t border-outline-variant/10 overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(137,206,255,0.08),transparent_70%)] pointer-events-none z-0" />
+      <ScrollFadeSection>
+        <section className="relative px-gutter py-32 border-t border-outline-variant/10 overflow-hidden">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(137,206,255,0.08),transparent_70%)] pointer-events-none z-0" />
 
-        <div className="relative z-10 max-w-3xl mx-auto text-center">
-          <h2 className="text-4xl md:text-6xl font-black text-white tracking-tight leading-[1.05] mb-6">
-            Find Your Next
-            <br />
-            Favorite Tool.
-          </h2>
-          <p className="text-on-surface-variant text-lg max-w-xl mx-auto mb-10">
-            Browse the full index of curated open-source software — filtered by platform,
-            type, and what actually matters.
-          </p>
-          <Link href="/tools">
-            <button className="group px-8 py-4 rounded-full bg-primary text-on-primary font-bold hover:bg-primary-fixed shadow-lg shadow-primary/20 hover-lift">
-              Explore All Tools
-              <span className="inline-block ml-2 group-hover:translate-x-1 transition-transform">→</span>
-            </button>
-          </Link>
-          <Link
-            href="/tools/submit"
-            className="group inline-flex items-center gap-1.5 mt-4 font-label-sm text-sm text-on-surface-variant hover:text-on-surface transition-colors"
-          >
-            <span className="material-symbols-outlined text-[16px]">add_circle</span>
-            Know a great tool? Submit it
-            <span className="group-hover:translate-x-0.5 transition-transform">→</span>
-          </Link>
-        </div>
-      </section>
+          <div className="relative z-10 max-w-3xl mx-auto text-center">
+            <h2 className="text-4xl md:text-6xl font-black text-white tracking-tight leading-[1.05] mb-6">
+              Find Your Next
+              <br />
+              Favorite Tool.
+            </h2>
+            <p className="text-on-surface-variant text-lg max-w-xl mx-auto mb-10">
+              Browse the full index of curated open-source software — filtered by platform,
+              type, and what actually matters.
+            </p>
+            <Link href="/tools">
+              <button className="group px-8 py-4 rounded-full bg-primary text-on-primary font-bold hover:bg-primary-fixed shadow-lg shadow-primary/20 hover-lift">
+                Explore All Tools
+                <span className="inline-block ml-2 group-hover:translate-x-1 transition-transform">→</span>
+              </button>
+            </Link>
+            <Link
+              href="/tools/submit"
+              className="group inline-flex items-center gap-1.5 mt-4 font-label-sm text-sm text-on-surface-variant hover:text-on-surface transition-colors"
+            >
+              <span className="material-symbols-outlined text-[16px]">add_circle</span>
+              Know a great tool? Submit it
+              <span className="group-hover:translate-x-0.5 transition-transform">→</span>
+            </Link>
+          </div>
+        </section>
+      </ScrollFadeSection>
 
     </main>
     </ToolFilterProvider>

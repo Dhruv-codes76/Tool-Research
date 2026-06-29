@@ -478,13 +478,9 @@ export async function getPendingSubmissions() {
   return prisma.tool.findMany({
     where: { status: 'PENDING' },
     orderBy: { createdAt: 'desc' },
-    select: {
-      id: true,
-      name: true,
-      description: true,
-      repoUrl: true,
-      submittedByEmail: true,
-      createdAt: true,
+    include: {
+      platforms: true,
+      toolTypes: true,
     },
   });
 }
@@ -494,12 +490,47 @@ export async function getPendingSubmissions() {
  * Sets status → DRAFT so the admin can enrich details before publishing live.
  * Sends an approval email to the submitter (best-effort, never throws).
  */
-export async function approveSubmission(toolId: string) {
+export async function approveSubmission(
+  toolId: string,
+  editedData?: { 
+    name: string; 
+    description: string; 
+    repoUrl: string; 
+    websiteUrl: string | null;
+    aboutText?: string | null;
+    heroImageUrl?: string | null;
+    galleryImages?: string | null;
+    features?: string | null;
+    installCommand?: string | null;
+    license?: string | null;
+    version?: string | null;
+    since?: string | null;
+    downloadUrl?: string | null;
+  }
+) {
   const admin = await requireAdmin();
+
+  const dataToUpdate: Record<string, any> = { status: 'ACTIVE' };
+  if (editedData) {
+    dataToUpdate.name = editedData.name;
+    dataToUpdate.description = editedData.description;
+    dataToUpdate.repoUrl = editedData.repoUrl;
+    dataToUpdate.websiteUrl = editedData.websiteUrl;
+    
+    if (editedData.aboutText !== undefined) dataToUpdate.aboutText = editedData.aboutText;
+    if (editedData.heroImageUrl !== undefined) dataToUpdate.heroImageUrl = editedData.heroImageUrl;
+    if (editedData.galleryImages !== undefined) dataToUpdate.galleryImages = editedData.galleryImages;
+    if (editedData.features !== undefined) dataToUpdate.features = editedData.features;
+    if (editedData.installCommand !== undefined) dataToUpdate.installCommand = editedData.installCommand;
+    if (editedData.license !== undefined) dataToUpdate.license = editedData.license;
+    if (editedData.version !== undefined) dataToUpdate.version = editedData.version;
+    if (editedData.since !== undefined) dataToUpdate.since = editedData.since;
+    if (editedData.downloadUrl !== undefined) dataToUpdate.downloadUrl = editedData.downloadUrl;
+  }
 
   const tool = await prisma.tool.update({
     where: { id: toolId },
-    data: { status: 'DRAFT' },
+    data: dataToUpdate,
   });
 
   // Fire-and-forget email — captured in a void so the action never awaits it
@@ -513,13 +544,15 @@ export async function approveSubmission(toolId: string) {
     targetType: 'Tool',
     targetId: tool.id,
     targetLabel: tool.name,
-    metadata: { submittedByEmail: tool.submittedByEmail },
+    metadata: { submittedByEmail: tool.submittedByEmail, edited: !!editedData },
   });
 
   revalidatePath('/admin/submissions');
   revalidatePath('/admin/tools');
+  revalidatePath('/');
+  revalidatePath('/tools');
 
-  return { editUrl: `/admin/tools/${tool.id}/edit` };
+  return { success: true };
 }
 
 /**
