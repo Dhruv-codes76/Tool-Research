@@ -47,7 +47,7 @@ model ToolType {
 model Tool {
   id          String   @id @default(cuid())
   name        String
-  slug        String   
+  slug        String?   
   description String
   repoUrl     String   @unique
   imageUrl    String?
