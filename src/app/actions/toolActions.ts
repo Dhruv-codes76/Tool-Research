@@ -4,21 +4,28 @@ import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { getRepoStats, parseGitHubUrl, detectCategories } from "@/lib/github";
 import { logAudit } from "@/lib/audit-log";
+import { withErrorHandling, AppError } from "@/lib/errors";
 
 /**
  * Server action to submit a new tool.
  */
 export async function submitTool(formData: FormData, userId: string, submitterEmail: string) {
+  return withErrorHandling(async () => {
   const name = formData.get("name") as string;
   const description = formData.get("description") as string;
   const repoUrl = formData.get("repoUrl") as string;
+  let slug = formData.get("slug") as string;
   const websiteUrl = (formData.get("websiteUrl") as string) || '';
   const platformsInput = formData.get("platforms") as string; // Comma-separated
   const toolTypesInput = formData.get("toolTypes") as string; // Comma-separated
 
   // Validate required fields
   if (!name || !description || !repoUrl) {
-    throw new Error("Required fields are missing.");
+    throw new AppError("Required fields are missing.", "VALIDATION_ERROR");
+  }
+  
+  if (!slug) {
+    slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
   }
 
   // Fetch live stats from GitHub
@@ -63,24 +70,25 @@ export async function submitTool(formData: FormData, userId: string, submitterEm
   const tool = await prisma.tool.create({
     data: {
       name,
+      slug,
       description,
       repoUrl,
-      websiteUrl: websiteUrl || undefined,
-      userId,
-      ...stats,
+      websiteUrl,
       status: 'PENDING',
+      userId,
       submittedByEmail: submitterEmail,
+      ...stats,
       lastFetchedAt: new Date(),
       platforms: {
-        connectOrCreate: platformNames.map(name => ({
-          where: { name },
-          create: { name },
+        connectOrCreate: platformNames.map(n => ({
+          where: { name: n },
+          create: { name: n },
         })),
       },
       toolTypes: {
-        connectOrCreate: toolTypeNames.map(name => ({
-          where: { name },
-          create: { name },
+        connectOrCreate: toolTypeNames.map(n => ({
+          where: { name: n },
+          create: { name: n },
         })),
       },
     },
@@ -101,6 +109,7 @@ export async function submitTool(formData: FormData, userId: string, submitterEm
 
   revalidatePath("/");
   return tool;
+  });
 }
 
 /**
@@ -191,6 +200,7 @@ export async function refreshToolStats(toolId: string) {
 import { ToolAdminFormData } from '@/app/actions/adminActions';
 
 export async function submitFullTool(data: ToolAdminFormData, userId: string, submitterEmail: string) {
+  return withErrorHandling(async () => {
   let stats = { stars: 0, forks: 0, issues: 0 };
   const githubInfo = parseGitHubUrl(data.repoUrl);
   
@@ -245,6 +255,7 @@ export async function submitFullTool(data: ToolAdminFormData, userId: string, su
 
   revalidatePath("/");
   return tool;
+  });
 }
 
 import { isLikelyJunkAsset, guessAssetLabel, guessAssetOsArch, DownloadAsset } from '@/lib/install';

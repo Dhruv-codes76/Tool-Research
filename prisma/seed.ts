@@ -111,6 +111,7 @@ async function main() {
       },
       create: {
         ...toolInfo,
+        slug: toolInfo.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
         userId: user.id,
         status: 'ACTIVE',
         platforms: {

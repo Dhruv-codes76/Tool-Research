@@ -44,6 +44,7 @@ function mapToolToCard(dbTool: ToolWithCategories, index: number) {
 
   return {
     id: dbTool.id,
+    slug: dbTool.slug,
     name: dbTool.name,
     stars: formatStars(dbTool.stars),
     description: dbTool.description,

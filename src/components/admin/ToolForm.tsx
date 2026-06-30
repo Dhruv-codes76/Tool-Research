@@ -15,6 +15,10 @@ import {
 
 type Feature = { title: string; description: string; icon: string };
 
+function generateSlug(name: string): string {
+  return name.toLowerCase().replace(/[^a-z0-9-]/g, '').replace(/(^-|-$)+/g, '');
+}
+
 export function ToolForm({ initialData, availablePlatforms = [], availableToolTypes = [] }: { 
   initialData?: any;
   availablePlatforms?: string[];
@@ -127,6 +131,7 @@ export function ToolForm({ initialData, availablePlatforms = [], availableToolTy
   const [formData, setFormData] = useState<ToolAdminFormData>({
     repoUrl: initialData?.repoUrl || '',
     name: initialData?.name || '',
+    slug: initialData?.slug || '',
     description: initialData?.description || '',
     stars: initialData?.stars || 0,
     forks: initialData?.forks || 0,
@@ -228,6 +233,7 @@ export function ToolForm({ initialData, availablePlatforms = [], availableToolTy
     try {
       const payload: ToolAdminFormData = {
         ...formData,
+        slug: formData.slug || generateSlug(formData.name),
         status,
         features: JSON.stringify(features),
         installCommand: JSON.stringify(
@@ -238,16 +244,27 @@ export function ToolForm({ initialData, availablePlatforms = [], availableToolTy
         ),
       };
 
+      let result;
       if (initialData?.id) {
-        await updateTool(initialData.id, payload);
+        result = await updateTool(initialData.id, payload);
       } else {
-        await createTool(payload);
+        result = await createTool(payload);
+      }
+      
+      if (!result.success) {
+        if (result.error.code === 'SLUG_TAKEN') {
+          alert("The URL slug is already taken. Please change it.");
+        } else {
+          console.error("Failed to save tool:", result.error);
+          alert(result.error.message || "Error saving tool.");
+        }
+        return;
       }
       
       router.push('/admin/tools');
     } catch (error) {
-      console.error("Failed to save tool", error);
-      alert("Error saving tool. See console.");
+      console.error("Unexpected error saving tool:", error);
+      alert("An unexpected error occurred. See console.");
     } finally {
       setIsSubmitting(false);
     }
@@ -316,6 +333,20 @@ export function ToolForm({ initialData, availablePlatforms = [], availableToolTy
               className="w-full bg-surface-container-low border border-outline-variant/30 rounded-lg px-4 py-2 text-on-surface focus:border-primary font-body-base text-sm"
               value={formData.name}
               onChange={e => setFormData({...formData, name: e.target.value})}
+            />
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <label className="font-label-sm text-[11px] text-on-surface-variant uppercase tracking-wider">URL Slug</label>
+            <input 
+              type="text" 
+              placeholder="my-awesome-tool"
+              className="w-full bg-surface-container-low border border-outline-variant/30 rounded-lg px-4 py-2 text-on-surface focus:border-primary font-body-base text-sm"
+              value={formData.slug}
+              onChange={(e) => {
+                const val = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '');
+                setFormData({...formData, slug: val});
+              }}
             />
           </div>
 

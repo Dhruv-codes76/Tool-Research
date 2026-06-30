@@ -16,6 +16,7 @@ export interface CardTool {
   icon: string;
   color: string;
   logoUrl?: string | null;
+  slug: string;
 }
 
 // The four filters the homepage exposes. "All Tools" is the reset state.

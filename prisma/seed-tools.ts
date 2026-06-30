@@ -57,6 +57,7 @@ async function main() {
       update: { stars: toolInfo.stars, status: 'ACTIVE' },
       create: {
         ...toolInfo,
+        slug: toolInfo.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
         userId: user.id,
         status: 'ACTIVE',
         platforms: { connectOrCreate: platforms.map((name) => ({ where: { name }, create: { name } })) },

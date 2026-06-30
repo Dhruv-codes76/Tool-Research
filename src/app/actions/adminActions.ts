@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth-guard";
 import { logAudit } from "@/lib/audit-log";
 import { revalidatePath } from "next/cache";
+import { withErrorHandling } from "@/lib/errors";
 import {
   guessAssetLabel,
   guessAssetOsArch,
@@ -98,88 +99,93 @@ export type ToolAdminFormData = {
   websiteUrl: string;
   downloadUrl: string;
   downloadAssets: string; // JSON string of curated DownloadAsset[]
+  slug: string;
   platforms: string[]; // array of names
   toolTypes: string[]; // array of names
 };
 
 export async function createTool(data: ToolAdminFormData) {
-  const admin = await requireAdmin();
-  
-  const { platforms, toolTypes, ...toolData } = data;
+  return withErrorHandling(async () => {
+    const admin = await requireAdmin();
+    
+    const { platforms, toolTypes, ...toolData } = data;
 
-  const tool = await prisma.tool.create({
-    data: {
-      ...toolData,
-      userId: admin.id,
-      platforms: {
-        connectOrCreate: platforms.map(name => ({
-          where: { name },
-          create: { name },
-        })),
-      },
-      toolTypes: {
-        connectOrCreate: toolTypes.map(name => ({
-          where: { name },
-          create: { name },
-        })),
-      },
-    }
+    const tool = await prisma.tool.create({
+      data: {
+        ...toolData,
+        userId: admin.id,
+        platforms: {
+          connectOrCreate: platforms.map(name => ({
+            where: { name },
+            create: { name },
+          })),
+        },
+        toolTypes: {
+          connectOrCreate: toolTypes.map(name => ({
+            where: { name },
+            create: { name },
+          })),
+        },
+      }
+    });
+
+    await logAudit({
+      action: "tool.create",
+      actor: admin,
+      targetType: "Tool",
+      targetId: tool.id,
+      targetLabel: tool.name,
+      metadata: { repoUrl: tool.repoUrl, status: tool.status, platforms, toolTypes },
+    });
+
+    revalidatePath("/admin/tools");
+    revalidatePath("/tools");
+    return tool;
   });
-
-  await logAudit({
-    action: "tool.create",
-    actor: admin,
-    targetType: "Tool",
-    targetId: tool.id,
-    targetLabel: tool.name,
-    metadata: { repoUrl: tool.repoUrl, status: tool.status, platforms, toolTypes },
-  });
-
-  revalidatePath("/admin/tools");
-  revalidatePath("/tools");
-  return tool;
 }
 
 export async function updateTool(id: string, data: ToolAdminFormData) {
-  const admin = await requireAdmin();
+  return withErrorHandling(async () => {
+    const admin = await requireAdmin();
 
-  const { platforms, toolTypes, ...toolData } = data;
+    const { platforms, toolTypes, ...toolData } = data;
 
-  // We need to overwrite platforms and toolTypes. Prisma 'set' replaces existing connections.
-  const tool = await prisma.tool.update({
-    where: { id },
-    data: {
-      ...toolData,
-      platforms: {
-        set: [], // Clear existing
-        connectOrCreate: platforms.map(name => ({
-          where: { name },
-          create: { name },
-        })),
-      },
-      toolTypes: {
-        set: [], // Clear existing
-        connectOrCreate: toolTypes.map(name => ({
-          where: { name },
-          create: { name },
-        })),
-      },
-    }
+    // We need to overwrite platforms and toolTypes. Prisma 'set' replaces existing connections.
+    const tool = await prisma.tool.update({
+      where: { id },
+      data: {
+        ...toolData,
+        platforms: {
+          set: [], // Clear existing
+          connectOrCreate: platforms.map(name => ({
+            where: { name },
+            create: { name },
+          })),
+        },
+        toolTypes: {
+          set: [], // Clear existing
+          connectOrCreate: toolTypes.map(name => ({
+            where: { name },
+            create: { name },
+          })),
+        },
+      }
+    });
+
+    await logAudit({
+      action: "tool.update",
+      actor: admin,
+      targetType: "Tool",
+      targetId: tool.id,
+      targetLabel: tool.name,
+      metadata: { status: tool.status, platforms, toolTypes },
+    });
+
+    revalidatePath("/admin/tools");
+    revalidatePath("/tools");
+    revalidatePath(`/tools/${id}`);
+    return tool;
   });
-
-  await logAudit({
-    action: "tool.update",
-    actor: admin,
-    targetType: "Tool",
-    targetId: tool.id,
-    targetLabel: tool.name,
-    metadata: { status: tool.status, platforms, toolTypes },
-  });
-
-  revalidatePath("/admin/tools");
-  revalidatePath("/tools");
-  revalidatePath(`/tools/${id}`);
-  return tool;
 }
 
 export async function getCategories() {

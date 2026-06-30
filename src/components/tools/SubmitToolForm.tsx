@@ -16,6 +16,8 @@ import {
 
 type Feature = { title: string; description: string; icon: string };
 
+const generateSlug = (text: string) => text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
+
 export function SubmitToolForm({ userId, userEmail, availablePlatforms = [], availableToolTypes = [] }: { 
   userId: string;
   userEmail: string;
@@ -32,6 +34,7 @@ export function SubmitToolForm({ userId, userEmail, availablePlatforms = [], ava
   const [isDraggingLogo, setIsDraggingLogo] = useState(false);
   const [isDraggingGallery, setIsDraggingGallery] = useState<Record<number, boolean>>({});
   const [galleryTab, setGalleryTab] = useState<'upload' | 'link'>('upload');
+  const [slugError, setSlugError] = useState('');
 
   const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -115,6 +118,7 @@ export function SubmitToolForm({ userId, userEmail, availablePlatforms = [], ava
   const [formData, setFormData] = useState<ToolAdminFormData>({
     repoUrl: '',
     name: '',
+    slug: '',
     description: '',
     stars: 0,
     forks: 0,
@@ -168,6 +172,7 @@ export function SubmitToolForm({ userId, userEmail, availablePlatforms = [], ava
       setFormData(prev => ({
         ...prev,
         name: data.name || prev.name,
+        slug: (prev.slug === generateSlug(prev.name) || !prev.slug) && data.name ? generateSlug(data.name) : prev.slug,
         description: data.description || prev.description,
         stars: data.stars,
         forks: data.forks,
@@ -207,9 +212,11 @@ export function SubmitToolForm({ userId, userEmail, availablePlatforms = [], ava
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     setIsSubmitting(true);
+    setSlugError('');
     try {
       const payload: ToolAdminFormData = {
         ...formData,
+        slug: formData.slug || generateSlug(formData.name),
         status: 'PENDING',
         features: JSON.stringify(features),
         installCommand: JSON.stringify(
@@ -220,12 +227,23 @@ export function SubmitToolForm({ userId, userEmail, availablePlatforms = [], ava
         ),
       };
 
-      await submitFullTool(payload, userId, userEmail);
+      const result = await submitFullTool(payload, userId, userEmail);
+      
+      if (!result.success) {
+        if (result.error.code === "SLUG_TAKEN") {
+          setSlugError(result.error.message || "A tool with this slug already exists.");
+          alert(result.error.message || "The URL slug is already taken. Please change it.");
+        } else {
+          console.error("Failed to save tool:", result.error);
+          alert(result.error.message || "Error saving tool.");
+        }
+        return;
+      }
       
       router.push('/tools?submitted=true');
-    } catch (error) {
-      console.error("Failed to save tool", error);
-      alert("Error saving tool. See console.");
+    } catch (error: any) {
+      console.error("Unexpected error saving tool:", error);
+      alert("An unexpected error occurred. See console.");
     } finally {
       setIsSubmitting(false);
     }
@@ -281,8 +299,33 @@ export function SubmitToolForm({ userId, userEmail, availablePlatforms = [], ava
               type="text" 
               className="w-full bg-surface-container-low border border-outline-variant/30 rounded-lg px-4 py-2 text-on-surface focus:border-primary font-body-base text-sm"
               value={formData.name}
-              onChange={e => setFormData({...formData, name: e.target.value})}
+              onChange={e => {
+                const newName = e.target.value;
+                const oldAutoSlug = generateSlug(formData.name);
+                const isAuto = formData.slug === oldAutoSlug || formData.slug === '';
+                setFormData({
+                  ...formData,
+                  name: newName,
+                  slug: isAuto ? generateSlug(newName) : formData.slug
+                });
+              }}
             />
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <label className="font-label-sm text-[11px] text-on-surface-variant uppercase tracking-wider">URL Slug</label>
+            <input
+              type="text"
+              placeholder="my-awesome-tool"
+              className={`w-full bg-surface-container-low border ${slugError ? 'border-error' : 'border-outline-variant/30'} rounded-lg px-4 py-2 text-on-surface focus:border-primary font-body-base text-sm`}
+              value={formData.slug}
+              onChange={(e) => {
+                const val = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '');
+                setFormData({...formData, slug: val});
+                if (slugError) setSlugError('');
+              }}
+            />
+            {slugError && <p className="text-[11px] text-error mt-1">{slugError}</p>}
           </div>
 
           <div className="flex flex-col gap-2">

@@ -14,6 +14,7 @@ interface ToolItem {
   icon: string;
   color: string;
   logoUrl?: string | null;
+  slug: string;
 }
 
 interface ToolsListClientProps {
