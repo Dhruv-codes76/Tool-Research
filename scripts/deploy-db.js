@@ -23,6 +23,16 @@ try {
     console.log("Note: Resolve command skipped or already applied.");
   }
 
+  console.log("🩹 Resolving remove_slug migration via CLI so it skips DROP COLUMN...");
+  try {
+    execSync('npx prisma migrate resolve --applied 20260701183330_remove_slug', {
+      env: { ...process.env, DATABASE_URL: directUrl }, 
+      stdio: 'inherit'
+    });
+  } catch (e) {
+    console.log("Note: Resolve command skipped or already applied.");
+  }
+
   // 3. Run Migrations using the Direct Connection (Required for schema changes)
   console.log("📦 Running prisma migrate deploy...");
   execSync('npx prisma migrate deploy', { 
