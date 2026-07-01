@@ -12,7 +12,18 @@ if (!directUrl) {
 }
 
 try {
-  // 2. Run Migrations using the Direct Connection (Required for schema changes)
+  // 2. Resolve failed migration (P3018) via Prisma CLI before deploying
+  console.log("🩹 Resolving stuck migration 20260630182811_slug_optional via CLI...");
+  try {
+    execSync('npx prisma migrate resolve --rolled-back 20260630182811_slug_optional', {
+      env: { ...process.env, DATABASE_URL: directUrl }, 
+      stdio: 'inherit'
+    });
+  } catch (e) {
+    console.log("Note: Resolve command skipped or already applied.");
+  }
+
+  // 3. Run Migrations using the Direct Connection (Required for schema changes)
   console.log("📦 Running prisma migrate deploy...");
   execSync('npx prisma migrate deploy', { 
     env: { ...process.env, DATABASE_URL: directUrl }, 
