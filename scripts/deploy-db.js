@@ -15,7 +15,7 @@ try {
   // 2. Resolve failed migration (P3018) via Prisma CLI before deploying
   console.log("🩹 Resolving stuck migration 20260630182811_slug_optional via CLI...");
   try {
-    execSync('npx prisma migrate resolve --rolled-back 20260630182811_slug_optional', {
+    execSync('npx prisma migrate resolve --applied 20260630182811_slug_optional', {
       env: { ...process.env, DATABASE_URL: directUrl }, 
       stdio: 'inherit'
     });
