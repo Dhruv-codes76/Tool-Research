@@ -21,7 +21,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       select: { id: true, slug: true, updatedAt: true },
     });
     toolRoutes = tools.map((t) => ({
-      url: `${SITE_URL}/tools/${t.slug}`,
+      url: `${SITE_URL}/tools/${t.slug || t.id}`,
       lastModified: t.updatedAt,
       changeFrequency: "weekly",
       priority: 0.8,
