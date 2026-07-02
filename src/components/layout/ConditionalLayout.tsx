@@ -23,7 +23,7 @@ export function ConditionalLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
       <TopNavBar />
-      <main className="min-h-screen">{children}</main>
+      <main className="flex-1 flex flex-col w-full">{children}</main>
       <BottomNavBar />
       <Footer />
     </>

@@ -12,11 +12,9 @@ export const ScrollFadeSection = ({
 }) => {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 40, filter: 'blur(8px)' }}
-      whileInView={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-      exit={{ opacity: 0, y: -40, filter: 'blur(8px)' }}
-      // By omitting `once: true`, the animation will re-trigger both when scrolling down and up.
-      viewport={{ amount: "some", margin: "-15% 0px -15% 0px" }}
+      initial={{ opacity: 0, filter: 'blur(8px)' }}
+      whileInView={{ opacity: 1, filter: 'blur(0px)' }}
+      viewport={{ amount: "some", margin: "-10% 0px -10% 0px", once: true }}
       transition={{ duration: 0.8, ease: "easeOut" }}
       className={className}
     >

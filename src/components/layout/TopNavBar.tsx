@@ -26,6 +26,7 @@ function getAvatarColor(identifier: string) {
 
 import { supabase } from '@/lib/supabase';
 import { logAuthEvent } from '@/app/actions/auditActions';
+import { checkUserRole } from '@/app/actions/authActions';
 import { useRouter } from 'next/navigation';
 import { LogOut, User, Info, FileText, Menu, X, LayoutDashboard } from 'lucide-react';
 import { type Session } from '@supabase/supabase-js';
@@ -41,29 +42,17 @@ const TopNavBar = () => {
   const menuRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
-  const checkRole = async (email: string) => {
-    const { data } = await supabase
-      .from('User')
-      .select('role, isPrimaryAdmin')
-      .eq('email', email)
-      .single();
-
-    if (data && data.role === 'ADMIN') {
-      setIsAdmin(true);
-      if (data.isPrimaryAdmin) {
-        setIsSuperAdmin(true);
-      }
-    } else {
-      setIsAdmin(false);
-      setIsSuperAdmin(false);
-    }
+  const checkRole = async () => {
+    const { isAdmin, isSuperAdmin } = await checkUserRole();
+    setIsAdmin(isAdmin);
+    setIsSuperAdmin(isSuperAdmin);
   };
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       if (session?.user?.email) {
-        checkRole(session.user.email);
+        checkRole();
       } else {
         setIsAdmin(false);
         setIsSuperAdmin(false);
@@ -75,7 +64,7 @@ const TopNavBar = () => {
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       if (session?.user?.email) {
-        checkRole(session.user.email);
+        checkRole();
       } else {
         setIsAdmin(false);
         setIsSuperAdmin(false);

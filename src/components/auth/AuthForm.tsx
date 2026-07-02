@@ -175,6 +175,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({ mode }) => {
         // Best-effort audit trail; never block the redirect on it.
         void logAuthEvent('auth.login', data.session?.access_token).catch(() => {});
         router.push('/');
+        router.refresh();
       } else if (isForgotPassword) {
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
           redirectTo: `${window.location.origin}/auth/callback?next=/update-password`,
@@ -190,10 +191,10 @@ export const AuthForm: React.FC<AuthFormProps> = ({ mode }) => {
           // Promote the pending invite to an active admin, then enter the panel.
           await acceptInvite();
           setError('Account activated! Redirecting to the admin panel...');
-          setTimeout(() => router.push('/admin'), 1500);
+          setTimeout(() => { router.push('/admin'); router.refresh(); }, 1500);
         } else {
           setError('Password updated successfully! Redirecting...');
-          setTimeout(() => router.push('/login'), 2000);
+          setTimeout(() => { router.push('/login'); router.refresh(); }, 2000);
         }
       } else {
         const { error } = await supabase.auth.signUp({
@@ -662,4 +663,3 @@ export const AuthForm: React.FC<AuthFormProps> = ({ mode }) => {
     </div>
   );
 };
-

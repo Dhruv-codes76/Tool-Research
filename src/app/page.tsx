@@ -64,7 +64,7 @@ export default async function HomePage() {
 
   return (
     <ToolFilterProvider>
-    <main className="flex-grow overflow-x-clip">
+    <main className="flex-grow flex flex-col w-full">
       {/* Hero Search Section — premium glow + bold display, mirroring the About page */}
       <section className="relative overflow-hidden px-gutter pt-32 pb-20 md:pt-40 md:pb-28">
         {/* Ambient radial glow */}
