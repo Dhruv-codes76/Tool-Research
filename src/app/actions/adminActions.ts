@@ -76,6 +76,26 @@ export async function deleteTool(id: string) {
   revalidatePath("/tools");
 }
 
+export async function restoreTool(id: string) {
+  const admin = await requireAdmin();
+
+  const tool = await prisma.tool.update({
+    where: { id },
+    data: { status: 'DRAFT' } // Restore as DRAFT for safety
+  });
+
+  await logAudit({
+    action: "tool.restore",
+    actor: admin,
+    targetType: "Tool",
+    targetId: id,
+    targetLabel: tool.name,
+  });
+
+  revalidatePath("/admin/tools");
+  revalidatePath("/tools");
+}
+
 export type ToolAdminFormData = {
   name: string;
   description: string;

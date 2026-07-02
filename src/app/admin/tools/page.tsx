@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { getAdminStats, getAllToolsAdmin } from '@/app/actions/adminActions';
 import { Tool, Platform, ToolType } from '@prisma/client';
 import { DeleteToolButton } from '@/components/admin/DeleteToolButton';
+import { RestoreToolButton } from '@/components/admin/RestoreToolButton';
 
 type ToolWithCategories = Tool & { platforms: Platform[], toolTypes: ToolType[] };
 export default async function ManageToolsPage() {
@@ -118,10 +119,15 @@ export default async function ManageToolsPage() {
                           <span className="w-2 h-2 rounded-full bg-[#FBBF24]"></span>
                           <span className="text-[#FBBF24]">Draft</span>
                         </>
+                      ) : tool.status === 'DELETED' ? (
+                        <>
+                          <span className="w-2 h-2 rounded-full bg-error"></span>
+                          <span className="text-error">Deleted</span>
+                        </>
                       ) : (
                         <>
                           <span className="w-2 h-2 rounded-full bg-outline-variant"></span>
-                          <span className="text-on-surface-variant">Hidden</span>
+                          <span className="text-on-surface-variant capitalize">{tool.status.toLowerCase()}</span>
                         </>
                       )}
                     </div>
@@ -131,7 +137,11 @@ export default async function ManageToolsPage() {
                       <Link href={`/admin/tools/${tool.id}/edit`} className="p-1.5 hover:text-primary transition-colors hover:bg-surface-container rounded-md">
                         <span className="material-symbols-outlined text-[18px]">edit</span>
                       </Link>
-                      <DeleteToolButton toolId={tool.id} toolName={tool.name} />
+                      {tool.status === 'DELETED' ? (
+                        <RestoreToolButton toolId={tool.id} toolName={tool.name} />
+                      ) : (
+                        <DeleteToolButton toolId={tool.id} toolName={tool.name} />
+                      )}
                     </div>
                   </td>
                 </tr>
