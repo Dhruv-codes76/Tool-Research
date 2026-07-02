@@ -27,7 +27,7 @@ function getAvatarColor(identifier: string) {
 import { supabase } from '@/lib/supabase';
 import { logAuthEvent } from '@/app/actions/auditActions';
 import { useRouter } from 'next/navigation';
-import { LogOut, User, Info, FileText, Menu, X } from 'lucide-react';
+import { LogOut, User, Info, FileText, Menu, X, LayoutDashboard } from 'lucide-react';
 import { type Session } from '@supabase/supabase-js';
 
 const TopNavBar = () => {
@@ -42,12 +42,12 @@ const TopNavBar = () => {
 
   const checkRole = async (userId: string) => {
     const { data } = await supabase
-      .from('profiles')
+      .from('User')
       .select('role')
       .eq('id', userId)
       .single();
 
-    if (data && data.role === 'admin') {
+    if (data && data.role === 'ADMIN') {
       setIsAdmin(true);
     } else {
       setIsAdmin(false);
@@ -198,14 +198,28 @@ const TopNavBar = () => {
                   </div>
 
                   {/* Role and Status Label */}
-                  <div className="px-4 py-3 border-b border-outline-variant/20 flex items-center justify-between bg-surface">
-                     <span className="text-xs tracking-widest text-on-surface-variant font-mono uppercase font-semibold">
-                        {isAdmin ? 'Admin' : 'Curated Open Source'}
-                     </span>
-                  </div>
+                  {isAdmin && (
+                    <div className="px-4 py-3 border-b border-outline-variant/20 flex items-center justify-between bg-surface">
+                       <span className="text-xs tracking-widest text-on-surface-variant font-mono uppercase font-semibold">
+                          Admin
+                       </span>
+                    </div>
+                  )}
 
                   {/* Actions */}
                   <div className="p-2">
+                    {isAdmin && (
+                      <div className="border-b border-white/5 mb-2 pb-2">
+                        <Link
+                          href="/admin"
+                          onClick={() => setMenuOpen(false)}
+                          className="relative flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm font-medium text-on-surface-variant hover:text-white hover:bg-white/10 transition-all duration-300 overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-r before:from-white/5 before:to-transparent before:opacity-0 hover:before:opacity-100"
+                        >
+                          <LayoutDashboard size={18} />
+                          Dashboard
+                        </Link>
+                      </div>
+                    )}
                     {/* Mobile Links */}
                     <div className="md:hidden border-b border-white/5 mb-2 pb-2">
                       <Link
