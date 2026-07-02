@@ -20,7 +20,7 @@ export async function getAdminStats() {
   await requireAdmin();
   
   const [total, active, pending] = await Promise.all([
-    prisma.tool.count({ where: { status: { not: 'DELETED' } } }),
+    prisma.tool.count(),
     prisma.tool.count({ where: { status: 'ACTIVE' } }),
     prisma.tool.count({ where: { status: 'PENDING' } }),
   ]);
