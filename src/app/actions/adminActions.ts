@@ -110,6 +110,18 @@ export async function createTool(data: ToolAdminFormData) {
     
     const { platforms, toolTypes, ...toolData } = data;
 
+    // Backend duplicate blocks
+    if (!(await checkSlugUnique(toolData.slug))) {
+      throw new Error(`The slug "${toolData.slug}" is already taken.`);
+    }
+    if (toolData.websiteUrl || toolData.repoUrl) {
+      const urlToCheck = toolData.websiteUrl || toolData.repoUrl;
+      const existing = await checkUrlExists(urlToCheck);
+      if (existing) {
+        throw new Error(`The URL is already used by another tool (${existing.name}).`);
+      }
+    }
+
     const tool = await prisma.tool.create({
       data: {
         ...toolData,
@@ -150,6 +162,18 @@ export async function updateTool(id: string, data: ToolAdminFormData) {
 
     const { platforms, toolTypes, ...toolData } = data;
 
+    // Backend duplicate blocks
+    if (!(await checkSlugUnique(toolData.slug, id))) {
+      throw new Error(`The slug "${toolData.slug}" is already taken.`);
+    }
+    if (toolData.websiteUrl || toolData.repoUrl) {
+      const urlToCheck = toolData.websiteUrl || toolData.repoUrl;
+      const existing = await checkUrlExists(urlToCheck, id);
+      if (existing) {
+        throw new Error(`The URL is already used by another tool (${existing.name}).`);
+      }
+    }
+
     // We need to overwrite platforms and toolTypes. Prisma 'set' replaces existing connections.
     const tool = await prisma.tool.update({
       where: { id },
@@ -186,6 +210,35 @@ export async function updateTool(id: string, data: ToolAdminFormData) {
     revalidatePath(`/tools/${id}`);
     return tool;
   });
+}
+
+export async function checkSlugUnique(slug: string, excludeId?: string) {
+  await requireAdmin();
+  const whereClause: any = { slug };
+  if (excludeId) {
+    whereClause.id = { not: excludeId };
+  }
+  const count = await prisma.tool.count({ where: whereClause });
+  return count === 0;
+}
+
+export async function checkUrlExists(url: string, excludeId?: string) {
+  await requireAdmin();
+  const whereClause: any = {
+    OR: [
+      { websiteUrl: url },
+      { repoUrl: url }
+    ],
+    status: { not: 'DELETED' }
+  };
+  if (excludeId) {
+    whereClause.id = { not: excludeId };
+  }
+  const existing = await prisma.tool.findFirst({
+    where: whereClause,
+    select: { name: true, slug: true }
+  });
+  return existing;
 }
 
 export async function getCategories() {

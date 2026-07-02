@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { createTool, updateTool, fetchGitHubMetadata, ToolAdminFormData } from '@/app/actions/adminActions';
+import { createTool, updateTool, fetchGitHubMetadata, checkSlugUnique, checkUrlExists, ToolAdminFormData } from '@/app/actions/adminActions';
 import { uploadToolImage } from '@/lib/supabase';
 import { InstallSection } from '@/components/tools/InstallSection';
 import {
@@ -34,6 +34,11 @@ export function ToolForm({ initialData, availablePlatforms = [], availableToolTy
   const [isDraggingLogo, setIsDraggingLogo] = useState(false);
   const [isDraggingGallery, setIsDraggingGallery] = useState<Record<number, boolean>>({});
   const [galleryTab, setGalleryTab] = useState<'upload' | 'link'>('upload');
+  const [slugStatus, setSlugStatus] = useState<'idle' | 'unvalidated' | 'checking' | 'available' | 'taken'>(
+    initialData?.slug ? 'available' : 'idle'
+  );
+  const [urlStatus, setUrlStatus] = useState<'idle' | 'checking' | 'taken'>('idle');
+  const [duplicateTool, setDuplicateTool] = useState<{name: string, slug: string} | null>(null);
 
   const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -155,6 +160,62 @@ export function ToolForm({ initialData, availablePlatforms = [], availableToolTy
     platforms: initialData?.platforms?.map((p: any) => p.name) || [],
     toolTypes: initialData?.toolTypes?.map((t: any) => t.name) || [],
   });
+
+  const validateSlug = async (slugToValidate: string) => {
+    if (!slugToValidate) {
+      setSlugStatus('idle');
+      return;
+    }
+    
+    if (initialData?.slug && slugToValidate === initialData.slug) {
+      setSlugStatus('available');
+      return;
+    }
+
+    setSlugStatus('checking');
+    try {
+      const isUnique = await checkSlugUnique(slugToValidate, initialData?.id);
+      setSlugStatus(isUnique ? 'available' : 'taken');
+    } catch (err) {
+      console.error('Slug check failed', err);
+      setSlugStatus('unvalidated');
+    }
+  };
+
+  useEffect(() => {
+    const urlToCheck = formData.websiteUrl || formData.repoUrl;
+    if (!urlToCheck) {
+      setUrlStatus('idle');
+      setDuplicateTool(null);
+      return;
+    }
+    
+    // Don't flag if it matches the initial data
+    if (initialData && (urlToCheck === initialData.websiteUrl || urlToCheck === initialData.repoUrl)) {
+      setUrlStatus('idle');
+      setDuplicateTool(null);
+      return;
+    }
+
+    setUrlStatus('checking');
+    const timer = setTimeout(async () => {
+      try {
+        const existingTool = await checkUrlExists(urlToCheck, initialData?.id);
+        if (existingTool) {
+          setUrlStatus('taken');
+          setDuplicateTool({ name: existingTool.name, slug: existingTool.slug ?? '' });
+        } else {
+          setUrlStatus('idle');
+          setDuplicateTool(null);
+        }
+      } catch (err) {
+        console.error('URL check failed', err);
+        setUrlStatus('idle');
+      }
+    }, 600);
+
+    return () => clearTimeout(timer);
+  }, [formData.websiteUrl, formData.repoUrl, initialData?.id, initialData?.websiteUrl, initialData?.repoUrl]);
 
   const handleFetch = async () => {
     if (!formData.repoUrl) return;
@@ -281,14 +342,14 @@ export function ToolForm({ initialData, availablePlatforms = [], availableToolTy
         <div className="flex items-center gap-3">
           <button 
             onClick={() => handleSubmit('DRAFT')}
-            disabled={isSubmitting}
+            disabled={isSubmitting || slugStatus === 'checking' || slugStatus === 'taken' || slugStatus === 'unvalidated' || !formData.slug || urlStatus === 'checking' || urlStatus === 'taken'}
             className="px-5 py-2.5 rounded-lg border border-outline-variant/30 text-on-surface hover:bg-surface-container transition-colors font-label-sm text-sm"
           >
             Save Draft
           </button>
           <button 
             onClick={() => handleSubmit('ACTIVE')}
-            disabled={isSubmitting}
+            disabled={isSubmitting || slugStatus === 'checking' || slugStatus === 'taken' || slugStatus === 'unvalidated' || !formData.slug || urlStatus === 'checking' || urlStatus === 'taken'}
             className="px-5 py-2.5 rounded-lg bg-primary-container text-on-primary-container hover:bg-primary transition-colors font-label-sm text-sm"
           >
             {isSubmitting ? 'Saving...' : 'Publish to Gallery'}
@@ -305,10 +366,20 @@ export function ToolForm({ initialData, availablePlatforms = [], availableToolTy
             <input 
               type="text" 
               placeholder="https://github.com/username/repository" 
-              className="w-full bg-surface-container-low border border-outline-variant/30 rounded-lg pl-12 pr-4 py-3 text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:border-primary transition-colors font-body-base text-sm"
+              className={`w-full bg-surface-container-low border rounded-lg pl-12 pr-4 py-3 text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none transition-colors font-body-base text-sm ${
+                urlStatus === 'taken' && formData.repoUrl
+                  ? 'border-yellow-500 focus:border-yellow-500 text-yellow-500'
+                  : 'border-outline-variant/30 focus:border-primary'
+              }`}
               value={formData.repoUrl}
               onChange={e => setFormData({...formData, repoUrl: e.target.value})}
             />
+            {urlStatus === 'checking' && formData.repoUrl && (
+               <span className="absolute -bottom-5 left-4 text-[10px] text-on-surface-variant italic">Checking URL...</span>
+            )}
+            {urlStatus === 'taken' && duplicateTool && formData.repoUrl && (
+               <span className="absolute -bottom-5 left-4 text-[10px] text-yellow-500 font-medium">⚠ This URL is already used by <a href={`/tools/${duplicateTool.slug}`} target="_blank" className="underline hover:text-yellow-400">{duplicateTool.name}</a>.</span>
+            )}
           </div>
           <button 
             onClick={handleFetch}
@@ -337,17 +408,57 @@ export function ToolForm({ initialData, availablePlatforms = [], availableToolTy
           </div>
 
           <div className="flex flex-col gap-2">
-            <label className="font-label-sm text-[11px] text-on-surface-variant uppercase tracking-wider">URL Slug</label>
+            <div className="flex justify-between items-center">
+              <label className="font-label-sm text-[11px] text-on-surface-variant uppercase tracking-wider">URL Slug</label>
+              <button
+                type="button"
+                onClick={() => {
+                  if (slugStatus === 'unvalidated') {
+                    validateSlug(formData.slug);
+                  } else {
+                    const newSlug = generateSlug(formData.name);
+                    setFormData({...formData, slug: newSlug});
+                    validateSlug(newSlug);
+                  }
+                }}
+                className="text-[10px] uppercase font-bold tracking-wider text-primary hover:text-primary/80 transition-colors"
+              >
+                {slugStatus === 'unvalidated' ? 'Validate' : 'Generate'}
+              </button>
+            </div>
             <input 
               type="text" 
               placeholder="my-awesome-tool"
-              className="w-full bg-surface-container-low border border-outline-variant/30 rounded-lg px-4 py-2 text-on-surface focus:border-primary font-body-base text-sm"
+              className={`w-full bg-surface-container-low border rounded-lg px-4 py-2 text-on-surface font-body-base text-sm focus:outline-none transition-colors ${
+                slugStatus === 'taken'
+                  ? 'border-error focus:border-error text-error'
+                  : slugStatus === 'available'
+                  ? 'border-[#2ea043] focus:border-[#2ea043]'
+                  : 'border-outline-variant/30 focus:border-primary'
+              }`}
               value={formData.slug}
               onChange={(e) => {
                 const val = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '');
                 setFormData({...formData, slug: val});
+                if (initialData?.slug && val === initialData.slug) {
+                  setSlugStatus('available');
+                } else {
+                  setSlugStatus('unvalidated');
+                }
               }}
             />
+            {slugStatus === 'checking' && (
+              <span className="text-[10px] text-on-surface-variant italic">Checking availability...</span>
+            )}
+            {slugStatus === 'unvalidated' && formData.slug && (
+              <span className="text-[10px] text-warning font-medium text-yellow-500">⚠ Please validate your slug</span>
+            )}
+            {slugStatus === 'available' && formData.slug && (
+              <span className="text-[10px] text-[#2ea043] font-medium">✓ Slug is available</span>
+            )}
+            {slugStatus === 'taken' && (
+              <span className="text-[10px] text-error font-medium">⚠ This slug is already taken. Please edit the name or slug.</span>
+            )}
           </div>
 
           <div className="flex flex-col gap-2">
@@ -416,9 +527,25 @@ export function ToolForm({ initialData, availablePlatforms = [], availableToolTy
             </div>
           </div>
           
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-2 relative pb-4">
             <label className="font-label-sm text-[11px] text-on-surface-variant uppercase tracking-wider">Website URL</label>
-            <input type="text" placeholder="https://" className="w-full bg-surface-container-low border border-outline-variant/30 rounded-lg px-3 py-2 text-on-surface text-sm" value={formData.websiteUrl} onChange={e => setFormData({...formData, websiteUrl: e.target.value})} />
+            <input 
+              type="text" 
+              placeholder="https://" 
+              className={`w-full bg-surface-container-low border rounded-lg px-3 py-2 text-on-surface text-sm focus:outline-none transition-colors ${
+                urlStatus === 'taken' && formData.websiteUrl
+                  ? 'border-yellow-500 focus:border-yellow-500 text-yellow-500'
+                  : 'border-outline-variant/30 focus:border-primary'
+              }`}
+              value={formData.websiteUrl} 
+              onChange={e => setFormData({...formData, websiteUrl: e.target.value})} 
+            />
+            {urlStatus === 'checking' && formData.websiteUrl && (
+               <span className="absolute bottom-0 left-1 text-[10px] text-on-surface-variant italic">Checking URL...</span>
+            )}
+            {urlStatus === 'taken' && duplicateTool && formData.websiteUrl && (
+               <span className="absolute bottom-0 left-1 text-[10px] text-yellow-500 font-medium">⚠ This URL is already used by <a href={`/tools/${duplicateTool.slug}`} target="_blank" className="underline hover:text-yellow-400">{duplicateTool.name}</a>.</span>
+            )}
           </div>
 
           <div className="flex flex-col gap-2">

@@ -2,6 +2,7 @@ import React from 'react';
 import Link from 'next/link';
 import { getAdminStats, getAllToolsAdmin } from '@/app/actions/adminActions';
 import { Tool, Platform, ToolType } from '@prisma/client';
+import { DeleteToolButton } from '@/components/admin/DeleteToolButton';
 
 type ToolWithCategories = Tool & { platforms: Platform[], toolTypes: ToolType[] };
 export default async function ManageToolsPage() {
@@ -130,9 +131,7 @@ export default async function ManageToolsPage() {
                       <Link href={`/admin/tools/${tool.id}/edit`} className="p-1.5 hover:text-primary transition-colors hover:bg-surface-container rounded-md">
                         <span className="material-symbols-outlined text-[18px]">edit</span>
                       </Link>
-                      <button className="p-1.5 hover:text-error transition-colors hover:bg-surface-container rounded-md">
-                        <span className="material-symbols-outlined text-[18px]">delete</span>
-                      </button>
+                      <DeleteToolButton toolId={tool.id} toolName={tool.name} />
                     </div>
                   </td>
                 </tr>
