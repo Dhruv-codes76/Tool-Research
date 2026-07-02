@@ -37,20 +37,25 @@ const TopNavBar = () => {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
   const checkRole = async (userId: string) => {
     const { data } = await supabase
       .from('User')
-      .select('role')
+      .select('role, isPrimaryAdmin')
       .eq('id', userId)
       .single();
 
     if (data && data.role === 'ADMIN') {
       setIsAdmin(true);
+      if (data.isPrimaryAdmin) {
+        setIsSuperAdmin(true);
+      }
     } else {
       setIsAdmin(false);
+      setIsSuperAdmin(false);
     }
   };
 
@@ -201,14 +206,14 @@ const TopNavBar = () => {
                   {isAdmin && (
                     <div className="px-4 py-3 border-b border-outline-variant/20 flex items-center justify-between bg-surface">
                        <span className="text-xs tracking-widest text-on-surface-variant font-mono uppercase font-semibold">
-                          Admin
+                          {isSuperAdmin ? 'Superadmin' : 'Admin'}
                        </span>
                     </div>
                   )}
 
                   {/* Actions */}
                   <div className="p-2">
-                    {isAdmin && (
+                    {(isAdmin || isSuperAdmin) && (
                       <div className="border-b border-white/5 mb-2 pb-2">
                         <Link
                           href="/admin"
