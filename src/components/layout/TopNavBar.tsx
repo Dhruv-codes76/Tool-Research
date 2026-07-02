@@ -41,11 +41,11 @@ const TopNavBar = () => {
   const menuRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
-  const checkRole = async (userId: string) => {
+  const checkRole = async (email: string) => {
     const { data } = await supabase
       .from('User')
       .select('role, isPrimaryAdmin')
-      .eq('id', userId)
+      .eq('email', email)
       .single();
 
     if (data && data.role === 'ADMIN') {
@@ -62,10 +62,11 @@ const TopNavBar = () => {
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
-      if (session?.user?.id) {
-        checkRole(session.user.id);
+      if (session?.user?.email) {
+        checkRole(session.user.email);
       } else {
         setIsAdmin(false);
+        setIsSuperAdmin(false);
       }
     });
 
@@ -73,10 +74,11 @@ const TopNavBar = () => {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
-      if (session?.user?.id) {
-        checkRole(session.user.id);
+      if (session?.user?.email) {
+        checkRole(session.user.email);
       } else {
         setIsAdmin(false);
+        setIsSuperAdmin(false);
       }
     });
 
