@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "prisma generate && node scripts/deploy-db.js && next build",
-    "build:cloudflare": "npm run build && opennextjs-cloudflare",
+    "build:cloudflare": "npm run build && opennextjs-cloudflare build",
     "deploy": "npm run build:cloudflare && wrangler pages deploy",
     "preview": "npm run build:cloudflare && wrangler pages dev",
     "start": "next start",
