@@ -114,6 +114,6 @@ export async function getAuditLogs(filters: AuditLogFilters = {}) {
     page,
     pageSize: PAGE_SIZE,
     totalPages: Math.max(1, Math.ceil(total / PAGE_SIZE)),
-    actions: distinctActions.map((a) => a.action),
+    actions: distinctActions.map((a: { action: string }) => a.action),
   };
 }
