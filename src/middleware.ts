@@ -10,7 +10,7 @@ import { createServerClient } from "@supabase/ssr";
  * ADMIN role/status check runs in the Node runtime — `getCurrentAdmin()` in the
  * admin layout and `requireAdmin()` in every admin Server Action.
  */
-export async function proxy(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   // ─── DEV BYPASS ────────────────────────────────────────────────────────────
   // In development, a quick-login cookie skips the Supabase JWT check so you
   // can reach the admin panel without a real session. Never runs in production.
@@ -62,4 +62,5 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: ["/admin/:path*"],
+  runtime: "experimental-edge",
 };

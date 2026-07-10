@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "build": "prisma generate && node scripts/deploy-db.js && next build",
+    "build": "next build",
     "dev": "next dev",
     "build:cloudflare": "npm run build && opennextjs-cloudflare build",
     "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
@@ -36,6 +36,7 @@
     "next": "16.2.10",
     "next-sanity": "^13.0.7",
     "octokit": "^5.0.5",
+    "pg-cloudflare": "^1.4.0",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "react-hook-form": "^7.75.0",
