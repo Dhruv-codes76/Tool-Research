@@ -72,7 +72,7 @@ export default async function SubmissionsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-outline-variant/10">
-              {submissions.map((submission) => (
+              {submissions.map((submission: any) => (
                 <SubmissionRow key={submission.id} submission={submission} />
               ))}
 
