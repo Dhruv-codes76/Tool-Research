@@ -5,7 +5,7 @@
   "scripts": {
     "build": "npx prisma generate && next build",
     "dev": "next dev",
-    "build:cloudflare": "npm run build && opennextjs-cloudflare build && cp .open-next/worker.js .open-next/assets/_worker.js",
+    "build:cloudflare": "opennextjs-cloudflare build && node scripts/prepare-cloudflare-pages.mjs",
     "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
     "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
     "start": "next start",
