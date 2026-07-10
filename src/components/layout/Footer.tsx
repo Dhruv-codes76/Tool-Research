@@ -44,13 +44,13 @@ const Footer = () => {
             aria-label="Footer"
             className="grid grid-cols-2 gap-x-8 gap-y-stack-md sm:gap-x-16"
           >
-            {footerNav.map((section) => (
+            {footerNav.map((section: any) => (
               <div key={section.heading}>
                 <h2 className="text-on-surface text-xs font-semibold uppercase tracking-wider mb-3">
                   {section.heading}
                 </h2>
                 <ul className="flex flex-col gap-2">
-                  {section.links.map((link) => (
+                  {section.links.map((link: any) => (
                     <li key={link.href}>
                       <Link
                         href={link.href}

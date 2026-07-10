@@ -107,7 +107,7 @@ export default function AuditLogClient({
             className="bg-surface-container border border-outline-variant/30 rounded-lg px-3 py-2 text-sm text-on-surface min-w-[200px] focus:outline-none focus:ring-2 focus:ring-primary/40"
           >
             <option value="">All actions</option>
-            {actions.map((a) => (
+            {actions.map((a: any) => (
               <option key={a} value={a}>
                 {a}
               </option>
@@ -171,7 +171,7 @@ export default function AuditLogClient({
                   </td>
                 </tr>
               )}
-              {logs.map((log) => {
+              {logs.map((log: any) => {
                 const isOpen = expanded === log.id;
                 const hasDetail = !!(log.metadata || log.userAgent || log.targetId);
                 return (

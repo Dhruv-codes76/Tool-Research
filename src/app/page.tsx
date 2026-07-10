@@ -38,8 +38,8 @@ function mapToolToCard(dbTool: ToolWithCategories, index: number) {
 
   // Combine platforms and toolTypes for the UI tags array
   const tags = [
-    ...dbTool.platforms.map((p) => p.name),
-    ...dbTool.toolTypes.map((t) => t.name)
+    ...dbTool.platforms.map((p: any) => p.name),
+    ...dbTool.toolTypes.map((t: any) => t.name)
   ];
 
   return {

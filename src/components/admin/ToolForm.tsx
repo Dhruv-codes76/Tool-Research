@@ -556,7 +556,7 @@ export function ToolForm({ initialData, availablePlatforms = [], availableToolTy
           <div className="flex flex-col gap-2">
             <label className="font-label-sm text-[11px] text-on-surface-variant uppercase tracking-wider">Tool Types</label>
             <div className="flex flex-wrap gap-2">
-              {availableToolTypes.map(name => {
+              {availableToolTypes.map((name: any) => {
                 const selected = formData.toolTypes.includes(name);
                 return (
                   <button
@@ -587,7 +587,7 @@ export function ToolForm({ initialData, availablePlatforms = [], availableToolTy
           <div className="flex flex-col gap-2">
             <label className="font-label-sm text-[11px] text-on-surface-variant uppercase tracking-wider">Platforms (OS)</label>
             <div className="flex flex-wrap gap-2">
-              {availablePlatforms.map(name => {
+              {availablePlatforms.map((name: any) => {
                 const selected = formData.platforms.includes(name);
                 return (
                   <button
@@ -677,7 +677,7 @@ export function ToolForm({ initialData, availablePlatforms = [], availableToolTy
                         setCommands(next);
                       }}
                     >
-                      {OS_OPTIONS.map(opt => (
+                      {OS_OPTIONS.map((opt: any) => (
                         <option key={opt.value} value={opt.value}>{opt.label}</option>
                       ))}
                     </select>

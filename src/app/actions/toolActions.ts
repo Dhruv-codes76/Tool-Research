@@ -51,19 +51,19 @@ export async function submitTool(formData: FormData, userId: string, submitterEm
     const detected = await detectCategories(githubInfo.owner, githubInfo.repo, description);
     
     platformNames = platformsInput 
-      ? platformsInput.split(',').map(c => c.trim()).filter(c => c !== "")
+      ? platformsInput.split(',').map((c: any) => c.trim()).filter(c => c !== "")
       : detected.platforms;
       
     toolTypeNames = toolTypesInput 
-      ? toolTypesInput.split(',').map(c => c.trim()).filter(c => c !== "")
+      ? toolTypesInput.split(',').map((c: any) => c.trim()).filter(c => c !== "")
       : detected.toolTypes;
   } else {
     platformNames = platformsInput 
-      ? platformsInput.split(',').map(c => c.trim()).filter(c => c !== "")
+      ? platformsInput.split(',').map((c: any) => c.trim()).filter(c => c !== "")
       : ["Agnostic"];
       
     toolTypeNames = toolTypesInput 
-      ? toolTypesInput.split(',').map(c => c.trim()).filter(c => c !== "")
+      ? toolTypesInput.split(',').map((c: any) => c.trim()).filter(c => c !== "")
       : ["Other"];
   }
 
@@ -80,13 +80,13 @@ export async function submitTool(formData: FormData, userId: string, submitterEm
       ...stats,
       lastFetchedAt: new Date(),
       platforms: {
-        connectOrCreate: platformNames.map(n => ({
+        connectOrCreate: platformNames.map((n: any) => ({
           where: { name: n },
           create: { name: n },
         })),
       },
       toolTypes: {
-        connectOrCreate: toolTypeNames.map(n => ({
+        connectOrCreate: toolTypeNames.map((n: any) => ({
           where: { name: n },
           create: { name: n },
         })),
@@ -226,13 +226,13 @@ export async function submitFullTool(data: ToolAdminFormData, userId: string, su
       ...stats,
       lastFetchedAt: new Date(),
       platforms: {
-        connectOrCreate: platforms.map(name => ({
+        connectOrCreate: platforms.map((name: any) => ({
           where: { name },
           create: { name },
         })),
       },
       toolTypes: {
-        connectOrCreate: toolTypes.map(name => ({
+        connectOrCreate: toolTypes.map((name: any) => ({
           where: { name },
           create: { name },
         })),

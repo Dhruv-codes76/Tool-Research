@@ -35,7 +35,7 @@ const ALIASES: Record<string, string[]> = {
 function matchesCategory(tags: string[], category: string): boolean {
   if (category === 'All Tools') return true;
   const wanted = ALIASES[category] ?? [category.toLowerCase()];
-  const normalized = tags.map((t) => t.toLowerCase().trim());
+  const normalized = tags.map((t: any) => t.toLowerCase().trim());
   return normalized.some((tag) => wanted.some((w) => tag === w || tag.includes(w)));
 }
 
@@ -46,7 +46,7 @@ function matchesQuery(tool: CardTool, query: string): boolean {
   if (!q) return true;
   const haystack = [tool.name, tool.author, ...tool.tags]
     .filter(Boolean)
-    .map((s) => s.toLowerCase());
+    .map((s: any) => s.toLowerCase());
   return haystack.some((field) => field.includes(q));
 }
 
@@ -65,7 +65,7 @@ export function ToolExplorer({ tools }: { tools: CardTool[] }) {
           positioned hero section, which would otherwise paint over (and steal
           clicks from) these chips where the negative margin overlaps it. */}
       <div className="relative z-20 flex flex-wrap justify-center gap-3 px-gutter -mt-12 md:-mt-20">
-        {CATEGORIES.map((cat) => (
+        {CATEGORIES.map((cat: any) => (
           <CategoryChip
             key={cat}
             label={cat}
@@ -93,7 +93,7 @@ export function ToolExplorer({ tools }: { tools: CardTool[] }) {
               No tools found in the database yet.
             </div>
           ) : filtered.length > 0 ? (
-            filtered.slice(0, 8).map((tool) => <ToolCard key={tool.id} {...tool} />)
+            filtered.slice(0, 8).map((tool: any) => <ToolCard key={tool.id} {...tool} />)
           ) : (
             <div className="col-span-full text-center py-10 text-on-surface-variant">
               {query.trim()

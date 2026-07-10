@@ -40,7 +40,7 @@ export const ToolCard: React.FC<ToolCardProps> = ({ id, slug, name, stars, descr
           {description}
         </p>
         <div className="mt-4 flex gap-2 flex-wrap">
-          {tags.map((tag) => (
+          {tags.map((tag: any) => (
             <span key={tag} className="text-xs text-on-surface-variant bg-surface-container px-2 py-1 rounded">
               {tag}
             </span>

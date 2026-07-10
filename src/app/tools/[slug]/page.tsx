@@ -150,7 +150,7 @@ export default async function ToolDetailPage({ params }: PageProps) {
               description: dbTool.metaDescription || dbTool.description,
               path: `/tools/${dbTool.id}`,
               image: dbTool.heroImageUrl || dbTool.imageUrl,
-              operatingSystems: dbTool.platforms.map((p) => p.name),
+              operatingSystems: dbTool.platforms.map((p: any) => p.name),
               category: dbTool.toolTypes[0]?.name,
               repoUrl: dbTool.repoUrl,
             }),
@@ -199,9 +199,9 @@ export default async function ToolDetailPage({ params }: PageProps) {
             <div className="relative p-6 md:p-8 z-10 flex-grow flex flex-col justify-start">
               <div className="flex flex-wrap items-center gap-3 mb-4">
                 {(dbTool.toolTypes.length > 0
-                  ? dbTool.toolTypes.map(t => t.name)
+                  ? dbTool.toolTypes.map((t: any) => t.name)
                   : [categoryLabel]
-                ).map(name => (
+                ).map((name: any) => (
                   <span key={name} className="bg-primary-container/10 text-primary-container px-3 py-1 rounded-full text-[10px] font-bold border border-primary-container/20 tracking-wider">
                     {name.toUpperCase()}
                   </span>
@@ -326,7 +326,7 @@ export default async function ToolDetailPage({ params }: PageProps) {
                 <div className="flex justify-between items-start gap-3 py-2 border-b border-outline-variant/30 text-sm">
                   <span className="text-on-surface-variant shrink-0 pt-0.5">OS</span>
                   <div className="flex flex-wrap justify-end gap-1.5">
-                    {dbTool.platforms.map(p => (
+                    {dbTool.platforms.map((p: any) => (
                       <span key={p.name} className="bg-on-surface-variant/10 text-on-surface-variant px-2.5 py-0.5 rounded-full text-[10px] font-bold border border-outline-variant/30 tracking-wider">
                         {p.name.toUpperCase()}
                       </span>

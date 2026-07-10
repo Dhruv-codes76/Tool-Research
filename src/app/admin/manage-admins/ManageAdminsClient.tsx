@@ -141,7 +141,7 @@ export default function ManageAdminsClient({ initialAdmins, removedAdmins, viewe
             </tr>
           </thead>
           <tbody>
-            {initialAdmins.map((a) => {
+            {initialAdmins.map((a: any) => {
               const isSelf = a.id === viewerId;
               const isInvited = a.status === 'INVITED';
               const canResend = viewerIsPrimary && isInvited;
@@ -265,7 +265,7 @@ export default function ManageAdminsClient({ initialAdmins, removedAdmins, viewe
           <div className="bg-surface border border-outline-variant/20 rounded-xl shadow-sm overflow-hidden">
             <table className="w-full text-sm">
               <tbody>
-                {removedAdmins.map((a) => (
+                {removedAdmins.map((a: any) => (
                   <tr key={a.id} className="border-b border-outline-variant/10 last:border-0">
                     <td className="px-5 py-3">
                       <div className="flex items-center gap-3 opacity-70">

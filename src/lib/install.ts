@@ -29,7 +29,7 @@ export const OS_OPTIONS: { value: string; label: string; icon: string }[] = [
 ];
 
 const OS_ICON_MAP: Record<string, string> = Object.fromEntries(
-  OS_OPTIONS.map((o) => [o.value, o.icon]),
+  OS_OPTIONS.map((o: any) => [o.value, o.icon]),
 );
 
 /** Material Symbols icon name for an OS label (falls back to a generic chip). */
@@ -46,7 +46,7 @@ export function parseInstallCommands(raw?: string | null): InstallCommand[] {
     if (Array.isArray(parsed)) {
       return parsed
         .filter((c) => c && typeof c.command === 'string')
-        .map((c) => ({ os: c.os || 'Universal', command: c.command }));
+        .map((c: any) => ({ os: c.os || 'Universal', command: c.command }));
     }
   } catch {
     // legacy: a bare command string
@@ -72,7 +72,7 @@ export function parseDownloadAssets(raw?: string | null): DownloadAsset[] {
     if (Array.isArray(parsed)) {
       return parsed
         .filter((a) => a && typeof a.url === 'string' && a.url.trim() !== '')
-        .map((a) => ({
+        .map((a: any) => ({
           label: a.label || a.url,
           url: a.url,
           os: a.os || undefined,

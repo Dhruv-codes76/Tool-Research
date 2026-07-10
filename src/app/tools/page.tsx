@@ -31,8 +31,8 @@ function mapToolToCard(dbTool: ToolWithCategories, index: number) {
   };
 
   const tags = [
-    ...dbTool.platforms.map((p) => p.name),
-    ...dbTool.toolTypes.map((t) => t.name)
+    ...dbTool.platforms.map((p: any) => p.name),
+    ...dbTool.toolTypes.map((t: any) => t.name)
   ];
 
   return {
@@ -56,8 +56,8 @@ export default async function ToolsPage() {
   const tools = toolsData.map((item: ToolWithCategories, index: number) => mapToolToCard(item, index));
 
   // Only surface categories that actually have tools — derived from the tool set
-  const allPlatforms = Array.from(new Set(toolsData.flatMap((t: ToolWithCategories) => t.platforms.map((p) => p.name))));
-  const allTypes = Array.from(new Set(toolsData.flatMap((t: ToolWithCategories) => t.toolTypes.map((ty) => ty.name))));
+  const allPlatforms = Array.from(new Set(toolsData.flatMap((t: ToolWithCategories) => t.platforms.map((p: any) => p.name))));
+  const allTypes = Array.from(new Set(toolsData.flatMap((t: ToolWithCategories) => t.toolTypes.map((ty: any) => ty.name))));
 
   return (
     <main className="flex-grow pt-24 pb-32 max-w-container-max mx-auto px-gutter w-full">

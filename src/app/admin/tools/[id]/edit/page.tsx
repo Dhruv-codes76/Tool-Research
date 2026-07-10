@@ -31,8 +31,8 @@ export default async function EditToolPage({
 
       <ToolForm
         initialData={tool}
-        availablePlatforms={platforms.map((p) => p.name)}
-        availableToolTypes={toolTypes.map((t) => t.name)}
+        availablePlatforms={platforms.map((p: { name: string }) => p.name)}
+        availableToolTypes={toolTypes.map((t: { name: string }) => t.name)}
       />
     </div>
   );

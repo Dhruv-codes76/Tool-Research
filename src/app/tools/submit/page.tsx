@@ -64,8 +64,8 @@ export default async function SubmitToolPage() {
           <SubmitToolForm
             userId={user.id}
             userEmail={user.email || ''}
-            availablePlatforms={platforms.map(p => p.name)}
-            availableToolTypes={toolTypes.map(t => t.name)}
+            availablePlatforms={platforms.map((p: any) => p.name)}
+            availableToolTypes={toolTypes.map((t: any) => t.name)}
           />
         </div>
       </section>

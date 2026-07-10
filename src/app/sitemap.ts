@@ -20,7 +20,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       where: { status: "ACTIVE" },
       select: { id: true, slug: true, updatedAt: true },
     });
-    toolRoutes = tools.map((t) => ({
+    toolRoutes = tools.map((t: any) => ({
       url: `${SITE_URL}/tools/${t.slug || t.id}`,
       lastModified: t.updatedAt,
       changeFrequency: "weekly",
@@ -37,7 +37,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       await sanityClient.fetch(postsQuery);
     blogRoutes = (posts || [])
       .filter((p) => p.slug?.current)
-      .map((p) => ({
+      .map((p: any) => ({
         url: `${SITE_URL}/blog/${p.slug!.current}`,
         lastModified: p.publishedAt ? new Date(p.publishedAt) : undefined,
         changeFrequency: "monthly",

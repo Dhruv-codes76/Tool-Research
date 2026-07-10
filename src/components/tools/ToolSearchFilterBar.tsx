@@ -77,7 +77,7 @@ export const ToolSearchFilterBar: React.FC<ToolSearchFilterBarProps> = ({
               className="glass-panel absolute left-0 right-0 top-full mt-3 z-[70] rounded-2xl p-1.5 max-h-72 overflow-y-auto shadow-2xl shadow-black/40 origin-top animate-pop-in"
               role="listbox"
             >
-              {['All', ...options].map((opt) => {
+              {['All', ...options].map((opt: any) => {
                 const active = selected === opt;
                 return (
                   <button

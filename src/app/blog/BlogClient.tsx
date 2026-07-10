@@ -52,7 +52,7 @@ export default function BlogClient({ posts }: { posts: SanityPost[] }) {
       {/* Interactive Category Filter */}
       <div className="relative z-10 max-w-container-max mx-auto mb-10">
         <div className="flex justify-center gap-stack-sm flex-wrap">
-          {allCategories.map((cat) => {
+          {allCategories.map((cat: any) => {
             const isActive = selectedCategory === cat;
             return (
               <button
@@ -74,7 +74,7 @@ export default function BlogClient({ posts }: { posts: SanityPost[] }) {
       {/* 3-in-a-Row Normal Grid Layout */}
       <div className="relative z-10 max-w-container-max mx-auto px-4 sm:px-6 lg:px-8 mb-12">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {filteredNodes.map((node) => (
+          {filteredNodes.map((node: any) => (
             <Link href={`/blog/${node.slug?.current}`} key={node._id} className="block no-underline">
               <article
                 className="liquid-glass overflow-hidden flex flex-col h-full group cursor-pointer transition-all duration-300 hover:-translate-y-1.5"

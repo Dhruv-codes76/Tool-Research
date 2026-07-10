@@ -76,15 +76,15 @@ export async function GET(request: Request) {
       if (release && release.assets.length > 0) {
         const proposed: DownloadAsset[] = release.assets
           .filter((a) => a.name && !isLikelyJunkAsset(a.name))
-          .map((a) => ({
+          .map((a: any) => ({
             label: guessAssetLabel(a.name),
             url: a.browser_download_url,
             ...guessAssetOsArch(a.name),
           }));
 
         const current = parseDownloadAssets(tool.downloadAssets);
-        const currentUrls = new Set(current.map((a) => a.url));
-        const proposedUrls = new Set(proposed.map((a) => a.url));
+        const currentUrls = new Set(current.map((a: any) => a.url));
+        const proposedUrls = new Set(proposed.map((a: any) => a.url));
         const changed =
           proposed.length > 0 &&
           (proposedUrls.size !== currentUrls.size ||

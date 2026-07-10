@@ -68,7 +68,7 @@ export async function getLatestRelease(
     const { data } = await octokit.rest.repos.getLatestRelease({ owner, repo });
     return {
       version: data.tag_name || "",
-      assets: (data.assets || []).map((a) => ({
+      assets: (data.assets || []).map((a: any) => ({
         name: a.name,
         browser_download_url: a.browser_download_url,
         size: a.size,

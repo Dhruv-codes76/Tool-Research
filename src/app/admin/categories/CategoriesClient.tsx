@@ -23,14 +23,14 @@ export default function CategoriesClient({ initialPlatforms, initialToolTypes }:
 
   // Unified items
   const allItems: CategoryItem[] = [
-    ...initialPlatforms.map(p => ({
+    ...initialPlatforms.map((p: any) => ({
       id: p.id,
       name: p.name,
       description: p.description,
       type: 'PLATFORM' as const,
       toolCount: p._count?.tools || 0,
     })),
-    ...initialToolTypes.map(t => ({
+    ...initialToolTypes.map((t: any) => ({
       id: t.id,
       name: t.name,
       description: t.description,
@@ -179,7 +179,7 @@ export default function CategoriesClient({ initialPlatforms, initialToolTypes }:
 
       {/* Grid of Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {filteredItems.map(item => (
+        {filteredItems.map((item: any) => (
           <div key={item.id} className="bg-surface rounded-xl p-5 border border-outline-variant/20 shadow-sm flex flex-col justify-between relative hover:border-outline-variant/40 transition-colors">
             <div>
               <div className="flex justify-between items-start mb-3">

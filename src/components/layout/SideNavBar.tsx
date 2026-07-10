@@ -23,7 +23,7 @@ const SideNavBar = () => {
         <div className="px-6 mb-4">
           <span className="text-[10px] uppercase font-bold tracking-[0.15em] text-outline">Categories</span>
         </div>
-        {categories.map((cat) => (
+        {categories.map((cat: any) => (
           <Link
             key={cat.name}
             href={cat.href}
@@ -41,7 +41,7 @@ const SideNavBar = () => {
         <div className="px-6 mt-10 mb-4">
           <span className="text-[10px] uppercase font-bold tracking-[0.15em] text-outline">Work</span>
         </div>
-        {workTypes.map((type) => (
+        {workTypes.map((type: any) => (
           <Link
             key={type.name}
             href={type.href}

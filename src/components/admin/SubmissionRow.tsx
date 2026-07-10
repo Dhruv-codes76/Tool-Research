@@ -327,8 +327,8 @@ export function SubmissionRow({ submission }: { submission: Submission }) {
                   <div>
                     <label className="text-[10px] text-on-surface-variant uppercase tracking-wider font-bold">Categories / Platforms</label>
                     <p className="text-on-surface-variant text-sm mt-1">
-                      {submission.toolTypes?.map(t => t.name).join(', ')} <br/>
-                      {submission.platforms?.map(p => p.name).join(', ')}
+                      {submission.toolTypes?.map((t: any) => t.name).join(', ')} <br/>
+                      {submission.platforms?.map((p: any) => p.name).join(', ')}
                     </p>
                   </div>
                   <div>

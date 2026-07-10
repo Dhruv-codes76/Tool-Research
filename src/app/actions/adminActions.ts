@@ -147,13 +147,13 @@ export async function createTool(data: ToolAdminFormData) {
         ...toolData,
         userId: admin.id,
         platforms: {
-          connectOrCreate: platforms.map(name => ({
+          connectOrCreate: platforms.map((name: any) => ({
             where: { name },
             create: { name },
           })),
         },
         toolTypes: {
-          connectOrCreate: toolTypes.map(name => ({
+          connectOrCreate: toolTypes.map((name: any) => ({
             where: { name },
             create: { name },
           })),
@@ -201,14 +201,14 @@ export async function updateTool(id: string, data: ToolAdminFormData) {
         ...toolData,
         platforms: {
           set: [], // Clear existing
-          connectOrCreate: platforms.map(name => ({
+          connectOrCreate: platforms.map((name: any) => ({
             where: { name },
             create: { name },
           })),
         },
         toolTypes: {
           set: [], // Clear existing
-          connectOrCreate: toolTypes.map(name => ({
+          connectOrCreate: toolTypes.map((name: any) => ({
             where: { name },
             create: { name },
           })),

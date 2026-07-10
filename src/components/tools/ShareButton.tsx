@@ -91,7 +91,7 @@ export function ShareButton({ title, text }: { title: string; text?: string }) {
           className="absolute right-0 mt-2 w-52 z-30 rounded-2xl border border-white/15 bg-[#14161a]/90 backdrop-blur-2xl shadow-2xl p-2 origin-top-right"
           style={{ boxShadow: '0 16px 48px rgba(0,0,0,0.55)' }}
         >
-          {targets.map((target) => (
+          {targets.map((target: any) => (
             <button
               key={target.name}
               role="menuitem"

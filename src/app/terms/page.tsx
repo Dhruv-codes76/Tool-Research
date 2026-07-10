@@ -125,20 +125,20 @@ export default function TermsPage() {
       {/* Content */}
       <section className="py-24 px-6">
         <div className="max-w-3xl mx-auto space-y-16">
-          {sections.map((section) => (
+          {sections.map((section: any) => (
             <article key={section.id} id={section.id} className="scroll-mt-24">
               <h2 className="text-2xl md:text-3xl font-bold text-white mb-6 tracking-tight flex items-baseline gap-3">
                 <span className="text-secondary font-mono text-base">§</span>
                 {section.title}
               </h2>
               <div className="space-y-4 text-on-surface-variant text-base md:text-lg leading-relaxed">
-                {section.body.map((paragraph, i) => (
+                {section.body.map((paragraph: any, i: number) => (
                   <p key={i}>{paragraph}</p>
                 ))}
               </div>
               {section.list && (
                 <ul className="mt-6 space-y-3">
-                  {section.list.map((item, i) => (
+                  {section.list.map((item: any, i: number) => (
                     <li
                       key={i}
                       className="flex items-start gap-3 text-on-surface-variant text-base md:text-lg leading-relaxed"
