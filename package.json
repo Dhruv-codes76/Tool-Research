@@ -5,14 +5,9 @@
   "scripts": {
     "build": "npx prisma generate && next build",
     "dev": "next dev",
-    "build:cloudflare": "opennextjs-cloudflare build",
-    "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
-    "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
     "start": "next start",
     "lint": "eslint",
-    "seo:audit": "node scripts/audit-seo.mjs",
-    "upload": "opennextjs-cloudflare build && opennextjs-cloudflare upload",
-    "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts"
+    "seo:audit": "node scripts/audit-seo.mjs"
   },
   "dependencies": {
     "@portabletext/react": "^6.2.0",
@@ -48,7 +43,6 @@
     "zod": "^4.4.2"
   },
   "devDependencies": {
-    "@opennextjs/cloudflare": "^1.20.1",
     "@tailwindcss/container-queries": "^0.1.1",
     "@tailwindcss/forms": "^0.5.11",
     "@types/node": "^20",
@@ -61,8 +55,7 @@
     "prisma": "^7.8.0",
     "tailwindcss": "^4.2.4",
     "ts-node": "^10.9.2",
-    "typescript": "^5",
-    "wrangler": "^4.108.0"
+    "typescript": "^5"
   },
   "prisma": {
     "seed": "ts-node -O \"{\\\"module\\\":\\\"commonjs\\\"}\" prisma/seed.ts"

@@ -54,10 +54,3 @@ docker-compose.yml
 supabase/.branches
 supabase/.temp
 supabase/snippets
-# OpenNext
-.open-next
-
-# wrangler files
-.wrangler
-.dev.vars*
-!.dev.vars.example
