@@ -9,7 +9,7 @@ import type { Metadata } from "next";
  * rendered once in the root layout via the <JsonLd /> component.
  */
 
-export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://aitoolresearch.com";
+export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.aitoolresearch.com";
 export const SITE_NAME = "AI Tool Research";
 
 // Optional X/Twitter handle (e.g. "@aitoolresearch") for card attribution.

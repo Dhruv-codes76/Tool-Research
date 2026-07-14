@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { client as sanityClient } from "@/sanity/client";
 import { postsQuery } from "@/sanity/queries";
 
-const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || "https://aitoolresearch.com").replace(/\/$/, "");
+const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || "https://www.aitoolresearch.com").replace(/\/$/, "");
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticRoutes: MetadataRoute.Sitemap = [
