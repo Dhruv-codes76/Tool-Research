@@ -119,7 +119,7 @@ const TopNavBar = () => {
       <div className="flex justify-between items-center max-w-container-max mx-auto px-gutter h-16">
         <div className="font-sans text-2xl font-black tracking-tighter leading-none text-white">
           <Link href="/" className="flex items-center gap-2">
-            <Image src="/logo-v2.png" alt="Logo" width={32} height={30} className="object-contain" />
+            <Image src="/logo-v2.png" alt="AI Tool Research" width={32} height={30} className="object-contain" />
             <span>
               <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">ai</span>toolresearch
             </span>

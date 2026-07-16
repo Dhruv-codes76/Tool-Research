@@ -10,6 +10,9 @@ export const metadata = buildMetadata({
   description:
     'Know a great open-source AI tool? Submit it to the AI Tool Research directory for manual review.',
   path: '/tools/submit',
+  // Auth-gated: unauthenticated visitors (incl. crawlers) are redirected to
+  // /login, so there is no indexable content here.
+  index: false,
 });
 
 export default async function SubmitToolPage() {

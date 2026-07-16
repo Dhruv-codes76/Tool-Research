@@ -11,13 +11,15 @@ const fmt = (n: number) =>
 export default async function OgImage({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  params: Promise<{ slug: string }>;
 }) {
-  const { id } = await params;
+  // The dynamic segment is [slug] — the param key is `slug`, not `id`.
+  // Reading `id` here left it undefined and rendered the wrong tool's card.
+  const { slug } = await params;
 
   const tool = await prisma.tool.findFirst({
     where: {
-      OR: [{ id }, { name: { equals: id } }, { repoUrl: { contains: `/${id}` } }],
+      OR: [{ slug }, { id: slug }, { repoUrl: { contains: `/${slug}` } }],
     },
     include: { toolTypes: true },
   });

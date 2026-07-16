@@ -29,7 +29,7 @@ const Footer = () => {
           {/* Brand */}
           <div className="max-w-sm">
             <div className="flex items-center gap-2 mb-3">
-              <Image src="/logo-v2.png" alt="Logo" width={32} height={30} className="object-contain" />
+              <Image src="/logo-v2.png" alt="AI Tool Research" width={32} height={30} className="object-contain" />
               <div className="font-sans text-2xl font-black tracking-tighter leading-none text-white">
                 <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">ai</span>toolresearch
               </div>

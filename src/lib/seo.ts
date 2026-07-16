@@ -15,8 +15,10 @@ export const SITE_NAME = "AI Tool Research";
 // Optional X/Twitter handle (e.g. "@aitoolresearch") for card attribution.
 export const TWITTER_HANDLE = process.env.NEXT_PUBLIC_TWITTER_HANDLE || undefined;
 
-// Default share image. TODO: replace with a purpose-built 1200×630 OG image.
-export const DEFAULT_OG_IMAGE = "/logo-v2.png";
+// No hardcoded default share image. When a page passes no `image`, we defer to
+// Next.js file-based Open Graph images (a branded 1200×630 card is generated at
+// the app root — src/app/opengraph-image.tsx — and per tool page). This keeps
+// every social card at the correct aspect ratio instead of a cropped logo.
 
 export const DEFAULT_TITLE = "AI Tool Research — Curated Open-Source AI Tools";
 export const DEFAULT_DESCRIPTION =
@@ -52,9 +54,10 @@ export function buildMetadata({
       : title
     : DEFAULT_TITLE;
   const desc = (description || DEFAULT_DESCRIPTION).slice(0, 160);
-  // Pass image: null to omit og:image here and let a file-based
-  // opengraph-image.tsx generate it (correct 1200×630 with dimensions).
-  const ogImage = image === null ? undefined : image || DEFAULT_OG_IMAGE;
+  // Only set an explicit image when the page passes a real URL string. For
+  // `undefined` (no image) or `null` (opt out) we leave images unset so Next.js
+  // supplies the file-based opengraph-image (branded 1200×630) automatically.
+  const ogImage = typeof image === "string" && image ? image : undefined;
 
   return {
     title: fullTitle,
@@ -70,7 +73,9 @@ export function buildMetadata({
       ...(ogImage ? { images: [{ url: ogImage }] } : {}),
     },
     twitter: {
-      card: ogImage ? "summary_large_image" : "summary",
+      // A file-based 1200×630 card always exists (root + per tool page), so the
+      // large-image layout is always correct even when no explicit image is set.
+      card: "summary_large_image",
       title: fullTitle,
       description: desc,
       ...(ogImage ? { images: [ogImage] } : {}),

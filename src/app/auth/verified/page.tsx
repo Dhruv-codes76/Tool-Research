@@ -1,10 +1,14 @@
 import { Suspense } from 'react';
 import VerifiedClient from './VerifiedClient';
+import { buildMetadata } from '@/lib/seo';
 
-export const metadata = {
-  title: 'Verifying… | AI Tool Research',
+// Utility/auth page — kept out of search results.
+export const metadata = buildMetadata({
+  title: 'Verifying…',
   description: 'Confirming your account.',
-};
+  path: '/auth/verified',
+  index: false,
+});
 
 export default function VerifiedPage() {
   return (

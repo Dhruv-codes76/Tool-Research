@@ -69,7 +69,11 @@ model Tool {
   metaDescription  String?
   rejectionReason  String?
   submittedByEmail String?
-  slug             String?
+  // SEO: slug is the ONLY public URL identifier for a tool. Unique so no two
+  // tools can collide. Kept nullable at the DB level (Postgres treats NULLs as
+  // distinct, so the constraint is safe on legacy rows) — presence is enforced
+  // in the app layer (both submit forms + server actions always set a slug).
+  slug             String?      @unique
   user             User         @relation(fields: [userId], references: [id])
   changes          ToolChange[]
   platforms        Platform[]   @relation("PlatformToTool")

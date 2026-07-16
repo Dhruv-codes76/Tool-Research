@@ -6,6 +6,31 @@ import { getRepoStats, parseGitHubUrl, detectCategories } from "@/lib/github";
 import { logAudit } from "@/lib/audit-log";
 import { withErrorHandling, AppError } from "@/lib/errors";
 
+/** Normalise a string into a URL-safe slug. */
+function slugify(input: string): string {
+  return input
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)+/g, "");
+}
+
+/**
+ * Return a slug guaranteed unique against the Tool table. slug is the sole
+ * public URL identifier and is DB-unique, so a collision would otherwise throw
+ * on insert. Appends -2, -3, … until a free slug is found.
+ */
+async function ensureUniqueSlug(base: string): Promise<string> {
+  const root = slugify(base) || "tool";
+  let candidate = root;
+  let n = 1;
+  // Bounded loop — the counter guarantees eventual termination.
+  while (await prisma.tool.findUnique({ where: { slug: candidate }, select: { id: true } })) {
+    n += 1;
+    candidate = `${root}-${n}`;
+  }
+  return candidate;
+}
+
 /**
  * Server action to submit a new tool.
  */
@@ -24,9 +49,9 @@ export async function submitTool(formData: FormData, userId: string, submitterEm
     throw new AppError("Required fields are missing.", "VALIDATION_ERROR");
   }
   
-  if (!slug) {
-    slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
-  }
+  // slug is the sole public URL. Fall back to the name, then guarantee it is
+  // unique so the DB unique constraint never rejects the submission.
+  slug = await ensureUniqueSlug(slug || name);
 
   // Fetch live stats from GitHub
   const githubInfo = parseGitHubUrl(repoUrl);

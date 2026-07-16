@@ -59,8 +59,8 @@ export function ImageGallery({ images, imageRatio, toolName }: { images: string[
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
               transition={{ type: "spring", stiffness: 300, damping: 25 }}
-              src={selectedImage} 
-              alt="Zoomed view" 
+              src={selectedImage}
+              alt={`${toolName} preview (enlarged)`}
               className="max-w-full max-h-full object-contain rounded-xl shadow-2xl cursor-default"
               onClick={(e) => e.stopPropagation()}
             />

@@ -1,10 +1,14 @@
 import { Suspense } from 'react';
 import { AuthForm } from '@/components/auth/AuthForm';
+import { buildMetadata } from '@/lib/seo';
 
-export const metadata = {
-  title: 'Sign In | AI Tool Research',
+// Utility/auth page — kept out of search results.
+export const metadata = buildMetadata({
+  title: 'Sign In',
   description: 'Sign in to access the AI Tool Research admin panel.',
-};
+  path: '/login',
+  index: false,
+});
 
 export default function LoginPage() {
   return (

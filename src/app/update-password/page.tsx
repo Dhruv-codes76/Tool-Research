@@ -1,10 +1,14 @@
 import { Suspense } from 'react';
 import { AuthForm } from '@/components/auth/AuthForm';
+import { buildMetadata } from '@/lib/seo';
 
-export const metadata = {
-  title: 'Update Password | AI Tool Research',
+// Utility/auth page — kept out of search results.
+export const metadata = buildMetadata({
+  title: 'Update Password',
   description: 'Set a new password for your AI Tool Research account.',
-};
+  path: '/update-password',
+  index: false,
+});
 
 export default function UpdatePasswordPage() {
   return (

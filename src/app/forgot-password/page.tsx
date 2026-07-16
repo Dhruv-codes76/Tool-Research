@@ -1,10 +1,14 @@
 import { Suspense } from 'react';
 import { AuthForm } from '@/components/auth/AuthForm';
+import { buildMetadata } from '@/lib/seo';
 
-export const metadata = {
-  title: 'Forgot Password | AI Tool Research',
+// Utility/auth page — kept out of search results.
+export const metadata = buildMetadata({
+  title: 'Forgot Password',
   description: 'Reset your AI Tool Research account password.',
-};
+  path: '/forgot-password',
+  index: false,
+});
 
 export default function ForgotPasswordPage() {
   return (
