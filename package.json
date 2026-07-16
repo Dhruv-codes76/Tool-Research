@@ -3,10 +3,12 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "build": "npx prisma generate && next build",
+    "build": "npx prisma generate && node scripts/deploy-db.js && next build",
     "dev": "next dev",
     "start": "next start",
     "lint": "eslint",
+    "db:deploy": "node scripts/deploy-db.js",
+    "db:backfill-slugs": "node scripts/backfill-slugs.mjs",
     "seo:audit": "node scripts/audit-seo.mjs"
   },
   "dependencies": {

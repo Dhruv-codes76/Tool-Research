@@ -33,11 +33,26 @@ try {
     console.log("Note: Resolve command skipped or already applied.");
   }
 
-  // 3. Run Migrations using the Direct Connection (Required for schema changes)
+  // 3. Backfill slugs BEFORE migrating. slug is the sole public URL and the
+  // add_unique_slug migration adds a UNIQUE index — if any legacy row has a
+  // NULL/empty slug this fills it first so the constraint can't fail on deploy.
+  // Idempotent: a no-op once every tool already has a slug.
+  console.log("🔗 Backfilling missing tool slugs...");
+  try {
+    execSync('node scripts/backfill-slugs.mjs', {
+      env: { ...process.env, DATABASE_URL: pooledUrl || directUrl },
+      stdio: 'inherit'
+    });
+  } catch (e) {
+    console.error("❌ Slug backfill failed — aborting before migrate to avoid a unique-constraint failure.");
+    throw e;
+  }
+
+  // 4. Run Migrations using the Direct Connection (Required for schema changes)
   console.log("📦 Running prisma migrate deploy...");
-  execSync('npx prisma migrate deploy', { 
-    env: { ...process.env, DATABASE_URL: directUrl }, 
-    stdio: 'inherit' 
+  execSync('npx prisma migrate deploy', {
+    env: { ...process.env, DATABASE_URL: directUrl },
+    stdio: 'inherit'
   });
   console.log("✅ Migrations applied successfully!");
 
