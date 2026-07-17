@@ -4,11 +4,16 @@ import { createServerClient } from "@supabase/ssr";
 /**
  * Middleware runs on every page route (see `config.matcher`) and does two jobs:
  *
- *  1. Content-Security-Policy — a per-request nonce is generated and embedded in
- *     the CSP so scripts load via `'strict-dynamic'` without `'unsafe-inline'`.
- *     Next.js reads this header and stamps the nonce onto its own bootstrap
- *     scripts automatically. The nonce is exposed to Server Components via the
- *     `x-nonce` request header.
+ *  1. Content-Security-Policy — a STATIC, cache-safe policy. We deliberately do
+ *     NOT use a per-request nonce: this site is statically/ISR-rendered and sits
+ *     behind a CDN (Cloudflare), so the HTML body is cached while a nonce header
+ *     would rotate per request — the baked-in script nonce then no longer matches
+ *     the header, and `'strict-dynamic'` blocks EVERY script (sitewide blank page,
+ *     the outage this replaced). A constant `script-src 'self' 'unsafe-inline'`
+ *     is identical on every response, so it survives caching. Same-origin bundles
+ *     load via `'self'`; Next.js's inline hydration/flight scripts via
+ *     `'unsafe-inline'`. All the strong directives (object-src, frame-ancestors,
+ *     base-uri, form-action…) are kept.
  *
  *  2. Admin edge gate (only for `/admin/*`) — "is there a verified Supabase
  *     session?" plus auth-token refresh. The Edge runtime can't reach Prisma, so
@@ -16,13 +21,14 @@ import { createServerClient } from "@supabase/ssr";
  *     (`getCurrentAdmin()` in the admin layout, `requireAdmin()` in actions).
  */
 
-function buildCsp(nonce: string): string {
+function buildCsp(): string {
   const isDev = process.env.NODE_ENV !== "production";
 
-  // Scripts: nonce + strict-dynamic (self/https are ignored by supporting
-  // browsers once strict-dynamic is present, kept for older ones). Dev needs
-  // 'unsafe-eval' for React Fast Refresh / HMR.
-  const scriptSrc = ["'self'", `'nonce-${nonce}'`, "'strict-dynamic'", isDev ? "'unsafe-eval'" : ""]
+  // Scripts: static policy — 'self' for same-origin bundles, 'unsafe-inline' for
+  // Next.js's inline bootstrap/flight scripts. No nonce/'strict-dynamic' (see the
+  // file header: they break under CDN/ISR HTML caching). Dev adds 'unsafe-eval'
+  // for React Fast Refresh / HMR.
+  const scriptSrc = ["'self'", "'unsafe-inline'", isDev ? "'unsafe-eval'" : ""]
     .filter(Boolean)
     .join(" ");
 
@@ -62,14 +68,10 @@ function buildCsp(nonce: string): string {
 }
 
 export async function middleware(request: NextRequest) {
-  const nonce = btoa(crypto.randomUUID());
-  const csp = buildCsp(nonce);
+  // Static, cache-safe CSP — identical on every response (no per-request nonce).
+  const csp = buildCsp();
 
-  // Expose the nonce + CSP to the rendering pipeline via request headers so
-  // Next.js can nonce its framework scripts.
   const requestHeaders = new Headers(request.headers);
-  requestHeaders.set("x-nonce", nonce);
-  requestHeaders.set("Content-Security-Policy", csp);
 
   let response = NextResponse.next({ request: { headers: requestHeaders } });
 
