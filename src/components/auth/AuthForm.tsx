@@ -172,10 +172,24 @@ export const AuthForm: React.FC<AuthFormProps> = ({ mode }) => {
           password,
         });
         if (error) throw error;
-        // Best-effort audit trail; never block the redirect on it.
-        void logAuthEvent('auth.login', data.session?.access_token).catch(() => {});
-        router.push('/');
-        router.refresh();
+        // Record the sign-in first: a hard navigation (below) cancels in-flight
+        // fetches, so await the audit call instead of firing-and-forgetting it.
+        // It never throws (best-effort).
+        await logAuthEvent('auth.login', data.session?.access_token).catch(() => {});
+        // Full-page navigation — NOT router.push()+refresh(). signInWithPassword
+        // has just written the Supabase auth cookies; a soft RSC refresh can race
+        // that write and re-render the server as logged-out, which is exactly why
+        // login used to need two attempts. A real navigation guarantees the
+        // browser sends the fresh cookies, so the first attempt sticks. Honors the
+        // ?next= param (e.g. an admin bounced from /login?next=/admin) while
+        // rejecting open-redirects to external URLs.
+        const nextParam = searchParams?.get('next');
+        const dest =
+          nextParam && nextParam.startsWith('/') && !nextParam.startsWith('//')
+            ? nextParam
+            : '/';
+        window.location.assign(dest);
+        return;
       } else if (isForgotPassword) {
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
           redirectTo: `${window.location.origin}/auth/callback?next=/update-password`,
