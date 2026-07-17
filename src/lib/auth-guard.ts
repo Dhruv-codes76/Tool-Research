@@ -124,12 +124,49 @@ export async function getCurrentUser() {
 
   if (!user?.email) return null;
 
-  const dbUser = await prisma.user.findUnique({
+  // Fast path: the app account already exists.
+  const existing = await prisma.user.findUnique({
     where: { email: user.email },
     select: { id: true, email: true },
   });
+  if (existing) return existing;
 
-  return dbUser ?? null;
+  // First authenticated visit → provision the app-level account.
+  //
+  // Supabase is the identity source; the Prisma `User` row is the authorization
+  // record the rest of the app keys off (Tool.userId, RBAC). Nothing else
+  // created this row for a normal signup/OAuth user, which is why a
+  // Google-authenticated visitor used to be "logged in" yet get bounced from
+  // every gated page. We create it here as a plain USER.
+  //
+  // Safe by construction: OAuth emails arrive pre-verified from the provider,
+  // and password users can't reach this point until they've confirmed their
+  // email (Supabase withholds the session until then, when confirmations are
+  // enabled). Admins are never minted here — they're invite-provisioned
+  // elsewhere, and an existing invited-admin row is caught by the fast path
+  // above, so we never downgrade one to USER.
+  try {
+    return await prisma.user.create({
+      data: {
+        id: user.id, // reuse the Supabase auth id for a stable 1:1 mapping
+        email: user.email,
+        name:
+          (user.user_metadata?.full_name as string | undefined)?.trim() ||
+          user.email.split("@")[0],
+        image: (user.user_metadata?.avatar_url as string | undefined) ?? null,
+        role: "USER",
+        status: "ACTIVE",
+        emailVerified: new Date(),
+      },
+      select: { id: true, email: true },
+    });
+  } catch {
+    // Lost a create race with a concurrent request — the row exists now.
+    return prisma.user.findUnique({
+      where: { email: user.email },
+      select: { id: true, email: true },
+    });
+  }
 }
 
 /**

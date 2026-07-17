@@ -171,7 +171,18 @@ export const AuthForm: React.FC<AuthFormProps> = ({ mode }) => {
           email,
           password,
         });
-        if (error) throw error;
+        if (error) {
+          // A password account that hasn't clicked its confirmation link yet.
+          // Point them at the "Resend Email" action rather than showing a raw
+          // Supabase string. OAuth logins never hit this — providers pre-verify.
+          const code = (error as { code?: string }).code;
+          if (code === 'email_not_confirmed' || /not confirmed/i.test(error.message)) {
+            throw new Error(
+              'Please confirm your email before signing in. Check your inbox for the verification link, or use “Resend Email” below.',
+            );
+          }
+          throw error;
+        }
         // Record the sign-in first: a hard navigation (below) cancels in-flight
         // fetches, so await the audit call instead of firing-and-forgetting it.
         // It never throws (best-effort).
@@ -222,7 +233,9 @@ export const AuthForm: React.FC<AuthFormProps> = ({ mode }) => {
           },
         });
         if (error) throw error;
-        setError(`Confirmation email sent to ${email}! Please check your inbox.`);
+        setError(
+          `Account created! We've sent a confirmation link to ${email}. Click it to verify your account, then come back and sign in.`,
+        );
       }
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'An error occurred');
