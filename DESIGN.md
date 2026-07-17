@@ -182,6 +182,10 @@ erDiagram
 
 AI Tool Research enforces a high-quality, luxury design direction, avoiding generic "clean minimal" or unmodified templates.
 
+> This section governs the **look**. For the **words** — brand voice, editorial conventions for tool
+> write-ups, messaging, and positioning — see [`BRAND.md`](BRAND.md). `DESIGN.md` stays authoritative
+> for anything visual; `BRAND.md` owns voice and copy.
+
 ### A. Color System (Tailwind CSS v4 `@theme` Mappings)
 We use a disciplined, dark luxury palette heavily inspired by **Material Design v3** tokens:
 
