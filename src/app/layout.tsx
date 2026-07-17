@@ -54,6 +54,11 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${plusJakartaSans.variable} ${jetbrainsMono.variable} dark`}>
       <head>
+        {/* Warm the Google Fonts connections before the render-blocking icon
+            stylesheet is requested — saves the DNS + TLS + TCP handshake on the
+            critical path (the CSP forbids the inline-onload async-swap trick). */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
       </head>
       <body className="bg-background text-on-surface antialiased">
