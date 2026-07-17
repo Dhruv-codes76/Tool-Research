@@ -65,8 +65,6 @@ export default async function SubmitToolPage() {
       <section className="px-gutter pb-32">
         <div className="max-w-2xl mx-auto">
           <SubmitToolForm
-            userId={user.id}
-            userEmail={user.email || ''}
             availablePlatforms={platforms.map((p: any) => p.name)}
             availableToolTypes={toolTypes.map((t: any) => t.name)}
           />

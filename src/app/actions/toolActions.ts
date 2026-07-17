@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { getRepoStats, parseGitHubUrl, detectCategories } from "@/lib/github";
 import { logAudit } from "@/lib/audit-log";
 import { withErrorHandling, AppError } from "@/lib/errors";
+import { getCurrentUser } from "@/lib/auth-guard";
 
 /** Normalise a string into a URL-safe slug. */
 function slugify(input: string): string {
@@ -222,64 +223,135 @@ export async function refreshToolStats(toolId: string) {
   return updatedTool;
 }
 
-import { ToolAdminFormData } from '@/app/actions/adminActions';
+/**
+ * Lean community submission. The submitter provides only a repo URL plus
+ * (optionally) a description, images, and categories — everything heavy (slug,
+ * SEO, taxonomy polish) is the admin's job in the review modal. The values the
+ * submitter provided are snapshotted so the dashboard can later show exactly
+ * what the admin changed before publishing.
+ */
+export type ToolSubmissionInput = {
+  repoUrl: string;
+  name: string;
+  description?: string;
+  websiteUrl?: string;
+  author?: string;
+  authorUrl?: string;
+  license?: string;
+  version?: string;
+  since?: string;
+  heroImageUrl?: string;
+  galleryImages?: string; // JSON string of string[]
+  galleryLayout?: string;
+  downloadAssets?: string; // JSON string of DownloadAsset[]
+  toolTypes?: string[];
+  platforms?: string[];
+};
 
-export async function submitFullTool(data: ToolAdminFormData, userId: string, submitterEmail: string) {
+export async function submitToolRequest(input: ToolSubmissionInput) {
   return withErrorHandling(async () => {
-  let stats = { stars: 0, forks: 0, issues: 0 };
-  const githubInfo = parseGitHubUrl(data.repoUrl);
-  
-  if (githubInfo) {
-    const fetchedStats = await getRepoStats(githubInfo.owner, githubInfo.repo);
-    if (fetchedStats) {
-      stats = {
-        stars: fetchedStats.stars,
-        forks: fetchedStats.forks,
-        issues: fetchedStats.issues,
-      };
+    // Resolve identity server-side — never trust a client-passed userId.
+    const user = await getCurrentUser();
+    if (!user) {
+      throw new AppError("You must be signed in to submit a tool.", "UNAUTHORIZED");
     }
-  }
 
-  const { platforms, toolTypes, ...toolData } = data;
-
-  const tool = await prisma.tool.create({
-    data: {
-      ...toolData,
-      status: 'PENDING',
-      userId,
-      submittedByEmail: submitterEmail,
-      ...stats,
-      lastFetchedAt: new Date(),
-      platforms: {
-        connectOrCreate: platforms.map((name: any) => ({
-          where: { name },
-          create: { name },
-        })),
-      },
-      toolTypes: {
-        connectOrCreate: toolTypes.map((name: any) => ({
-          where: { name },
-          create: { name },
-        })),
-      },
-    },
-    include: {
-      platforms: true,
-      toolTypes: true,
+    const repoUrl = input.repoUrl?.trim();
+    const name = input.name?.trim();
+    if (!repoUrl) throw new AppError("A GitHub repository URL is required.", "VALIDATION_ERROR");
+    if (!name) throw new AppError("Could not read the tool name — try fetching again.", "VALIDATION_ERROR");
+    if (!parseGitHubUrl(repoUrl)) {
+      throw new AppError("That doesn't look like a valid GitHub repository URL.", "VALIDATION_ERROR");
     }
-  });
 
-  await logAudit({
-    action: "tool.submit_full",
-    actor: { id: userId },
-    targetType: "Tool",
-    targetId: tool.id,
-    targetLabel: tool.name,
-    metadata: { repoUrl: data.repoUrl, platforms, toolTypes },
-  });
+    // Reject a repo that's already in the directory (any status but deleted).
+    const existing = await prisma.tool.findFirst({
+      where: { repoUrl, status: { not: "DELETED" } },
+      select: { status: true },
+    });
+    if (existing) {
+      throw new AppError(
+        existing.status === "PENDING"
+          ? "This tool has already been submitted and is awaiting review."
+          : "This tool is already in the directory.",
+        "CONFLICT",
+      );
+    }
 
-  revalidatePath("/");
-  return tool;
+    // Auto-generate a unique slug — the admin can refine it before publishing.
+    const slug = await ensureUniqueSlug(name);
+
+    // Live stats, fetched server-side for integrity.
+    let stats = { stars: 0, forks: 0, issues: 0 };
+    const githubInfo = parseGitHubUrl(repoUrl);
+    if (githubInfo) {
+      const fetched = await getRepoStats(githubInfo.owner, githubInfo.repo);
+      if (fetched) stats = { stars: fetched.stars, forks: fetched.forks, issues: fetched.issues };
+    }
+
+    const platforms = input.platforms ?? [];
+    const toolTypes = input.toolTypes ?? [];
+
+    // Snapshot exactly what the submitter provided, before any admin edit.
+    const snapshot = {
+      name,
+      description: input.description ?? "",
+      websiteUrl: input.websiteUrl ?? "",
+      author: input.author ?? "",
+      authorUrl: input.authorUrl ?? "",
+      license: input.license ?? "",
+      version: input.version ?? "",
+      since: input.since ?? "",
+      heroImageUrl: input.heroImageUrl ?? "",
+      galleryImages: input.galleryImages ?? "[]",
+      galleryLayout: input.galleryLayout ?? "16:9",
+      toolTypes,
+      platforms,
+    };
+
+    const tool = await prisma.tool.create({
+      data: {
+        name,
+        slug,
+        description: input.description ?? "",
+        repoUrl,
+        websiteUrl: input.websiteUrl ?? "",
+        author: input.author || null,
+        authorUrl: input.authorUrl || null,
+        license: input.license || null,
+        version: input.version || null,
+        since: input.since || null,
+        heroImageUrl: input.heroImageUrl || null,
+        galleryImages: input.galleryImages ?? "[]",
+        galleryLayout: input.galleryLayout ?? "16:9",
+        downloadAssets: input.downloadAssets ?? "[]",
+        status: "PENDING",
+        userId: user.id,
+        submittedByEmail: user.email ?? null,
+        submissionSnapshot: JSON.stringify(snapshot),
+        ...stats,
+        lastFetchedAt: new Date(),
+        platforms: {
+          connectOrCreate: platforms.map((n) => ({ where: { name: n }, create: { name: n } })),
+        },
+        toolTypes: {
+          connectOrCreate: toolTypes.map((n) => ({ where: { name: n }, create: { name: n } })),
+        },
+      },
+      include: { platforms: true, toolTypes: true },
+    });
+
+    await logAudit({
+      action: "tool.submit",
+      actor: { id: user.id },
+      targetType: "Tool",
+      targetId: tool.id,
+      targetLabel: tool.name,
+      metadata: { repoUrl, platforms, toolTypes },
+    });
+
+    revalidatePath("/admin/submissions");
+    return tool;
   });
 }
 

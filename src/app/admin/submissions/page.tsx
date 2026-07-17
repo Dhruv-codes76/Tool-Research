@@ -2,9 +2,16 @@ import React from 'react';
 import Link from 'next/link';
 import { getPendingSubmissions } from '@/app/actions/adminActions';
 import { SubmissionRow } from '@/components/admin/SubmissionRow';
+import { prisma } from '@/lib/prisma';
 
 export default async function SubmissionsPage() {
-  const submissions = await getPendingSubmissions();
+  const [submissions, platformRows, toolTypeRows] = await Promise.all([
+    getPendingSubmissions(),
+    prisma.platform.findMany({ orderBy: { name: 'asc' }, select: { name: true } }),
+    prisma.toolType.findMany({ orderBy: { name: 'asc' }, select: { name: true } }),
+  ]);
+  const availablePlatforms = platformRows.map((p) => p.name);
+  const availableToolTypes = toolTypeRows.map((t) => t.name);
 
   return (
     <div className="flex flex-col gap-10">
@@ -73,7 +80,12 @@ export default async function SubmissionsPage() {
             </thead>
             <tbody className="divide-y divide-outline-variant/10">
               {submissions.map((submission: any) => (
-                <SubmissionRow key={submission.id} submission={submission} />
+                <SubmissionRow
+                  key={submission.id}
+                  submission={submission}
+                  availablePlatforms={availablePlatforms}
+                  availableToolTypes={availableToolTypes}
+                />
               ))}
 
               {submissions.length === 0 && (
@@ -109,8 +121,9 @@ export default async function SubmissionsPage() {
         <div className="flex flex-col gap-1">
           <p className="font-label-sm text-sm text-on-surface">How the review flow works</p>
           <p className="font-body-base text-[12px] text-on-surface-variant leading-relaxed">
-            <strong className="text-[#10B981]">Approve</strong> moves the tool to <span className="font-mono-code text-xs">DRAFT</span> and opens the editor so you can enrich its details before publishing live.&nbsp;
-            <strong className="text-error">Reject</strong> permanently marks it rejected and notifies the submitter via email (if a reason is provided, it's included).
+            <strong className="text-on-surface">Review</strong> opens the full editor — set the slug, SEO, categories and confirm the image.&nbsp;
+            <strong className="text-[#10B981]">Publish live</strong> sends it straight to the directory (a valid slug, description and thumbnail are required).&nbsp;
+            <strong className="text-error">Reject</strong> marks it rejected and emails the submitter (with your reason, if given).
           </p>
         </div>
       </div>

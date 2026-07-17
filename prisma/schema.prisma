@@ -69,6 +69,12 @@ model Tool {
   metaDescription  String?
   rejectionReason  String?
   submittedByEmail String?
+  publishedAt      DateTime?
+  // JSON snapshot of the values the SUBMITTER originally provided (name,
+  // description, images, categories…). Written once at submission time and
+  // never mutated after. The submitter dashboard diffs this against the live
+  // Tool to show exactly which fields the admin edited before publishing.
+  submissionSnapshot String?
   // SEO: slug is the ONLY public URL identifier for a tool. Unique so no two
   // tools can collide. Kept nullable at the DB level (Postgres treats NULLs as
   // distinct, so the constraint is safe on legacy rows) — presence is enforced

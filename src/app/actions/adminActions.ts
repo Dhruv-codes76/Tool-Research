@@ -565,73 +565,120 @@ export async function getPendingSubmissions() {
 }
 
 /**
- * Approve a user-submitted tool.
- * Sets status → DRAFT so the admin can enrich details before publishing live.
- * Sends an approval email to the submitter (best-effort, never throws).
+ * The full set of fields an admin edits in the review modal before publishing a
+ * community submission. Everything is finalised here — slug, SEO, taxonomy — so
+ * the public listing is polished the moment it goes live.
  */
-export async function approveSubmission(
-  toolId: string,
-  editedData?: { 
-    name: string; 
-    description: string; 
-    repoUrl: string; 
-    websiteUrl: string | null;
-    aboutText?: string | null;
-    heroImageUrl?: string | null;
-    galleryImages?: string | null;
-    features?: string | null;
-    installCommand?: string | null;
-    license?: string | null;
-    version?: string | null;
-    since?: string | null;
-    downloadUrl?: string | null;
-  }
-) {
-  const admin = await requireAdmin();
+export type SubmissionPublishData = {
+  name: string;
+  slug: string;
+  description: string;
+  metaDescription: string | null;
+  repoUrl: string;
+  websiteUrl: string | null;
+  aboutText: string | null;
+  heroImageUrl: string | null;
+  galleryImages: string | null;
+  galleryLayout: string | null;
+  features: string | null;
+  installCommand: string | null;
+  downloadAssets: string | null;
+  downloadUrl: string | null;
+  author: string | null;
+  authorUrl: string | null;
+  license: string | null;
+  version: string | null;
+  since: string | null;
+  platforms: string[];
+  toolTypes: string[];
+};
 
-  const dataToUpdate: Record<string, any> = { status: 'ACTIVE' };
-  if (editedData) {
-    dataToUpdate.name = editedData.name;
-    dataToUpdate.description = editedData.description;
-    dataToUpdate.repoUrl = editedData.repoUrl;
-    dataToUpdate.websiteUrl = editedData.websiteUrl;
-    
-    if (editedData.aboutText !== undefined) dataToUpdate.aboutText = editedData.aboutText;
-    if (editedData.heroImageUrl !== undefined) dataToUpdate.heroImageUrl = editedData.heroImageUrl;
-    if (editedData.galleryImages !== undefined) dataToUpdate.galleryImages = editedData.galleryImages;
-    if (editedData.features !== undefined) dataToUpdate.features = editedData.features;
-    if (editedData.installCommand !== undefined) dataToUpdate.installCommand = editedData.installCommand;
-    if (editedData.license !== undefined) dataToUpdate.license = editedData.license;
-    if (editedData.version !== undefined) dataToUpdate.version = editedData.version;
-    if (editedData.since !== undefined) dataToUpdate.since = editedData.since;
-    if (editedData.downloadUrl !== undefined) dataToUpdate.downloadUrl = editedData.downloadUrl;
-  }
+/**
+ * Approve and PUBLISH a user-submitted tool (status → ACTIVE) with the admin's
+ * finalised details. Enforces the publish gate (valid unique slug, an image, a
+ * non-empty description) so a half-finished listing can never go live. Sends an
+ * approval email to the submitter (best-effort, never throws).
+ */
+export async function approveSubmission(toolId: string, data: SubmissionPublishData) {
+  return withErrorHandling(async () => {
+    const admin = await requireAdmin();
 
-  const tool = await prisma.tool.update({
-    where: { id: toolId },
-    data: dataToUpdate,
+    // Publish gate — mirrors the disabled state of the modal's Publish button so
+    // the rule holds even if the client is bypassed.
+    const slug = data.slug?.trim().toLowerCase();
+    if (!slug || !/^[a-z0-9-]+$/.test(slug)) {
+      throw new Error("A valid URL slug (lowercase letters, numbers, hyphens) is required to publish.");
+    }
+    if (!(await checkSlugUnique(slug, toolId))) {
+      throw new Error(`The slug "${slug}" is already taken by another tool.`);
+    }
+    if (!data.description?.trim()) {
+      throw new Error("A description is required before publishing.");
+    }
+    if (!data.heroImageUrl?.trim()) {
+      throw new Error("A thumbnail image is required before publishing.");
+    }
+
+    const { platforms, toolTypes } = data;
+
+    const tool = await prisma.tool.update({
+      where: { id: toolId },
+      data: {
+        status: "ACTIVE",
+        publishedAt: new Date(),
+        name: data.name,
+        slug,
+        description: data.description,
+        metaDescription: data.metaDescription,
+        repoUrl: data.repoUrl,
+        websiteUrl: data.websiteUrl,
+        aboutText: data.aboutText,
+        heroImageUrl: data.heroImageUrl,
+        galleryImages: data.galleryImages,
+        galleryLayout: data.galleryLayout,
+        features: data.features,
+        installCommand: data.installCommand,
+        downloadAssets: data.downloadAssets,
+        downloadUrl: data.downloadUrl,
+        author: data.author,
+        authorUrl: data.authorUrl,
+        license: data.license,
+        version: data.version,
+        since: data.since,
+        platforms: {
+          set: [],
+          connectOrCreate: platforms.map((name) => ({ where: { name }, create: { name } })),
+        },
+        toolTypes: {
+          set: [],
+          connectOrCreate: toolTypes.map((name) => ({ where: { name }, create: { name } })),
+        },
+      },
+    });
+
+    // Fire-and-forget email — captured in a void so the action never awaits it.
+    if (tool.submittedByEmail) {
+      void sendSubmissionApprovedEmail(tool.submittedByEmail, tool.name);
+    }
+
+    await logAudit({
+      action: "tool.approve",
+      actor: admin,
+      targetType: "Tool",
+      targetId: tool.id,
+      targetLabel: tool.name,
+      metadata: { submittedByEmail: tool.submittedByEmail, slug, platforms, toolTypes },
+    });
+
+    revalidatePath("/admin/submissions");
+    revalidatePath("/admin/tools");
+    revalidatePath("/");
+    revalidatePath("/tools");
+    revalidatePath(`/tools/${slug}`);
+    revalidatePath("/dashboard");
+
+    return { id: tool.id, slug };
   });
-
-  // Fire-and-forget email — captured in a void so the action never awaits it
-  if (tool.submittedByEmail) {
-    void sendSubmissionApprovedEmail(tool.submittedByEmail, tool.name);
-  }
-
-  await logAudit({
-    action: 'tool.approve',
-    actor: admin,
-    targetType: 'Tool',
-    targetId: tool.id,
-    targetLabel: tool.name,
-    metadata: { submittedByEmail: tool.submittedByEmail, edited: !!editedData },
-  });
-
-  revalidatePath('/admin/submissions');
-  revalidatePath('/admin/tools');
-  revalidatePath('/');
-  revalidatePath('/tools');
-
-  return { success: true };
 }
 
 /**
@@ -664,4 +711,5 @@ export async function rejectSubmission(toolId: string, reason?: string) {
   });
 
   revalidatePath('/admin/submissions');
+  revalidatePath('/dashboard');
 }
