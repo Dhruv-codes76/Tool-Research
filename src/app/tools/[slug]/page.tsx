@@ -8,6 +8,7 @@ import { DownloadButton } from '@/components/tools/DownloadButton';
 import { ShareButton } from '@/components/tools/ShareButton';
 import { ImageGallery } from '@/components/tools/ImageGallery';
 import { JsonLd } from '@/components/seo/JsonLd';
+import { UploadedBy } from '@/components/tools/UploadedBy';
 import { buildMetadata, graph, breadcrumbSchema, softwareApplicationSchema } from '@/lib/seo';
 
 const glassStyle = {
@@ -34,7 +35,12 @@ async function findTool(identifier: string) {
         { repoUrl: { contains: `/${identifier}` } },
       ],
     },
-    include: { platforms: true, toolTypes: true },
+    include: {
+      platforms: true,
+      toolTypes: true,
+      // Uploader — powers the "Uploaded by …" trust attribution.
+      user: { select: { name: true, role: true, isPrimaryAdmin: true } },
+    },
   });
 }
 
@@ -307,7 +313,10 @@ export default async function ToolDetailPage({ params }: PageProps) {
         {/* Right Column (Sidebar) */}
         <div className="lg:col-span-4">
           <div className="sticky top-24 space-y-6">
-            
+
+            {/* Uploader attribution — trust signal */}
+            <UploadedBy name={dbTool.user?.name ?? null} role={dbTool.user?.role ?? null} />
+
             {/* Metadata Card */}
             <div 
               className="p-6 rounded-2xl flex flex-col justify-between space-y-4"
