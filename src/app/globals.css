@@ -256,3 +256,40 @@
   font-weight: 700 !important;
 }
 
+/* ── Skeleton loading ──────────────────────────────────────────────────────
+   Content-shaped placeholders that replace generic spinners while a route or
+   request resolves. A single highlight sweeps across each block via `transform`
+   (compositor-only, per the motion rules) over a layered dark surface so it
+   reads on-brand rather than as a flat grey bar. */
+@keyframes skeletonSweep {
+  from { transform: translateX(-100%); }
+  to   { transform: translateX(100%); }
+}
+
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: var(--color-surface-container);
+  border-radius: 8px;
+}
+
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.06) 45%,
+    rgba(195, 192, 255, 0.05) 55%,
+    transparent
+  );
+  animation: skeletonSweep 1.6s ease-in-out infinite;
+  will-change: transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton::after { animation: none; }
+}
+
