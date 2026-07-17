@@ -19,6 +19,7 @@ model User {
   isPrimaryAdmin Boolean   @default(false)
   status         String    @default("ACTIVE")
   tools          Tool[]
+  savedTools     SavedTool[]
   invitedBy      User?     @relation("AdminInvites", fields: [invitedById], references: [id])
   invitedAdmins  User[]    @relation("AdminInvites")
 }
@@ -82,8 +83,25 @@ model Tool {
   slug             String?      @unique
   user             User         @relation(fields: [userId], references: [id])
   changes          ToolChange[]
+  savedBy          SavedTool[]
   platforms        Platform[]   @relation("PlatformToTool")
   toolTypes        ToolType[]   @relation("ToolToToolType")
+}
+
+/**
+ * A user's wishlist entry — one row per (user, tool). Login-required, DB-backed.
+ * Deleting the tool or user cascades so no orphan saves remain.
+ */
+model SavedTool {
+  id        String   @id @default(cuid())
+  userId    String
+  toolId    String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tool      Tool     @relation(fields: [toolId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, toolId])
+  @@index([userId])
 }
 
 model ToolChange {

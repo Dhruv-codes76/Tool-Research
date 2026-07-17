@@ -1,7 +1,8 @@
 "use client";
 
 import { ReactNode } from "react";
+import { SavedToolsProvider } from "@/components/tools/SavedToolsProvider";
 
 export const Providers = ({ children }: { children: ReactNode }) => {
-  return <>{children}</>;
+  return <SavedToolsProvider>{children}</SavedToolsProvider>;
 };

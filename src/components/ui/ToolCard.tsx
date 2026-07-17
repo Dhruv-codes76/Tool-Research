@@ -1,5 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
+import { SaveButton } from '@/components/tools/SaveButton';
 
 interface ToolCardProps {
   id: string;
@@ -16,7 +17,11 @@ interface ToolCardProps {
 export const ToolCard: React.FC<ToolCardProps> = ({ id, slug, name, stars, description, tags, icon, color, logoUrl }) => {
   return (
     <Link href={`/tools/${slug}`} className="block h-full">
-      <div className="bg-surface rounded-2xl border border-outline-variant/30 p-6 hover:scale-[1.02] hover:border-outline-variant/60 transition-all duration-300 group cursor-pointer flex flex-col h-full">
+      <div className="relative bg-surface rounded-2xl border border-outline-variant/30 p-6 hover:scale-[1.02] hover:border-outline-variant/60 transition-all duration-300 group cursor-pointer flex flex-col h-full">
+        {/* Wishlist heart — overlay, stops propagation so it doesn't navigate */}
+        <div className="absolute top-3 right-3 z-10">
+          <SaveButton toolId={id} variant="card" />
+        </div>
         <div className="flex items-center gap-4 mb-4">
           <div className={`w-12 h-12 rounded-lg border border-white/10 flex items-center justify-center overflow-hidden ${color}`}>
             {logoUrl ? (
@@ -40,7 +45,7 @@ export const ToolCard: React.FC<ToolCardProps> = ({ id, slug, name, stars, descr
           {description}
         </p>
         <div className="mt-4 flex gap-2 flex-wrap">
-          {tags.map((tag: any) => (
+          {tags.map((tag) => (
             <span key={tag} className="text-xs text-on-surface-variant bg-surface-container px-2 py-1 rounded">
               {tag}
             </span>

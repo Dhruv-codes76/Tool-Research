@@ -6,6 +6,7 @@ import { AboutSection } from '@/components/tools/AboutSection';
 import { InstallSection } from '@/components/tools/InstallSection';
 import { DownloadButton } from '@/components/tools/DownloadButton';
 import { ShareButton } from '@/components/tools/ShareButton';
+import { SaveButton } from '@/components/tools/SaveButton';
 import { ImageGallery } from '@/components/tools/ImageGallery';
 import { JsonLd } from '@/components/seo/JsonLd';
 import { UploadedBy } from '@/components/tools/UploadedBy';
@@ -207,8 +208,9 @@ export default async function ToolDetailPage({ params }: PageProps) {
             {/* Dark overlay for readability */}
             <div className="absolute inset-0 bg-[#09090b]/70 backdrop-blur-[10px]"></div>
 
-            {/* Share — top-right of the hero card */}
-            <div className="absolute top-4 right-4 md:top-6 md:right-6 z-20">
+            {/* Save + Share — top-right of the hero card */}
+            <div className="absolute top-4 right-4 md:top-6 md:right-6 z-20 flex items-center gap-2">
+              <SaveButton toolId={dbTool.id} variant="hero" />
               <ShareButton title={dbTool.name} text={dbTool.description} />
             </div>
 

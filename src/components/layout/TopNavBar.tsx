@@ -28,7 +28,7 @@ import { supabase } from '@/lib/supabase';
 import { logAuthEvent } from '@/app/actions/auditActions';
 import { checkUserRole } from '@/app/actions/authActions';
 import { useRouter } from 'next/navigation';
-import { LogOut, User, Info, FileText, Menu, X, LayoutDashboard } from 'lucide-react';
+import { LogOut, User, Info, FileText, Menu, X, LayoutDashboard, LayoutGrid, Heart } from 'lucide-react';
 import { type Session } from '@supabase/supabase-js';
 
 const TopNavBar = () => {
@@ -212,10 +212,30 @@ const TopNavBar = () => {
                           className="relative flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm font-medium text-on-surface-variant hover:text-white hover:bg-white/10 transition-all duration-300 overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-r before:from-white/5 before:to-transparent before:opacity-0 hover:before:opacity-100"
                         >
                           <LayoutDashboard size={18} />
-                          Dashboard
+                          Admin panel
                         </Link>
                       </div>
                     )}
+
+                    {/* Everyone: personal dashboard + wishlist */}
+                    <div className="border-b border-white/5 mb-2 pb-2">
+                      <Link
+                        href="/dashboard"
+                        onClick={() => setMenuOpen(false)}
+                        className="relative flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm font-medium text-on-surface-variant hover:text-white hover:bg-white/10 transition-all duration-300 overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-r before:from-white/5 before:to-transparent before:opacity-0 hover:before:opacity-100"
+                      >
+                        <LayoutGrid size={18} />
+                        My submissions
+                      </Link>
+                      <Link
+                        href="/dashboard?tab=saved"
+                        onClick={() => setMenuOpen(false)}
+                        className="relative flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm font-medium text-on-surface-variant hover:text-white hover:bg-white/10 transition-all duration-300 overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-r before:from-white/5 before:to-transparent before:opacity-0 hover:before:opacity-100"
+                      >
+                        <Heart size={18} />
+                        Saved
+                      </Link>
+                    </div>
                     {/* Mobile Links */}
                     <div className="md:hidden border-b border-white/5 mb-2 pb-2">
                       <Link
