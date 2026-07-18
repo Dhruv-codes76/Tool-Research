@@ -15,7 +15,7 @@ type NavItem = {
   icon: string;
   label: string;
   exact?: boolean;
-  badge?: 'submissions';
+  badge?: 'submissions' | 'changes';
   primaryOnly?: boolean;
 };
 
@@ -23,6 +23,7 @@ const NAV_ITEMS: NavItem[] = [
   { href: '/admin', icon: 'bar_chart', label: 'Analytics', exact: true },
   { href: '/admin/tools', icon: 'build', label: 'Tools' },
   { href: '/admin/submissions', icon: 'inbox', label: 'Submissions', badge: 'submissions' },
+  { href: '/admin/review', icon: 'rule', label: 'Review', badge: 'changes' },
   { href: '/admin/categories', icon: 'category', label: 'Categories' },
   { href: '/admin/manage-admins', icon: 'admin_panel_settings', label: 'Manage Admins' },
   { href: '/admin/audit-log', icon: 'history', label: 'Audit Log', primaryOnly: true },
@@ -42,16 +43,21 @@ const NAV_ITEMS: NavItem[] = [
 export function AdminShell({
   user,
   submissionCount,
+  changeCount,
   children,
 }: {
   user: AdminShellUser;
   submissionCount: number;
+  changeCount: number;
   children: React.ReactNode;
 }) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
 
   const navItems = NAV_ITEMS.filter((item) => !item.primaryOnly || user.isPrimaryAdmin);
+  const badgeCount = (badge: NavItem['badge']) =>
+    badge === 'submissions' ? submissionCount : badge === 'changes' ? changeCount : 0;
+  const topBarCount = submissionCount + changeCount;
 
   return (
     <div className="flex min-h-screen bg-background">
@@ -103,9 +109,9 @@ export function AdminShell({
                 >
                   <span className="material-symbols-outlined text-[20px]">{item.icon}</span>
                   <span className="font-label-sm text-sm">{item.label}</span>
-                  {item.badge === 'submissions' && submissionCount > 0 && (
+                  {badgeCount(item.badge) > 0 && (
                     <span className="ml-auto px-2 py-0.5 bg-primary text-on-primary rounded-full text-[10px] font-bold leading-none">
-                      {submissionCount}
+                      {badgeCount(item.badge)}
                     </span>
                   )}
                 </Link>
@@ -141,9 +147,9 @@ export function AdminShell({
             <span className="material-symbols-outlined text-[24px]">menu</span>
           </button>
           <span className="font-display-lg text-base font-bold tracking-tight text-on-surface">Obsidian</span>
-          {submissionCount > 0 && (
+          {topBarCount > 0 && (
             <span className="ml-auto px-2 py-0.5 bg-primary text-on-primary rounded-full text-[10px] font-bold leading-none">
-              {submissionCount} pending
+              {topBarCount} pending
             </span>
           )}
         </header>

@@ -16,12 +16,16 @@ export default async function AdminLayout({
   const user = await getCurrentAdmin();
   if (!user) redirect('/login?next=/admin');
 
-  const submissionCount = await prisma.tool.count({ where: { status: 'PENDING' } });
+  const [submissionCount, changeCount] = await Promise.all([
+    prisma.tool.count({ where: { status: 'PENDING' } }),
+    prisma.toolChange.count({ where: { status: 'PENDING' } }),
+  ]);
 
   return (
     <AdminShell
       user={{ name: user.name, email: user.email, isPrimaryAdmin: user.isPrimaryAdmin }}
       submissionCount={submissionCount}
+      changeCount={changeCount}
     >
       {children}
     </AdminShell>

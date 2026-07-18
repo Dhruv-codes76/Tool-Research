@@ -543,6 +543,97 @@ export async function rejectChange(changeId: string) {
   revalidatePath("/admin/review");
 }
 
+// Cron-proposed fields that map 1:1 to a Tool column and can be one-click
+// applied. `downloadAssets` keeps its dedicated curation flow
+// (publishDownloadCuration); the deleted/archived alerts are resolved via
+// archiveToolFromChange, not a plain field write.
+const APPLYABLE_FIELDS = new Set(["name", "heroImageUrl", "repoUrl"]);
+
+/**
+ * One-click apply: write the exact value the cron fetched into the tool and
+ * resolve the change. Whitelisted to safe scalar fields — anything else
+ * (downloadAssets, the deleted/archived alerts) must go through its own flow.
+ */
+export async function applyChange(changeId: string) {
+  const admin = await requireAdmin();
+
+  const change = await prisma.toolChange.findUnique({
+    where: { id: changeId },
+    include: { tool: true },
+  });
+  if (!change) throw new Error("Change not found");
+  if (change.status !== "PENDING") throw new Error("This change has already been resolved");
+  if (!APPLYABLE_FIELDS.has(change.field)) {
+    throw new Error(`The "${change.field}" change can't be applied directly — use its own action`);
+  }
+
+  await prisma.$transaction([
+    prisma.tool.update({
+      where: { id: change.toolId },
+      data: { [change.field]: change.newValue },
+    }),
+    prisma.toolChange.update({
+      where: { id: changeId },
+      data: { status: "APPROVED", resolvedAt: new Date() },
+    }),
+  ]);
+
+  await logAudit({
+    action: "toolChange.apply",
+    actor: admin,
+    targetType: "Tool",
+    targetId: change.toolId,
+    targetLabel: change.tool?.name,
+    metadata: { changeId, field: change.field, oldValue: change.oldValue, newValue: change.newValue },
+  });
+
+  revalidatePath("/");
+  revalidatePath("/tools");
+  if (change.tool?.slug) revalidatePath(`/tools/${change.tool.slug}`);
+  revalidatePath("/admin/tools");
+  revalidatePath("/admin/review");
+}
+
+/**
+ * Resolve a deleted/archived-repo alert by hiding the tool (soft-delete →
+ * status DELETED). Mirrors deleteTool: the row is preserved (Tool.userId FK,
+ * recoverable) and drops out of the public directory + the cron's ACTIVE sweep.
+ */
+export async function archiveToolFromChange(changeId: string) {
+  const admin = await requireAdmin();
+
+  const change = await prisma.toolChange.findUnique({
+    where: { id: changeId },
+    include: { tool: true },
+  });
+  if (!change) throw new Error("Change not found");
+
+  await prisma.$transaction([
+    prisma.tool.update({
+      where: { id: change.toolId },
+      data: { status: "DELETED" },
+    }),
+    prisma.toolChange.update({
+      where: { id: changeId },
+      data: { status: "APPROVED", resolvedAt: new Date() },
+    }),
+  ]);
+
+  await logAudit({
+    action: "toolChange.archiveTool",
+    actor: admin,
+    targetType: "Tool",
+    targetId: change.toolId,
+    targetLabel: change.tool?.name,
+    metadata: { changeId, field: change.field, reason: change.newValue },
+  });
+
+  revalidatePath("/");
+  revalidatePath("/tools");
+  revalidatePath("/admin/tools");
+  revalidatePath("/admin/review");
+}
+
 // ---------------------------------------------------------------------------
 // User-submission review queue
 // ---------------------------------------------------------------------------

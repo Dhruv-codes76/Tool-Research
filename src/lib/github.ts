@@ -49,6 +49,59 @@ export async function getRepoStats(owner: string, repo: string) {
   }
 }
 
+/**
+ * Richer, deletion-aware repo lookup used by the refresh cron. Unlike
+ * getRepoStats (which collapses every failure to `null`), this distinguishes:
+ *  - `ok`      → repo is live; carries the fields the cron diffs for review
+ *                (fullName follows GitHub renames/transfers, avatarUrl is the
+ *                owner icon we store as heroImageUrl, archived flags read-only).
+ *  - `deleted` → GitHub returned 404: the repo was deleted or made private.
+ *                The cron must NOT remove the tool — it flags it for an admin.
+ *  - `error`   → transient failure (rate limit, 5xx). Skip this tool this run;
+ *                never mistake it for a deletion.
+ */
+export type RepoState =
+  | {
+      kind: "ok";
+      fullName: string;
+      stars: number;
+      forks: number;
+      issues: number;
+      description: string;
+      lastUpdate: string;
+      license: string;
+      avatarUrl: string;
+      archived: boolean;
+    }
+  | { kind: "deleted" }
+  | { kind: "error" };
+
+export async function getRepoState(owner: string, repo: string): Promise<RepoState> {
+  try {
+    const { data } = await octokit.rest.repos.get({ owner, repo });
+    return {
+      kind: "ok",
+      fullName: data.full_name,
+      stars: data.stargazers_count || 0,
+      forks: data.forks_count || 0,
+      issues: data.open_issues_count || 0,
+      description: data.description || "",
+      lastUpdate: data.updated_at,
+      license: data.license?.spdx_id || data.license?.name || "",
+      avatarUrl: data.owner?.avatar_url || "",
+      archived: data.archived || false,
+    };
+  } catch (error: unknown) {
+    const status = (error as { status?: number })?.status;
+    if (status === 404) return { kind: "deleted" };
+    console.error(
+      `Error fetching repo state for ${owner}/${repo}:`,
+      error instanceof Error ? error.message : error,
+    );
+    return { kind: "error" };
+  }
+}
+
 export interface ReleaseAsset {
   name: string;
   browser_download_url: string;
@@ -68,7 +121,7 @@ export async function getLatestRelease(
     const { data } = await octokit.rest.repos.getLatestRelease({ owner, repo });
     return {
       version: data.tag_name || "",
-      assets: (data.assets || []).map((a: any) => ({
+      assets: (data.assets || []).map((a): ReleaseAsset => ({
         name: a.name,
         browser_download_url: a.browser_download_url,
         size: a.size,
