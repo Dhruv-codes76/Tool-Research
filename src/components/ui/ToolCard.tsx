@@ -44,7 +44,7 @@ export const ToolCard: React.FC<ToolCardProps> = ({ id, slug, name, stars, descr
         <p className="font-body-base text-body-base text-on-surface-variant flex-grow text-sm line-clamp-2" title="Click to see more">
           {description}
         </p>
-        <div className="mt-4 flex gap-2 overflow-hidden whitespace-nowrap">
+        <div className="mt-8 flex gap-2 overflow-hidden whitespace-nowrap">
           {tags.map((tag) => (
             <span key={tag} className="text-xs text-on-surface-variant bg-surface-container px-2 py-1 rounded shrink-0">
               {tag}

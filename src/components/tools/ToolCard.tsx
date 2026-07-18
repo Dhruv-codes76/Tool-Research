@@ -81,7 +81,7 @@ export function ToolCard({
       </div>
 
       {/* Version */}
-      <div className="relative mt-6 flex items-center gap-3">
+      <div className="relative mt-6 flex items-center gap-3 pl-6">
         <History className="w-6 h-6 text-zinc-300" strokeWidth={2} />
         <span className="text-zinc-400 text-[17px] font-medium tracking-wide">
           Version: <span className="text-white font-bold">{version}</span>

@@ -57,7 +57,9 @@ export async function generateMetadata({ params }: PageProps) {
   }
 
   return buildMetadata({
-    title: `${tool.name} — Open-Source AI Tool`,
+    // Curator-authored SEO title wins; otherwise a neutral, non-overclaiming
+    // default (not everything in the directory is an "AI tool" or open source).
+    title: tool.metaTitle?.trim() || `${tool.name} — Open-Source Tool`,
     // Curator override first, then the short description, then about text.
     description:
       tool.metaDescription ||
@@ -215,16 +217,15 @@ export default async function ToolDetailPage({ params }: PageProps) {
             </div>
 
             <div className="relative p-6 md:p-8 z-10 flex-grow flex flex-col justify-start">
-              <div className="flex flex-wrap items-center gap-3 mb-4">
-                {(dbTool.toolTypes.length > 0
-                  ? dbTool.toolTypes.map((t: any) => t.name)
-                  : [categoryLabel]
-                ).map((name: any) => (
-                  <span key={name} className="bg-primary-container/10 text-primary-container px-3 py-1 rounded-full text-[10px] font-bold border border-primary-container/20 tracking-wider">
-                    {name.toUpperCase()}
-                  </span>
-                ))}
-              </div>
+              {dbTool.toolTypes.length > 0 && (
+                <div className="flex flex-wrap items-center gap-3 mb-4">
+                  {dbTool.toolTypes.map((t: any) => (
+                    <span key={t.name} className="bg-primary-container/10 text-primary-container px-3 py-1 rounded-full text-[10px] font-bold border border-primary-container/20 tracking-wider">
+                      {t.name.toUpperCase()}
+                    </span>
+                  ))}
+                </div>
+              )}
               <div className="flex items-center gap-3 md:gap-4 mb-2 mt-2 md:mt-0">
                 {(dbTool.heroImageUrl || dbTool.imageUrl) && (
                   <img
@@ -240,7 +241,7 @@ export default async function ToolDetailPage({ params }: PageProps) {
               <p className="text-white font-sans max-w-2xl text-base md:text-lg leading-relaxed font-semibold drop-shadow-xl">
                 {dbTool.description}
               </p>
-              <div className="flex items-center gap-4 mt-4 bg-black/60 backdrop-blur-xl w-fit px-5 py-2.5 rounded-full border border-white/20 shadow-lg">
+              <div className="flex items-center gap-4 mt-8 bg-black/60 backdrop-blur-xl w-fit px-5 py-2.5 rounded-full border border-white/20 shadow-lg">
                 <span className="text-white flex items-center gap-1.5 text-sm font-bold drop-shadow-md">
                   <span className="material-symbols-outlined text-yellow-400 text-base drop-shadow-md">star</span>
                   {formattedStars} Stars
@@ -250,13 +251,7 @@ export default async function ToolDetailPage({ params }: PageProps) {
                   {formattedForks} Forks
                 </span>
               </div>
-              {version && (
-                <div className="mt-3 text-sm text-white/90 flex items-center gap-1.5 font-medium drop-shadow-md">
-                  <span className="material-symbols-outlined text-base">update</span>
-                  Version: <span className="text-white font-bold">{version}</span>
-                </div>
-              )}
-              
+
               {/* Action Buttons */}
               {/* Action Buttons */}
               <div className="flex flex-wrap items-center gap-3 mt-auto pt-8">
@@ -340,6 +335,12 @@ export default async function ToolDetailPage({ params }: PageProps) {
                 <div className="flex justify-between items-center py-2 border-b border-outline-variant/30 text-sm">
                   <span className="text-on-surface-variant">License</span>
                   <span className="text-on-surface font-bold">{license}</span>
+                </div>
+              )}
+              {version && (
+                <div className="flex justify-between items-center py-2 border-b border-outline-variant/30 text-sm">
+                  <span className="text-on-surface-variant">Version</span>
+                  <span className="text-on-surface font-bold">{version}</span>
                 </div>
               )}
               

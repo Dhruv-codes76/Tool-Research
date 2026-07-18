@@ -143,6 +143,7 @@ export function ToolForm({ initialData, availablePlatforms = [], availableToolTy
     issues: initialData?.issues || 0,
     status: initialData?.status || 'ACTIVE',
     aboutText: initialData?.aboutText || '',
+    metaTitle: initialData?.metaTitle || '',
     metaDescription: initialData?.metaDescription || '',
     version: initialData?.version || '',
     license: initialData?.license || '',
@@ -480,6 +481,23 @@ export function ToolForm({ initialData, availablePlatforms = [], availableToolTy
               value={formData.aboutText}
               onChange={e => setFormData({...formData, aboutText: e.target.value})}
             />
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <label className="font-label-sm text-[11px] text-on-surface-variant uppercase tracking-wider">
+              SEO Title <span className="normal-case text-on-surface-variant/60">(optional — the browser-tab / Google link text)</span>
+            </label>
+            <input
+              type="text"
+              maxLength={70}
+              placeholder={`${formData.name || 'Tool name'} — Open-Source Tool`}
+              className="w-full bg-surface-container-low border border-outline-variant/30 rounded-lg p-4 text-on-surface text-sm focus:border-primary/50"
+              value={formData.metaTitle}
+              onChange={e => setFormData({...formData, metaTitle: e.target.value})}
+            />
+            <span className="text-[10px] text-on-surface-variant/60 self-end">
+              Blank → “{formData.name || 'Tool name'} — Open-Source Tool” · {formData.metaTitle.length}/70
+            </span>
           </div>
 
           <div className="flex flex-col gap-2">

@@ -10,6 +10,7 @@ type Submission = {
   name: string;
   slug: string | null;
   description: string;
+  metaTitle: string | null;
   metaDescription: string | null;
   repoUrl: string;
   websiteUrl: string | null;
@@ -59,6 +60,7 @@ export function SubmissionRow({
   const [slug, setSlug] = useState(submission.slug || slugify(submission.name));
   const [slugStatus, setSlugStatus] = useState<SlugStatus>('idle');
   const [description, setDescription] = useState(submission.description || '');
+  const [metaTitle, setMetaTitle] = useState(submission.metaTitle || '');
   const [metaDescription, setMetaDescription] = useState(submission.metaDescription || '');
   const [repoUrl, setRepoUrl] = useState(submission.repoUrl);
   const [websiteUrl, setWebsiteUrl] = useState(submission.websiteUrl || '');
@@ -116,6 +118,7 @@ export function SubmissionRow({
     startTransition(async () => {
       const res = await approveSubmission(submission.id, {
         name, slug, description,
+        metaTitle: metaTitle || null,
         metaDescription: metaDescription || null,
         repoUrl, websiteUrl: websiteUrl || null,
         aboutText: aboutText || null,
@@ -246,6 +249,11 @@ export function SubmissionRow({
 
                 <Field label="Description" required hint="Shown on cards and the hero.">
                   <textarea rows={2} value={description} onChange={(e) => setDescription(e.target.value)} className={`${inputCls} resize-none`} placeholder="Write the one-liner that sells this tool…" />
+                </Field>
+
+                <Field label="SEO title" hint={`Browser-tab / Google link text. Blank → “${name || 'Tool name'} — Open-Source Tool”.`}>
+                  <input type="text" maxLength={70} value={metaTitle} onChange={(e) => setMetaTitle(e.target.value)} className={inputCls} placeholder={`${name || 'Tool name'} — Open-Source Tool`} />
+                  <span className="mt-1 block text-right text-[10px] text-on-surface-variant/60">{metaTitle.length}/70</span>
                 </Field>
 
                 <Field label="SEO meta description" hint="Search snippet · ~120–160 chars. Falls back to Description.">

@@ -105,6 +105,7 @@ export type ToolAdminFormData = {
   issues: number;
   status: string;
   aboutText: string;
+  metaTitle: string;
   metaDescription: string;
   version: string;
   license: string;
@@ -487,6 +488,21 @@ export async function getPendingChangeCount() {
 }
 
 /**
+ * Full review feed — pending decisions plus already-resolved records
+ * (dismissed / applied) so the review UI can filter across every status.
+ * Resolved rows are the audit trail of what a curator did; recent-first.
+ */
+export async function getReviewChanges() {
+  await requireAdmin();
+
+  return prisma.toolChange.findMany({
+    include: { tool: true },
+    orderBy: [{ status: "asc" }, { detectedAt: "desc" }],
+    take: 300,
+  });
+}
+
+/**
  * Apply an admin-curated download-asset list to the tool and resolve the change.
  * `curatedAssets` is the edited JSON string the admin confirmed in the review UI.
  */
@@ -664,6 +680,7 @@ export type SubmissionPublishData = {
   name: string;
   slug: string;
   description: string;
+  metaTitle: string | null;
   metaDescription: string | null;
   repoUrl: string;
   websiteUrl: string | null;
@@ -720,6 +737,7 @@ export async function approveSubmission(toolId: string, data: SubmissionPublishD
         name: data.name,
         slug,
         description: data.description,
+        metaTitle: data.metaTitle,
         metaDescription: data.metaDescription,
         repoUrl: data.repoUrl,
         websiteUrl: data.websiteUrl,

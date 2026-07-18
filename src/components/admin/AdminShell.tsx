@@ -81,7 +81,7 @@ export function AdminShell({
         <div className="flex-1 overflow-y-auto p-6">
           <div className="flex items-center justify-between mb-8">
             <Link href="/" onClick={() => setOpen(false)} className="flex items-center gap-2">
-              <span className="font-display-lg text-lg font-bold tracking-tight text-on-surface">Obsidian</span>
+              <span className="font-display-lg text-lg font-bold tracking-tight text-on-surface">AI Tool Research</span>
             </Link>
             <button
               type="button"
@@ -146,7 +146,7 @@ export function AdminShell({
           >
             <span className="material-symbols-outlined text-[24px]">menu</span>
           </button>
-          <span className="font-display-lg text-base font-bold tracking-tight text-on-surface">Obsidian</span>
+          <span className="font-display-lg text-base font-bold tracking-tight text-on-surface">AI Tool Research</span>
           {topBarCount > 0 && (
             <span className="ml-auto px-2 py-0.5 bg-primary text-on-primary rounded-full text-[10px] font-bold leading-none">
               {topBarCount} pending
@@ -160,7 +160,7 @@ export function AdminShell({
 
         {/* Footer */}
         <footer className="py-4 px-4 sm:px-8 md:px-12 border-t border-outline-variant/20 flex flex-col sm:flex-row gap-2 sm:justify-between sm:items-center text-[11px] text-on-surface-variant font-body-base shrink-0">
-          <p>© 2026 Obsidian. Curated Excellence.</p>
+          <p>© 2026 AI Tool Research. Curated Excellence.</p>
           <div className="flex gap-4">
             <Link href="#" className="hover:text-on-surface">Mission</Link>
             <Link href="#" className="hover:text-on-surface">GitHub</Link>

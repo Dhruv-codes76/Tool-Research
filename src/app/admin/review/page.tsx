@@ -1,26 +1,32 @@
 import React from "react";
 import Link from "next/link";
-import { getPendingChanges } from "@/app/actions/adminActions";
+import { getReviewChanges } from "@/app/actions/adminActions";
 import { ReviewClient, type ChangeVM } from "@/components/admin/ReviewClient";
 
 // Auth + DB read on every request — never statically prerendered.
 export const dynamic = "force-dynamic";
 
 export default async function ReviewPage() {
-  const changes = await getPendingChanges();
+  const changes = await getReviewChanges();
 
   const items: ChangeVM[] = changes.map((c) => ({
     id: c.id,
     field: c.field,
     oldValue: c.oldValue,
     newValue: c.newValue,
+    status: c.status,
     detectedAt: c.detectedAt.toISOString(),
+    resolvedAt: c.resolvedAt ? c.resolvedAt.toISOString() : null,
     toolId: c.toolId,
     toolName: c.tool?.name ?? "Unknown tool",
+    toolSlug: c.tool?.slug ?? null,
     repoUrl: c.tool?.repoUrl ?? "",
   }));
 
-  const deletedCount = items.filter((i) => i.field === "__repo_deleted__").length;
+  const pendingCount = items.filter((i) => i.status === "PENDING").length;
+  const deletedCount = items.filter(
+    (i) => i.field === "__repo_deleted__" && i.status === "PENDING",
+  ).length;
 
   return (
     <div className="flex flex-col gap-10">
@@ -57,7 +63,7 @@ export default async function ReviewPage() {
             <span className="material-symbols-outlined text-[24px] text-primary">rule</span>
           </div>
           <div>
-            <p className="font-display-lg text-3xl text-on-surface font-bold">{items.length}</p>
+            <p className="font-display-lg text-3xl text-on-surface font-bold">{pendingCount}</p>
             <p className="font-label-sm text-xs text-on-surface-variant uppercase tracking-widest mt-0.5">
               Pending review
             </p>
@@ -80,18 +86,7 @@ export default async function ReviewPage() {
       </div>
 
       {/* List */}
-      {items.length === 0 ? (
-        <div className="glass-panel rounded-xl p-16 flex flex-col items-center gap-3 text-center">
-          <span className="material-symbols-outlined text-[48px] text-on-surface-variant/30">
-            task_alt
-          </span>
-          <p className="font-body-base text-sm text-on-surface-variant">
-            Nothing to review — every tracked repo is in sync.
-          </p>
-        </div>
-      ) : (
-        <ReviewClient changes={items} />
-      )}
+      <ReviewClient changes={items} />
     </div>
   );
 }

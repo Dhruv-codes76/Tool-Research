@@ -67,6 +67,7 @@ model Tool {
   downloadUrl      String?
   userId           String
   downloadAssets   String?      @default("[]")
+  metaTitle        String?
   metaDescription  String?
   rejectionReason  String?
   submittedByEmail String?
