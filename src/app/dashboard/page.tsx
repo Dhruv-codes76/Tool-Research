@@ -49,7 +49,7 @@ export default async function DashboardPage({
     name: t.name,
     stars: fmtStars(t.stars),
     description: t.description,
-    tags: [...t.platforms.map((p) => p.name), ...t.toolTypes.map((ty) => ty.name)],
+    tags: [...t.toolTypes.map((ty) => ty.name)],
     icon: ICONS[i % ICONS.length],
     color: COLORS[i % COLORS.length],
     logoUrl: t.heroImageUrl ?? null,

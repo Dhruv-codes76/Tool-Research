@@ -31,7 +31,6 @@ function mapToolToCard(dbTool: ToolWithCategories, index: number) {
   };
 
   const tags = [
-    ...dbTool.platforms.map((p: any) => p.name),
     ...dbTool.toolTypes.map((t: any) => t.name)
   ];
 

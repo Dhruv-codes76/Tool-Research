@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { createTool, updateTool, fetchGitHubMetadata, checkSlugUnique, checkUrlExists, ToolAdminFormData } from '@/app/actions/adminActions';
+import { createTool, updateTool, approveSubmission, rejectSubmission, fetchGitHubMetadata, checkSlugUnique, checkUrlExists, ToolAdminFormData } from '@/app/actions/adminActions';
 import { uploadToolImage } from '@/lib/supabase';
 import { InstallSection } from '@/components/tools/InstallSection';
 import {
@@ -19,12 +19,20 @@ function generateSlug(name: string): string {
   return name.toLowerCase().replace(/[^a-z0-9-]/g, '').replace(/(^-|-$)+/g, '');
 }
 
-export function ToolForm({ initialData, availablePlatforms = [], availableToolTypes = [] }: { 
+export function ToolForm({ initialData, availablePlatforms = [], availableToolTypes = [], submission, onDone }: {
   initialData?: any;
   availablePlatforms?: string[];
   availableToolTypes?: string[];
+  // When present, the form operates in submission-review mode: it publishes via
+  // approveSubmission / rejectSubmission instead of createTool / updateTool.
+  submission?: { id: string; submittedByEmail: string | null; createdAt: string | Date };
+  onDone?: () => void;
 }) {
   const router = useRouter();
+  const isSubmissionMode = !!submission;
+  const [rejectOpen, setRejectOpen] = useState(false);
+  const [rejectReason, setRejectReason] = useState('');
+  const [submissionError, setSubmissionError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('windows');
   const [isFetching, setIsFetching] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -332,31 +340,133 @@ export function ToolForm({ initialData, availablePlatforms = [], availableToolTy
     }
   };
 
+  // ---- Submission-review mode: publish gate + approve / reject ----
+  const buildPayload = (): ToolAdminFormData => ({
+    ...formData,
+    slug: formData.slug || generateSlug(formData.name),
+    features: JSON.stringify(features),
+    installCommand: JSON.stringify(commands.filter(c => c.command && c.command.trim() !== '')),
+    downloadAssets: JSON.stringify(assets.filter(a => a.url && a.url.trim() !== '')),
+  });
+
+  const submissionMissing = useMemo(() => {
+    const m: string[] = [];
+    if (!formData.name.trim()) m.push('name');
+    if (!formData.description.trim()) m.push('description');
+    if (!formData.heroImageUrl.trim()) m.push('image');
+    if (!formData.slug.trim() || slugStatus === 'taken' || slugStatus === 'unvalidated') m.push('valid slug');
+    return m;
+  }, [formData.name, formData.description, formData.heroImageUrl, formData.slug, slugStatus]);
+  const canPublishSubmission = submissionMissing.length === 0 && slugStatus !== 'checking' && !isSubmitting;
+
+  const handleApproveSubmission = async () => {
+    if (!submission) return;
+    setSubmissionError(null);
+    setIsSubmitting(true);
+    try {
+      const p = buildPayload();
+      const res = await approveSubmission(submission.id, {
+        name: p.name, slug: p.slug, description: p.description,
+        metaTitle: p.metaTitle || null,
+        metaDescription: p.metaDescription || null,
+        repoUrl: p.repoUrl, websiteUrl: p.websiteUrl || null,
+        aboutText: p.aboutText || null, heroImageUrl: p.heroImageUrl || null,
+        galleryImages: p.galleryImages, galleryLayout: p.galleryLayout,
+        features: p.features, installCommand: p.installCommand,
+        downloadAssets: p.downloadAssets, downloadUrl: p.downloadUrl || null,
+        author: p.author || null, authorUrl: p.authorUrl || null,
+        license: p.license || null, version: p.version || null, since: p.since || null,
+        platforms: p.platforms, toolTypes: p.toolTypes,
+      });
+      if (!res.success) { setSubmissionError(res.error.message ?? 'Something went wrong.'); return; }
+      onDone?.();
+    } catch (err) {
+      setSubmissionError(err instanceof Error ? err.message : 'Something went wrong.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleRejectSubmission = async () => {
+    if (!submission) return;
+    setSubmissionError(null);
+    setIsSubmitting(true);
+    try {
+      await rejectSubmission(submission.id, rejectReason.trim() || undefined);
+      onDone?.();
+    } catch (err) {
+      setSubmissionError(err instanceof Error ? err.message : 'Something went wrong.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const dateStr = submission
+    ? new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).format(new Date(submission.createdAt))
+    : '';
+
   return (
-    <div className="flex flex-col gap-6 pb-20">
+    <div className={`flex flex-col gap-6 ${isSubmissionMode ? '' : 'pb-20'}`}>
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <h1 className="font-display-lg text-3xl font-bold text-on-surface tracking-tight">
-          {initialData ? 'Edit' : 'Create'} Open-Source Tool
-        </h1>
-        
-        <div className="flex items-center gap-3">
-          <button 
-            onClick={() => handleSubmit('DRAFT')}
-            disabled={isSubmitting || slugStatus === 'checking' || slugStatus === 'taken' || slugStatus === 'unvalidated' || !formData.slug || urlStatus === 'checking' || urlStatus === 'taken'}
-            className="px-5 py-2.5 rounded-lg border border-outline-variant/30 text-on-surface hover:bg-surface-container transition-colors font-label-sm text-sm"
-          >
-            Save Draft
-          </button>
-          <button 
-            onClick={() => handleSubmit('ACTIVE')}
-            disabled={isSubmitting || slugStatus === 'checking' || slugStatus === 'taken' || slugStatus === 'unvalidated' || !formData.slug || urlStatus === 'checking' || urlStatus === 'taken'}
-            className="px-5 py-2.5 rounded-lg bg-primary-container text-on-primary-container hover:bg-primary transition-colors font-label-sm text-sm"
-          >
-            {isSubmitting ? 'Saving...' : 'Publish to Gallery'}
-          </button>
+      {isSubmissionMode ? (
+        <div className="sticky top-0 z-20 -mx-6 -mt-6 flex flex-col gap-3 border-b border-outline-variant/10 bg-surface-container/95 py-4 pl-6 pr-14 backdrop-blur sm:flex-row sm:items-center sm:justify-between">
+          <div className="min-w-0">
+            <h2 className="text-lg font-bold text-on-surface">Review &amp; publish</h2>
+            <p className="mt-0.5 truncate text-xs text-on-surface-variant">
+              Submitted by {submission?.submittedByEmail ?? 'unknown'} · {dateStr}
+            </p>
+          </div>
+          <div className="flex flex-col items-end gap-2">
+            <div className="flex items-center gap-2">
+              {!rejectOpen ? (
+                <button onClick={() => setRejectOpen(true)} disabled={isSubmitting} className="rounded-full border border-error/30 px-4 py-2 text-sm font-medium text-error transition-colors hover:bg-error/10 disabled:opacity-50">Reject</button>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <input autoFocus value={rejectReason} onChange={(e) => setRejectReason(e.target.value)} placeholder="Reason (optional)" className="w-40 rounded-lg border border-outline-variant/30 bg-surface-container-lowest px-3 py-2 text-xs text-on-surface focus:border-error focus:outline-none" />
+                  <button onClick={handleRejectSubmission} disabled={isSubmitting} className="rounded-full bg-error/90 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-error disabled:opacity-50">Confirm</button>
+                  <button onClick={() => setRejectOpen(false)} className="text-xs text-on-surface-variant hover:text-on-surface">Cancel</button>
+                </div>
+              )}
+              <button onClick={handleApproveSubmission} disabled={!canPublishSubmission} className="inline-flex items-center gap-2 rounded-full bg-primary-container px-6 py-2 text-sm font-semibold text-on-primary-container transition-all hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:scale-100">
+                <span className={`material-symbols-outlined text-[17px] ${isSubmitting ? 'animate-spin' : ''}`}>{isSubmitting ? 'progress_activity' : 'publish'}</span>
+                Publish live
+              </button>
+            </div>
+            <div className="min-h-[16px] text-right text-[12px]">
+              {submissionError ? (
+                <span className="flex items-center justify-end gap-1.5 text-error"><span className="material-symbols-outlined text-[15px]">error</span>{submissionError}</span>
+              ) : submissionMissing.length > 0 ? (
+                <span className="text-on-surface-variant/70">Add <span className="font-semibold text-on-surface-variant">{submissionMissing.join(', ')}</span> to publish.</span>
+              ) : (
+                <span className="flex items-center justify-end gap-1.5 text-[#10B981]"><span className="material-symbols-outlined text-[15px]">check_circle</span>Ready to publish.</span>
+              )}
+            </div>
+          </div>
         </div>
-      </div>
+      ) : (
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <h1 className="font-display-lg text-3xl font-bold text-on-surface tracking-tight">
+            {initialData ? 'Edit' : 'Create'} Open-Source Tool
+          </h1>
+
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => handleSubmit('DRAFT')}
+              disabled={isSubmitting || slugStatus === 'checking' || slugStatus === 'taken' || slugStatus === 'unvalidated' || !formData.slug || urlStatus === 'checking' || urlStatus === 'taken'}
+              className="px-5 py-2.5 rounded-lg border border-outline-variant/30 text-on-surface hover:bg-surface-container transition-colors font-label-sm text-sm"
+            >
+              Save Draft
+            </button>
+            <button
+              onClick={() => handleSubmit('ACTIVE')}
+              disabled={isSubmitting || slugStatus === 'checking' || slugStatus === 'taken' || slugStatus === 'unvalidated' || !formData.slug || urlStatus === 'checking' || urlStatus === 'taken'}
+              className="px-5 py-2.5 rounded-lg bg-primary-container text-on-primary-container hover:bg-primary transition-colors font-label-sm text-sm"
+            >
+              {isSubmitting ? 'Saving...' : 'Publish to Gallery'}
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Source & Fetch */}
       <div className="glass-panel p-6 rounded-xl flex flex-col gap-4 border border-outline-variant/20">
