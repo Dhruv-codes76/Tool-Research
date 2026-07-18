@@ -244,7 +244,7 @@ export default async function ToolDetailPage({ params }: PageProps) {
                     className="h-10 md:h-16 w-auto object-contain rounded-lg drop-shadow-xl shrink-0"
                   />
                 )}
-                <h1 className="font-sans text-3xl md:text-6xl text-white tracking-tighter font-black drop-shadow-xl pr-2">
+                <h1 className="font-sans text-2xl md:text-5xl text-white tracking-tighter font-black drop-shadow-xl pr-2">
                   {dbTool.name}
                 </h1>
               </div>

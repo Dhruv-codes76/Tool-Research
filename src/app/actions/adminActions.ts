@@ -503,6 +503,73 @@ export async function getReviewChanges() {
 }
 
 /**
+ * Full context for the review modal: the tool's current state (every field the
+ * modal renders read-only) plus all of its change records so the modal can show
+ * everything flagged for that tool in one place. Fetched lazily when the modal
+ * opens — keeps the review list payload light and returns fresh values after
+ * each apply. Dates are ISO-serialized for the client boundary.
+ */
+export async function getToolReviewDetail(toolId: string) {
+  await requireAdmin();
+
+  const tool = await prisma.tool.findUnique({
+    where: { id: toolId },
+    include: {
+      platforms: true,
+      toolTypes: true,
+      changes: { orderBy: [{ status: "asc" }, { detectedAt: "desc" }] },
+    },
+  });
+  if (!tool) throw new Error("Tool not found");
+
+  return {
+    detail: {
+      id: tool.id,
+      name: tool.name,
+      slug: tool.slug,
+      status: tool.status,
+      description: tool.description,
+      aboutText: tool.aboutText,
+      repoUrl: tool.repoUrl,
+      imageUrl: tool.imageUrl,
+      heroImageUrl: tool.heroImageUrl,
+      stars: tool.stars,
+      forks: tool.forks,
+      issues: tool.issues,
+      author: tool.author,
+      authorUrl: tool.authorUrl,
+      since: tool.since,
+      license: tool.license,
+      version: tool.version,
+      websiteUrl: tool.websiteUrl,
+      downloadUrl: tool.downloadUrl,
+      installCommand: tool.installCommand,
+      downloadAssets: tool.downloadAssets,
+      galleryImages: tool.galleryImages,
+      features: tool.features,
+      platforms: tool.platforms.map((p) => p.name),
+      toolTypes: tool.toolTypes.map((t) => t.name),
+      lastUpdate: tool.lastUpdate.toISOString(),
+      lastFetchedAt: tool.lastFetchedAt.toISOString(),
+      createdAt: tool.createdAt.toISOString(),
+    },
+    changes: tool.changes.map((c) => ({
+      id: c.id,
+      field: c.field,
+      oldValue: c.oldValue,
+      newValue: c.newValue,
+      status: c.status,
+      detectedAt: c.detectedAt.toISOString(),
+      resolvedAt: c.resolvedAt ? c.resolvedAt.toISOString() : null,
+      toolId: c.toolId,
+      toolName: tool.name,
+      toolSlug: tool.slug,
+      repoUrl: tool.repoUrl,
+    })),
+  };
+}
+
+/**
  * Apply an admin-curated download-asset list to the tool and resolve the change.
  * `curatedAssets` is the edited JSON string the admin confirmed in the review UI.
  */
