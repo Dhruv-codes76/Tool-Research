@@ -82,8 +82,8 @@ export function SubmissionRow({
       </tr>
 
       {isModalOpen && createPortal(
-        <div className="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto bg-black/65 p-4 backdrop-blur-sm" onMouseDown={(e) => e.target === e.currentTarget && setIsModalOpen(false)}>
-          <div className="animate-in fade-in zoom-in-95 relative my-8 w-full max-w-6xl overflow-hidden rounded-2xl border border-outline-variant/20 bg-surface-container p-6 shadow-2xl duration-200">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/65 p-4 backdrop-blur-sm" onMouseDown={(e) => e.target === e.currentTarget && setIsModalOpen(false)}>
+          <div className="animate-in fade-in zoom-in-95 relative flex max-h-[92vh] w-full max-w-6xl flex-col overflow-hidden rounded-2xl border border-outline-variant/20 bg-surface-container shadow-2xl duration-200">
             <button
               onClick={() => setIsModalOpen(false)}
               className="absolute right-4 top-4 z-30 flex h-8 w-8 items-center justify-center rounded-full text-on-surface-variant transition-colors hover:bg-surface-container-high hover:text-on-surface"
@@ -91,13 +91,15 @@ export function SubmissionRow({
             >
               <span className="material-symbols-outlined text-[20px]">close</span>
             </button>
-            <ToolForm
-              initialData={submission}
-              availablePlatforms={availablePlatforms}
-              availableToolTypes={availableToolTypes}
-              submission={{ id: submission.id, submittedByEmail: submission.submittedByEmail, createdAt: submission.createdAt }}
-              onDone={() => { setIsModalOpen(false); router.refresh(); }}
-            />
+            <div className="overflow-y-auto p-6">
+              <ToolForm
+                initialData={submission}
+                availablePlatforms={availablePlatforms}
+                availableToolTypes={availableToolTypes}
+                submission={{ id: submission.id, submittedByEmail: submission.submittedByEmail, createdAt: submission.createdAt }}
+                onDone={() => { setIsModalOpen(false); router.refresh(); }}
+              />
+            </div>
           </div>
         </div>,
         document.body,

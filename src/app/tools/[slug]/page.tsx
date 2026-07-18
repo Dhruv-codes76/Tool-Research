@@ -9,7 +9,7 @@ import { ShareButton } from '@/components/tools/ShareButton';
 import { SaveButton } from '@/components/tools/SaveButton';
 import { ImageGallery } from '@/components/tools/ImageGallery';
 import { JsonLd } from '@/components/seo/JsonLd';
-import { UploadedBy } from '@/components/tools/UploadedBy';
+import { UploadedByBadge } from '@/components/tools/UploadedByBadge';
 import { buildMetadata, graph, breadcrumbSchema, softwareApplicationSchema } from '@/lib/seo';
 
 const glassStyle = {
@@ -217,15 +217,25 @@ export default async function ToolDetailPage({ params }: PageProps) {
             </div>
 
             <div className="relative p-6 md:p-8 z-10 flex-grow flex flex-col justify-start">
-              {dbTool.toolTypes.length > 0 && (
-                <div className="flex flex-wrap items-center gap-3 mb-4">
+              <div className="flex items-center gap-3 mb-4 pr-24 md:pr-28">
+                <div 
+                  className="flex gap-2 overflow-hidden whitespace-nowrap"
+                  style={{ 
+                    maskImage: "linear-gradient(to right, black 85%, transparent 100%)", 
+                    WebkitMaskImage: "-webkit-linear-gradient(left, black 85%, transparent 100%)" 
+                  }}
+                >
                   {dbTool.toolTypes.map((t: any) => (
-                    <span key={t.name} className="bg-primary-container/10 text-primary-container px-3 py-1 rounded-full text-[10px] font-bold border border-primary-container/20 tracking-wider">
+                    <span key={t.name} className="bg-primary-container/10 text-primary-container px-3 py-1 rounded-full text-[10px] font-bold border border-primary-container/20 tracking-wider shrink-0">
                       {t.name.toUpperCase()}
                     </span>
                   ))}
                 </div>
-              )}
+                {/* Uploader attribution — trust signal, hover to reveal */}
+                <div className="shrink-0">
+                  <UploadedByBadge name={dbTool.user?.name ?? null} role={dbTool.user?.role ?? null} />
+                </div>
+              </div>
               <div className="flex items-center gap-3 md:gap-4 mb-2 mt-2 md:mt-0">
                 {(dbTool.heroImageUrl || dbTool.imageUrl) && (
                   <img
@@ -234,7 +244,7 @@ export default async function ToolDetailPage({ params }: PageProps) {
                     className="h-10 md:h-16 w-auto object-contain rounded-lg drop-shadow-xl shrink-0"
                   />
                 )}
-                <h1 className="font-sans text-4xl md:text-7xl text-white tracking-tighter font-black drop-shadow-xl pr-2">
+                <h1 className="font-sans text-3xl md:text-6xl text-white tracking-tighter font-black drop-shadow-xl pr-2">
                   {dbTool.name}
                 </h1>
               </div>
@@ -310,9 +320,6 @@ export default async function ToolDetailPage({ params }: PageProps) {
         {/* Right Column (Sidebar) */}
         <div className="lg:col-span-4">
           <div className="sticky top-24 space-y-6">
-
-            {/* Uploader attribution — trust signal */}
-            <UploadedBy name={dbTool.user?.name ?? null} role={dbTool.user?.role ?? null} />
 
             {/* Metadata Card */}
             <div 

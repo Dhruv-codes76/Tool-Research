@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { ToolCard } from '@/components/ui/ToolCard';
+import { EditSubmissionModal } from '@/components/dashboard/EditSubmissionModal';
 
 type Submission = {
   id: string;
@@ -15,6 +16,12 @@ type Submission = {
   publishedAt: string | null;
   rejectionReason: string | null;
   edits: string[];
+  // Editable-while-pending fields.
+  repoUrl: string;
+  galleryImages: string;
+  galleryLayout: string;
+  toolTypes: string[];
+  platforms: string[];
 };
 
 type SavedCard = {
@@ -43,7 +50,7 @@ const EDIT_LABELS: Record<string, string> = {
 const fmtDate = (iso: string) =>
   new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).format(new Date(iso));
 
-export function DashboardTabs({ submissions, saved, initialTab = 'submissions' }: { submissions: Submission[]; saved: SavedCard[]; initialTab?: 'submissions' | 'saved' }) {
+export function DashboardTabs({ submissions, saved, initialTab = 'submissions', availablePlatforms = [], availableToolTypes = [] }: { submissions: Submission[]; saved: SavedCard[]; initialTab?: 'submissions' | 'saved'; availablePlatforms?: string[]; availableToolTypes?: string[] }) {
   const [tab, setTab] = useState<'submissions' | 'saved'>(initialTab);
 
   return (
@@ -65,7 +72,7 @@ export function DashboardTabs({ submissions, saved, initialTab = 'submissions' }
         ) : (
           <div className="flex flex-col gap-3">
             {submissions.map((s) => (
-              <SubmissionRow key={s.id} s={s} />
+              <SubmissionRow key={s.id} s={s} availablePlatforms={availablePlatforms} availableToolTypes={availableToolTypes} />
             ))}
           </div>
         )
@@ -87,9 +94,11 @@ export function DashboardTabs({ submissions, saved, initialTab = 'submissions' }
   );
 }
 
-function SubmissionRow({ s }: { s: Submission }) {
+function SubmissionRow({ s, availablePlatforms, availableToolTypes }: { s: Submission; availablePlatforms: string[]; availableToolTypes: string[] }) {
   const status = STATUS[s.status] ?? STATUS.DRAFT;
   const isPublished = s.status === 'ACTIVE';
+  const isPending = s.status === 'PENDING';
+  const [editing, setEditing] = useState(false);
 
   const inner = (
     <div className="flex items-start gap-4 rounded-2xl border border-outline-variant/20 bg-surface-container-lowest/60 p-4 transition-colors hover:border-outline-variant/40 sm:items-center">
@@ -129,6 +138,16 @@ function SubmissionRow({ s }: { s: Submission }) {
         <p className="mt-1 text-[10px] text-on-surface-variant/50">Submitted {fmtDate(s.createdAt)}</p>
       </div>
 
+      {isPending && (
+        <button
+          type="button"
+          onClick={() => setEditing(true)}
+          className="shrink-0 self-center inline-flex items-center gap-1.5 rounded-full border border-outline-variant/40 px-3.5 py-1.5 text-xs font-semibold text-on-surface-variant transition-colors hover:border-primary/50 hover:text-on-surface"
+        >
+          <span className="material-symbols-outlined text-[15px]">edit</span>
+          Edit
+        </button>
+      )}
       {isPublished && (
         <span className="material-symbols-outlined shrink-0 self-center text-on-surface-variant/40">chevron_right</span>
       )}
@@ -136,10 +155,32 @@ function SubmissionRow({ s }: { s: Submission }) {
   );
 
   // Published tools link to the live page; others aren't public yet.
-  return isPublished ? (
-    <Link href={`/tools/${s.slug}`} className="block">{inner}</Link>
-  ) : (
-    <div>{inner}</div>
+  if (isPublished) {
+    return <Link href={`/tools/${s.slug}`} className="block">{inner}</Link>;
+  }
+
+  return (
+    <div>
+      {inner}
+      {editing && (
+        <EditSubmissionModal
+          submission={{
+            id: s.id,
+            name: s.name,
+            repoUrl: s.repoUrl,
+            description: s.description,
+            heroImageUrl: s.logoUrl,
+            galleryImages: s.galleryImages,
+            galleryLayout: s.galleryLayout,
+            toolTypes: s.toolTypes,
+            platforms: s.platforms,
+          }}
+          availablePlatforms={availablePlatforms}
+          availableToolTypes={availableToolTypes}
+          onClose={() => setEditing(false)}
+        />
+      )}
+    </div>
   );
 }
 

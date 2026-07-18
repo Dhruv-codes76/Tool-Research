@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { getCurrentUser } from '@/lib/auth-guard';
 import { getMySubmissions, getSavedTools } from '@/app/actions/userActions';
+import { prisma } from '@/lib/prisma';
 import { DashboardTabs } from '@/components/dashboard/DashboardTabs';
 import { buildMetadata } from '@/lib/seo';
 
@@ -27,7 +28,12 @@ export default async function DashboardPage({
   const { tab } = await searchParams;
   const initialTab = tab === 'saved' ? 'saved' : 'submissions';
 
-  const [submissions, savedTools] = await Promise.all([getMySubmissions(), getSavedTools()]);
+  const [submissions, savedTools, platforms, toolTypes] = await Promise.all([
+    getMySubmissions(),
+    getSavedTools(),
+    prisma.platform.findMany({ orderBy: { name: 'asc' }, select: { name: true } }),
+    prisma.toolType.findMany({ orderBy: { name: 'asc' }, select: { name: true } }),
+  ]);
 
   // Serializable shapes for the client tabs.
   const subs = submissions.map((t) => ({
@@ -41,6 +47,11 @@ export default async function DashboardPage({
     publishedAt: t.publishedAt ? t.publishedAt.toISOString() : null,
     rejectionReason: t.rejectionReason,
     edits: t.edits,
+    repoUrl: t.repoUrl,
+    galleryImages: t.galleryImages ?? '[]',
+    galleryLayout: t.galleryLayout ?? '16:9',
+    toolTypes: t.toolTypes.map((ty) => ty.name),
+    platforms: t.platforms.map((p) => p.name),
   }));
 
   const saved = savedTools.map((t, i) => ({
@@ -71,7 +82,13 @@ export default async function DashboardPage({
         </p>
       </header>
 
-      <DashboardTabs submissions={subs} saved={saved} initialTab={initialTab} />
+      <DashboardTabs
+        submissions={subs}
+        saved={saved}
+        initialTab={initialTab}
+        availablePlatforms={platforms.map((p) => p.name)}
+        availableToolTypes={toolTypes.map((t) => t.name)}
+      />
     </main>
   );
 }

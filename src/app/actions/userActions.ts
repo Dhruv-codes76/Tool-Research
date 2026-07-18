@@ -98,6 +98,81 @@ function computeEdits(tool: {
   return edits;
 }
 
+/**
+ * Self-service edit of the current user's OWN submission — only while it is still
+ * PENDING (i.e. before an admin accepts/rejects it). Restricted to the fields the
+ * submitter controls (description, images, categories); the name/stats come from
+ * GitHub and the admin finalises slug/SEO. Ownership + status are enforced here,
+ * never trusted from the client. The submissionSnapshot is refreshed so the
+ * dashboard "edited by our team" diff still reflects what the user last submitted.
+ */
+export type MySubmissionEdit = {
+  description?: string;
+  heroImageUrl?: string;
+  galleryImages?: string; // JSON string of string[]
+  galleryLayout?: string;
+  toolTypes?: string[];
+  platforms?: string[];
+};
+
+export async function updateMySubmission(toolId: string, data: MySubmissionEdit) {
+  const user = await getCurrentUser();
+  if (!user) throw new Error("You must be signed in to edit a submission.");
+
+  const tool = await prisma.tool.findUnique({
+    where: { id: toolId },
+    select: { userId: true, status: true, submissionSnapshot: true, name: true },
+  });
+  if (!tool) throw new Error("Submission not found.");
+  if (tool.userId !== user.id) throw new Error("You can only edit your own submissions.");
+  if (tool.status !== "PENDING") {
+    throw new Error("This submission has already been reviewed and can no longer be edited.");
+  }
+
+  const platforms = data.platforms ?? [];
+  const toolTypes = data.toolTypes ?? [];
+
+  // Refresh the snapshot with the values the submitter now provides.
+  let snap: Record<string, unknown> = {};
+  try {
+    snap = tool.submissionSnapshot ? JSON.parse(tool.submissionSnapshot) : {};
+  } catch {
+    snap = {};
+  }
+  const snapshot = {
+    ...snap,
+    name: tool.name,
+    description: data.description ?? "",
+    heroImageUrl: data.heroImageUrl ?? "",
+    galleryImages: data.galleryImages ?? "[]",
+    galleryLayout: data.galleryLayout ?? "16:9",
+    toolTypes,
+    platforms,
+  };
+
+  await prisma.tool.update({
+    where: { id: toolId },
+    data: {
+      description: data.description ?? "",
+      heroImageUrl: data.heroImageUrl || null,
+      galleryImages: data.galleryImages ?? "[]",
+      galleryLayout: data.galleryLayout ?? "16:9",
+      submissionSnapshot: JSON.stringify(snapshot),
+      platforms: {
+        set: [],
+        connectOrCreate: platforms.map((n) => ({ where: { name: n }, create: { name: n } })),
+      },
+      toolTypes: {
+        set: [],
+        connectOrCreate: toolTypes.map((n) => ({ where: { name: n }, create: { name: n } })),
+      },
+    },
+  });
+
+  revalidatePath("/dashboard");
+  revalidatePath("/admin/submissions");
+}
+
 /** The current user's submitted tools (every status), newest first. */
 export async function getMySubmissions() {
   const user = await getCurrentUser();

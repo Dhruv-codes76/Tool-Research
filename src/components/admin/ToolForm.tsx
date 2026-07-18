@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createTool, updateTool, approveSubmission, rejectSubmission, fetchGitHubMetadata, checkSlugUnique, checkUrlExists, ToolAdminFormData } from '@/app/actions/adminActions';
 import { uploadToolImage } from '@/lib/supabase';
@@ -349,14 +349,14 @@ export function ToolForm({ initialData, availablePlatforms = [], availableToolTy
     downloadAssets: JSON.stringify(assets.filter(a => a.url && a.url.trim() !== '')),
   });
 
-  const submissionMissing = useMemo(() => {
+  const submissionMissing = ((): string[] => {
     const m: string[] = [];
     if (!formData.name.trim()) m.push('name');
     if (!formData.description.trim()) m.push('description');
     if (!formData.heroImageUrl.trim()) m.push('image');
     if (!formData.slug.trim() || slugStatus === 'taken' || slugStatus === 'unvalidated') m.push('valid slug');
     return m;
-  }, [formData.name, formData.description, formData.heroImageUrl, formData.slug, slugStatus]);
+  })();
   const canPublishSubmission = submissionMissing.length === 0 && slugStatus !== 'checking' && !isSubmitting;
 
   const handleApproveSubmission = async () => {
