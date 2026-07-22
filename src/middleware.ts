@@ -67,9 +67,48 @@ function buildCsp(): string {
   ].join("; ");
 }
 
+// The embedded Sanity Studio (/studio) is a client-side app that needs a much
+// looser policy than the public site: `eval` for its runtime, blob: workers,
+// and its own iframes for document previews. It is not CDN-cached like the
+// marketing pages, so a route-scoped relaxed CSP is safe here.
+function buildStudioCsp(): string {
+  const isDev = process.env.NODE_ENV !== "production";
+
+  const connectSrc = [
+    "'self'",
+    "https://*.sanity.io",
+    "wss://*.sanity.io",
+    "https://*.sanity-cdn.com",
+    "https://*.supabase.co",
+    "wss://*.supabase.co",
+    isDev ? "ws:" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+  return [
+    "default-src 'self'",
+    // *.sanity-cdn.com serves the Studio "bridge" script (dashboard/comments).
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://*.sanity-cdn.com",
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+    "img-src 'self' data: blob: https:",
+    "font-src 'self' data: https://fonts.gstatic.com",
+    `connect-src ${connectSrc}`,
+    "worker-src 'self' blob:",
+    "frame-src 'self' https://*.sanity.io blob:",
+    "object-src 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+    "frame-ancestors 'self'",
+  ].join("; ");
+}
+
 export async function middleware(request: NextRequest) {
   // Static, cache-safe CSP — identical on every response (no per-request nonce).
-  const csp = buildCsp();
+  // The Studio route gets its own relaxed policy (see buildStudioCsp).
+  const csp = request.nextUrl.pathname.startsWith("/studio")
+    ? buildStudioCsp()
+    : buildCsp();
 
   const requestHeaders = new Headers(request.headers);
 
