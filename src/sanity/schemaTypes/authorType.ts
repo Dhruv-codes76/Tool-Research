@@ -16,6 +16,11 @@ export const authorType = defineType({
       options: { source: "name", maxLength: 96 },
     }),
     defineField({
+      name: "role",
+      type: "string",
+      description: "Byline shown under the name, e.g. \"Senior Engineer\".",
+    }),
+    defineField({
       name: "image",
       type: "image",
       options: { hotspot: true },

@@ -10,7 +10,38 @@ interface BlogArticleClientProps {
   post: any;
 }
 
+// Estimate reading time from the Portable Text body (~200 wpm), counting prose,
+// code and terminal blocks so long code samples still bump the estimate.
+type BodyBlock = {
+  _type?: string;
+  children?: { text?: string }[];
+  code?: string;
+  command?: string;
+  output?: string;
+};
+function estimateReadTime(body: BodyBlock[]): string {
+  if (!Array.isArray(body)) return '1 min read';
+  let words = 0;
+  for (const block of body) {
+    if (block._type === 'block' && Array.isArray(block.children)) {
+      for (const child of block.children) {
+        if (typeof child.text === 'string') {
+          words += child.text.trim().split(/\s+/).filter(Boolean).length;
+        }
+      }
+    } else if (block._type === 'code' && typeof block.code === 'string') {
+      words += block.code.split(/\s+/).filter(Boolean).length;
+    } else if (block._type === 'terminal') {
+      words += `${block.command || ''} ${block.output || ''}`
+        .split(/\s+/)
+        .filter(Boolean).length;
+    }
+  }
+  return `${Math.max(1, Math.round(words / 200))} min read`;
+}
+
 export default function BlogArticleClient({ post }: BlogArticleClientProps) {
+  const readTime = estimateReadTime(post.body);
   const [activeSection, setActiveSection] = useState<string>('intro');
 
   useEffect(() => {
@@ -116,7 +147,7 @@ export default function BlogArticleClient({ post }: BlogArticleClientProps) {
             <span className="bg-surface-container px-3 py-1 rounded-full border border-outline-variant/30">
               {post.category?.title || 'Article'}
             </span>
-            <span className="text-on-surface-variant">• {post.readTime || '5 min read'}</span>
+            <span className="text-on-surface-variant">• {readTime}</span>
           </div>
           <h1 className="font-display-lg text-4xl md:text-5xl text-on-surface leading-tight font-extrabold tracking-tight mt-2">
             {post.title}
@@ -124,6 +155,18 @@ export default function BlogArticleClient({ post }: BlogArticleClientProps) {
           <p className="text-on-surface-variant text-lg leading-relaxed mt-2 font-medium">
             {post.excerpt}
           </p>
+          {post.tags?.length > 0 && (
+            <div className="flex flex-wrap gap-2 mt-4">
+              {post.tags.map((tag: string) => (
+                <span
+                  key={tag}
+                  className="text-[11px] font-mono px-2.5 py-1 rounded-full bg-surface-container-high text-on-surface-variant border border-outline-variant/25"
+                >
+                  #{tag}
+                </span>
+              ))}
+            </div>
+          )}
 
           <div className="flex items-center gap-4 pt-6 border-t border-outline-variant/20 mt-stack-md">
             <div className="w-11 h-11 rounded-full bg-surface-container-high overflow-hidden border border-outline-variant/30 shrink-0">

@@ -21,7 +21,7 @@ import { createServerClient } from "@supabase/ssr";
  *     (`getCurrentAdmin()` in the admin layout, `requireAdmin()` in actions).
  */
 
-function buildCsp(): string {
+function buildCsp(allowVideoEmbeds = false): string {
   const isDev = process.env.NODE_ENV !== "production";
 
   // Scripts: static policy — 'self' for same-origin bundles, 'unsafe-inline' for
@@ -58,7 +58,10 @@ function buildCsp(): string {
     "img-src 'self' data: blob: https:",
     "font-src 'self' data: https://fonts.gstatic.com",
     `connect-src ${connectSrc}`,
-    "frame-src 'none'",
+    // Blog posts can embed YouTube/Vimeo players; everywhere else stays 'none'.
+    allowVideoEmbeds
+      ? "frame-src https://www.youtube-nocookie.com https://www.youtube.com https://player.vimeo.com"
+      : "frame-src 'none'",
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",
@@ -106,9 +109,10 @@ function buildStudioCsp(): string {
 export async function middleware(request: NextRequest) {
   // Static, cache-safe CSP — identical on every response (no per-request nonce).
   // The Studio route gets its own relaxed policy (see buildStudioCsp).
-  const csp = request.nextUrl.pathname.startsWith("/studio")
+  const pathname = request.nextUrl.pathname;
+  const csp = pathname.startsWith("/studio")
     ? buildStudioCsp()
-    : buildCsp();
+    : buildCsp(pathname.startsWith("/blog"));
 
   const requestHeaders = new Headers(request.headers);
 

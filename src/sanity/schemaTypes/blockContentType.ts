@@ -61,22 +61,42 @@ export const blockContentType = defineType({
         },
       },
     }),
-    // Rendered by the `codeBlock` component.
+    // Source code with a language dropdown + filename, from @sanity/code-input
+    // (the `code` type is registered by codeInput() in sanity.config.ts).
+    // Rendered with syntax highlighting by the `code` component.
     defineArrayMember({
-      type: "object",
-      name: "codeBlock",
+      type: "code",
+      name: "code",
       title: "Code block",
-      fields: [
-        defineField({ name: "code", type: "text", rows: 8 }),
-        defineField({ name: "filename", type: "string" }),
-      ],
-      preview: {
-        select: { title: "filename", subtitle: "code" },
-        prepare({ title, subtitle }) {
-          return { title: title || "Code", subtitle };
-        },
+      options: {
+        withFilename: true,
+        languageAlternatives: [
+          { title: "Bash / Shell", value: "bash" },
+          { title: "TypeScript", value: "typescript" },
+          { title: "TSX", value: "tsx" },
+          { title: "JavaScript", value: "javascript" },
+          { title: "JSX", value: "jsx" },
+          { title: "JSON", value: "json" },
+          { title: "Python", value: "python" },
+          { title: "Go", value: "go" },
+          { title: "Rust", value: "rust" },
+          { title: "YAML", value: "yaml" },
+          { title: "SQL", value: "sql" },
+          { title: "HTML", value: "markup" },
+          { title: "CSS", value: "css" },
+          { title: "Dockerfile", value: "docker" },
+          { title: "Markdown", value: "markdown" },
+          { title: "Plain text", value: "text" },
+        ],
       },
     }),
+    // Shell commands in a terminal-window UI (registered in schemaTypes/index).
+    defineArrayMember({ type: "terminal" }),
+    // Comparison / spec tables, from @sanity/table (the `table` type is
+    // registered by table() in sanity.config.ts).
+    defineArrayMember({ type: "table" }),
+    // YouTube / Vimeo embeds (registered in schemaTypes/index).
+    defineArrayMember({ type: "videoEmbed" }),
     // Rendered by the `callout` component.
     defineArrayMember({
       type: "object",

@@ -49,8 +49,44 @@ export const postType = defineType({
       description: "Short summary shown on the blog index and social cards.",
     }),
     defineField({
+      name: "tags",
+      type: "array",
+      of: [{ type: "string" }],
+      options: { layout: "tags" },
+      description: "Free-form technical tags, e.g. docker, ci/cd, rust.",
+    }),
+    defineField({
       name: "body",
       type: "blockContent",
+    }),
+    defineField({
+      name: "seo",
+      title: "SEO overrides",
+      type: "object",
+      description:
+        "Optional. Leave blank to fall back to the title / excerpt / main image.",
+      options: { collapsible: true, collapsed: true },
+      fields: [
+        defineField({
+          name: "metaTitle",
+          type: "string",
+          description: "Overrides the <title> and social title.",
+          validation: (rule) => rule.max(70),
+        }),
+        defineField({
+          name: "metaDescription",
+          type: "text",
+          rows: 2,
+          description: "Overrides the meta description / social description.",
+          validation: (rule) => rule.max(160),
+        }),
+        defineField({
+          name: "ogImage",
+          title: "Social share image",
+          type: "image",
+          description: "Overrides the main image for social cards.",
+        }),
+      ],
     }),
   ],
   preview: {

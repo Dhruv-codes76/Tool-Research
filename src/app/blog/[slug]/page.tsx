@@ -28,11 +28,13 @@ export async function generateMetadata({
     return buildMetadata({ title: "Article Not Found", index: false });
   }
 
+  // SEO overrides (post.seo) win over the auto-generated title/excerpt/image.
+  const ogSource = post.seo?.ogImage || post.mainImage;
   return buildMetadata({
-    title: post.title,
-    description: post.excerpt,
+    title: post.seo?.metaTitle || post.title,
+    description: post.seo?.metaDescription || post.excerpt,
     path: `/blog/${slug}`,
-    image: post.mainImage ? urlForImage(post.mainImage)?.url() : undefined,
+    image: ogSource ? urlForImage(ogSource)?.url() : undefined,
     type: "article",
   });
 }
