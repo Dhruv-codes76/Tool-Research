@@ -244,9 +244,20 @@ export default async function ToolDetailPage({ params }: PageProps) {
                     className="h-10 md:h-16 w-auto object-contain rounded-lg drop-shadow-xl shrink-0"
                   />
                 )}
-                <h1 className="font-sans text-2xl md:text-5xl text-white tracking-tighter font-black drop-shadow-xl pr-2">
+                <h1 className="font-sans text-2xl md:text-5xl text-white tracking-tighter font-black drop-shadow-xl">
                   {dbTool.name}
                 </h1>
+                {/* Verified curation mark — blue tick beside the tool name,
+                    signalling a human-vetted listing (Twitter/Facebook style). */}
+                <span
+                  role="img"
+                  aria-label="Verified tool"
+                  title="Verified — human-curated listing"
+                  className="material-symbols-outlined shrink-0 text-[22px] md:text-[36px] drop-shadow-xl"
+                  style={{ color: '#1D9BF0', fontVariationSettings: "'FILL' 1" }}
+                >
+                  verified
+                </span>
               </div>
               <p className="text-white font-sans max-w-2xl text-base md:text-lg leading-relaxed font-semibold drop-shadow-xl">
                 {dbTool.description}
