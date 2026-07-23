@@ -43,6 +43,39 @@ export function ToolCardSkeleton() {
   );
 }
 
+/** Placeholder for the admin `ToolForm` — breadcrumb, stacked field panels, and
+ *  an action bar. Shared by the new-tool and edit-tool loading states so the
+ *  layout holds steady while the (DB-backed) page resolves. */
+export function ToolFormSkeleton() {
+  return (
+    <div className="flex flex-col gap-8 pb-20" role="status" aria-label="Loading">
+      {/* Breadcrumb */}
+      <Skeleton className="h-3 w-56 rounded" />
+
+      {/* Field panels */}
+      {Array.from({ length: 2 }).map((_, panel) => (
+        <div key={panel} className="glass-panel rounded-xl p-6 space-y-6">
+          <Skeleton className="h-5 w-40 rounded" />
+          {Array.from({ length: 3 }).map((_, row) => (
+            <div key={row} className="space-y-2">
+              <Skeleton className="h-3 w-28 rounded" />
+              <Skeleton className="h-10 w-full rounded-lg" />
+            </div>
+          ))}
+        </div>
+      ))}
+
+      {/* Action bar */}
+      <div className="flex justify-end gap-3">
+        <Skeleton className="h-10 w-24 rounded-lg" />
+        <Skeleton className="h-10 w-32 rounded-lg" />
+      </div>
+
+      <span className="sr-only">Loading…</span>
+    </div>
+  );
+}
+
 /** A grid of `ToolCardSkeleton`s — the shared body for the home and directory
  *  loading states. */
 export function ToolGridSkeleton({ count = 8 }: { count?: number }) {

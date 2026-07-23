@@ -1,9 +1,10 @@
 import React from 'react';
-import Link from 'next/link';
 import { getAdminStats, getAllToolsAdmin } from '@/app/actions/adminActions';
 import { Tool, Platform, ToolType } from '@prisma/client';
 import { DeleteToolButton } from '@/components/admin/DeleteToolButton';
 import { RestoreToolButton } from '@/components/admin/RestoreToolButton';
+import { AddToolButton } from '@/components/admin/AddToolButton';
+import { EditToolButton } from '@/components/admin/EditToolButton';
 
 type ToolWithCategories = Tool & { platforms: Platform[], toolTypes: ToolType[] };
 export default async function ManageToolsPage() {
@@ -24,13 +25,7 @@ export default async function ManageToolsPage() {
           <p className="font-body-base text-sm text-on-surface-variant">Curate and oversee the open-source repository ecosystem.</p>
         </div>
         
-        <Link 
-          href="/admin/tools/new" 
-          className="bg-primary-container text-on-primary-container hover:bg-primary transition-colors flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg font-label-sm text-sm"
-        >
-          <span className="material-symbols-outlined text-[18px]">add</span>
-          Add Tool
-        </Link>
+        <AddToolButton />
       </div>
 
       {/* Metrics */}
@@ -134,9 +129,7 @@ export default async function ManageToolsPage() {
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex items-center justify-end gap-2 text-on-surface-variant">
-                      <Link href={`/admin/tools/${tool.id}/edit`} className="p-1.5 hover:text-primary transition-colors hover:bg-surface-container rounded-md">
-                        <span className="material-symbols-outlined text-[18px]">edit</span>
-                      </Link>
+                      <EditToolButton toolId={tool.id} />
                       {tool.status === 'DELETED' ? (
                         <RestoreToolButton toolId={tool.id} toolName={tool.name} />
                       ) : (
