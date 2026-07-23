@@ -64,7 +64,10 @@ export function ToolExplorer({ tools }: { tools: CardTool[] }) {
       {/* Category filters — relative z-20 keeps the row above the relatively-
           positioned hero section, which would otherwise paint over (and steal
           clicks from) these chips where the negative margin overlaps it. */}
-      <div className="relative z-20 flex flex-wrap justify-center gap-3 px-gutter -mt-12 md:-mt-20">
+      {/* Single horizontal row: scrolls sideways on narrow screens (so "MCP
+          Servers" stays inline instead of wrapping), and centers once the four
+          chips fit. Scrollbar hidden for a clean edge-to-edge swipe. */}
+      <div className="relative z-20 flex flex-nowrap justify-start md:justify-center gap-3 px-gutter -mt-12 md:-mt-20 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
         {CATEGORIES.map((cat: any) => (
           <CategoryChip
             key={cat}

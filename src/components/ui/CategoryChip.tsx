@@ -17,7 +17,7 @@ export const CategoryChip: React.FC<CategoryChipProps> = ({ label, isActive = fa
           ? 'bg-primary-container text-on-primary-container hover:bg-primary-container/90' 
           : 'bg-surface-container-high text-on-surface border border-outline-variant/30 hover:border-outline-variant'
         } 
-        font-label-sm text-label-sm px-6 py-3 rounded-full hover-lift
+        font-label-sm text-label-sm px-6 py-3 rounded-full hover-lift shrink-0 whitespace-nowrap
       `}
     >
       {label}
