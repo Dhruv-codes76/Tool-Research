@@ -18,9 +18,10 @@ export const ToolCard: React.FC<ToolCardProps> = ({ id, slug, name, stars, descr
   return (
     <Link href={`/tools/${slug}`} className="block h-full">
       <div className="relative bg-surface rounded-2xl border border-outline-variant/30 p-6 hover:scale-[1.02] hover:border-outline-variant/60 transition-all duration-300 group cursor-pointer flex flex-col h-full">
-        {/* Wishlist heart — overlay, stops propagation so it doesn't navigate */}
+        {/* Wishlist heart — overlay, stops propagation so it doesn't navigate.
+            Uses the same bare Instagram-style heart as the detail-page hero. */}
         <div className="absolute top-3 right-3 z-10">
-          <SaveButton toolId={id} variant="card" />
+          <SaveButton toolId={id} variant="hero" />
         </div>
         <div className="flex items-center gap-4 mb-4">
           <div className={`w-12 h-12 rounded-lg border border-white/10 flex items-center justify-center overflow-hidden ${color}`}>
@@ -34,7 +35,19 @@ export const ToolCard: React.FC<ToolCardProps> = ({ id, slug, name, stars, descr
             )}
           </div>
           <div>
-            <h3 className="font-headline-md text-headline-md text-on-surface text-lg">{name}</h3>
+            <div className="flex items-center gap-1">
+              <h3 className="font-headline-md text-headline-md text-on-surface text-lg">{name}</h3>
+              {/* Verified curation mark — matches the detail-page hero tick. */}
+              <span
+                role="img"
+                aria-label="Verified tool"
+                title="Verified — human-curated listing"
+                className="material-symbols-outlined shrink-0 text-[9px] leading-none"
+                style={{ color: '#1D9BF0', fontVariationSettings: "'FILL' 1" }}
+              >
+                verified
+              </span>
+            </div>
             <div className="flex items-center gap-1 text-on-surface-variant text-xs">
               <span className="material-symbols-outlined text-[14px]">star</span>
               <span>{stars}</span>
