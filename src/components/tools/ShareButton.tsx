@@ -1,21 +1,29 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useSyncExternalStore } from 'react';
+
+const NOOP = () => () => {};
+
 
 /**
  * Share control for the tool detail hero. Opens a menu of explicit share
- * destinations (X, WhatsApp, LinkedIn, Facebook, Reddit, Telegram, Email) plus
- * copy-link. On devices with the native share sheet, a "More…" item opens it.
+ * destinations (X, WhatsApp, LinkedIn, Reddit, Telegram) plus copy-link. On
+ * devices with the native share sheet, a "Share…" item is promoted to the top
+ * so the OS sheet — the best mobile UX — is the primary action.
  */
 export function ShareButton({ title, text }: { title: string; text?: string }) {
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [hasNativeShare, setHasNativeShare] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    setHasNativeShare(typeof navigator !== 'undefined' && !!navigator.share);
-  }, []);
+  // Client-only capability check (SSR-safe: server snapshot is always false, so
+  // the "Share…" item never causes a hydration mismatch).
+  const hasNativeShare = useSyncExternalStore(
+    NOOP,
+    () => typeof navigator !== 'undefined' && !!navigator.share,
+    () => false
+  );
 
   // Close on outside click or Escape.
   useEffect(() => {
@@ -32,20 +40,24 @@ export function ShareButton({ title, text }: { title: string; text?: string }) {
     };
   }, [open]);
 
+  // Move focus into the menu when it opens so arrow-key nav has a starting point.
+  useEffect(() => {
+    if (!open) return;
+    const first = menuRef.current?.querySelector<HTMLButtonElement>('[role="menuitem"]');
+    first?.focus();
+  }, [open]);
+
   const url = typeof window !== 'undefined' ? window.location.href : '';
   const shareText = text ? `${title} — ${text}` : title;
   const u = encodeURIComponent(url);
   const t = encodeURIComponent(title);
-  const tt = encodeURIComponent(shareText);
 
-  const targets: { name: string; href: string; icon: React.ReactNode }[] = [
-    { name: 'X', href: `https://twitter.com/intent/tweet?text=${t}&url=${u}`, icon: <IconX /> },
-    { name: 'WhatsApp', href: `https://wa.me/?text=${encodeURIComponent(`${title} ${url}`)}`, icon: <IconWhatsApp /> },
-    { name: 'LinkedIn', href: `https://www.linkedin.com/sharing/share-offsite/?url=${u}`, icon: <IconLinkedIn /> },
-    { name: 'Facebook', href: `https://www.facebook.com/sharer/sharer.php?u=${u}`, icon: <IconFacebook /> },
-    { name: 'Reddit', href: `https://www.reddit.com/submit?url=${u}&title=${t}`, icon: <IconReddit /> },
-    { name: 'Telegram', href: `https://t.me/share/url?url=${u}&text=${t}`, icon: <IconTelegram /> },
-    { name: 'Email', href: `mailto:?subject=${t}&body=${encodeURIComponent(`${title}\n\n${url}`)}`, icon: <IconMail /> },
+  const targets: { name: string; href: string; color: string; icon: React.ReactNode }[] = [
+    { name: 'X', href: `https://twitter.com/intent/tweet?text=${t}&url=${u}`, color: '#ffffff', icon: <IconX /> },
+    { name: 'WhatsApp', href: `https://wa.me/?text=${encodeURIComponent(`${title} ${url}`)}`, color: '#25D366', icon: <IconWhatsApp /> },
+    { name: 'LinkedIn', href: `https://www.linkedin.com/sharing/share-offsite/?url=${u}`, color: '#0A66C2', icon: <IconLinkedIn /> },
+    { name: 'Reddit', href: `https://www.reddit.com/submit?url=${u}&title=${t}`, color: '#FF4500', icon: <IconReddit /> },
+    { name: 'Telegram', href: `https://t.me/share/url?url=${u}&text=${t}`, color: '#26A5E4', icon: <IconTelegram /> },
   ];
 
   const openTarget = (href: string) => {
@@ -72,6 +84,26 @@ export function ShareButton({ title, text }: { title: string; text?: string }) {
     setOpen(false);
   };
 
+  // Roving arrow-key navigation across the visible menu items.
+  const onMenuKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp' && e.key !== 'Home' && e.key !== 'End') return;
+    const items = Array.from(
+      menuRef.current?.querySelectorAll<HTMLButtonElement>('[role="menuitem"]') ?? []
+    );
+    if (!items.length) return;
+    e.preventDefault();
+    const i = items.indexOf(document.activeElement as HTMLButtonElement);
+    let next = i;
+    if (e.key === 'ArrowDown') next = i < 0 ? 0 : (i + 1) % items.length;
+    else if (e.key === 'ArrowUp') next = i <= 0 ? items.length - 1 : i - 1;
+    else if (e.key === 'Home') next = 0;
+    else if (e.key === 'End') next = items.length - 1;
+    items[next]?.focus();
+  };
+
+  const itemClass =
+    'w-full flex items-center gap-3 px-3 py-2 rounded-xl text-left text-sm text-white/90 hover:bg-white/10 focus:bg-white/10 focus:outline-none transition-colors';
+
   return (
     <div ref={containerRef} className="relative">
       <button
@@ -93,48 +125,48 @@ export function ShareButton({ title, text }: { title: string; text?: string }) {
 
       {open && (
         <div
+          ref={menuRef}
           role="menu"
-          className="absolute right-0 mt-2 w-52 z-30 rounded-2xl border border-white/15 bg-[#14161a]/90 backdrop-blur-2xl shadow-2xl p-2 origin-top-right"
+          aria-label="Share options"
+          onKeyDown={onMenuKeyDown}
+          className="animate-pop-in absolute right-0 mt-2 w-52 z-30 rounded-2xl border border-white/15 bg-[#14161a]/90 backdrop-blur-2xl shadow-2xl p-2 origin-top-right"
           style={{ boxShadow: '0 16px 48px rgba(0,0,0,0.55)' }}
         >
-          {targets.map((target: any) => (
+          {hasNativeShare && (
+            <>
+              <button role="menuitem" type="button" onClick={nativeShare} className={itemClass}>
+                <span className="material-symbols-outlined text-[18px] text-white/80">ios_share</span>
+                <span className="font-medium">Share…</span>
+              </button>
+              <div className="my-1.5 h-px bg-white/10" />
+            </>
+          )}
+
+          {targets.map((target) => (
             <button
               key={target.name}
               role="menuitem"
               type="button"
               onClick={() => openTarget(target.href)}
-              className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-left text-sm text-white/90 hover:bg-white/10 transition-colors"
+              className={itemClass}
             >
-              <span className="shrink-0 text-white/80">{target.icon}</span>
+              <span className="shrink-0" style={{ color: target.color }}>
+                {target.icon}
+              </span>
               <span className="font-medium">{target.name}</span>
             </button>
           ))}
 
           <div className="my-1.5 h-px bg-white/10" />
 
-          <button
-            role="menuitem"
-            type="button"
-            onClick={copyLink}
-            className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-left text-sm text-white/90 hover:bg-white/10 transition-colors"
-          >
-            <span className="material-symbols-outlined text-[18px] text-white/80">
+          <button role="menuitem" type="button" onClick={copyLink} className={itemClass}>
+            <span
+              className={`material-symbols-outlined text-[18px] ${copied ? 'text-emerald-400' : 'text-white/80'}`}
+            >
               {copied ? 'check' : 'link'}
             </span>
             <span className="font-medium">{copied ? 'Link copied!' : 'Copy link'}</span>
           </button>
-
-          {hasNativeShare && (
-            <button
-              role="menuitem"
-              type="button"
-              onClick={nativeShare}
-              className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-left text-sm text-white/90 hover:bg-white/10 transition-colors"
-            >
-              <span className="material-symbols-outlined text-[18px] text-white/80">more_horiz</span>
-              <span className="font-medium">More…</span>
-            </button>
-          )}
         </div>
       )}
     </div>
@@ -157,11 +189,6 @@ const IconLinkedIn = () => (
     <path d="M20.45 20.45h-3.56v-5.57c0-1.33-.02-3.04-1.85-3.04-1.85 0-2.14 1.45-2.14 2.94v5.67H9.34V9h3.42v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.45v6.29ZM5.34 7.43a2.07 2.07 0 1 1 0-4.14 2.07 2.07 0 0 1 0 4.14ZM7.12 20.45H3.56V9h3.56v11.45ZM22.22 0H1.77C.79 0 0 .77 0 1.73v20.54C0 23.23.79 24 1.77 24h20.45c.98 0 1.78-.77 1.78-1.73V1.73C24 .77 23.2 0 22.22 0Z" />
   </svg>
 );
-const IconFacebook = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-    <path d="M24 12.07C24 5.4 18.63 0 12 0S0 5.4 0 12.07c0 6.02 4.39 11.01 10.13 11.93v-8.44H7.08v-3.49h3.05V9.41c0-3.02 1.79-4.69 4.53-4.69 1.31 0 2.68.24 2.68.24v2.97h-1.51c-1.49 0-1.96.93-1.96 1.89v2.25h3.33l-.53 3.49h-2.8v8.44C19.61 23.08 24 18.09 24 12.07Z" />
-  </svg>
-);
 const IconReddit = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
     <path d="M24 11.78a2.6 2.6 0 0 0-4.4-1.86 12.78 12.78 0 0 0-6.86-2.16l1.17-3.7 3.16.75a1.86 1.86 0 1 0 .2-.93l-3.5-.83a.39.39 0 0 0-.47.27l-1.3 4.1a12.83 12.83 0 0 0-7.02 2.16 2.6 2.6 0 1 0-2.87 4.27 5.1 5.1 0 0 0-.06.8c0 4.06 4.73 7.36 10.56 7.36s10.56-3.3 10.56-7.36c0-.27-.02-.54-.06-.8A2.6 2.6 0 0 0 24 11.78ZM6.33 13.6a1.86 1.86 0 1 1 3.72 0 1.86 1.86 0 0 1-3.72 0Zm10.4 4.92c-1.27 1.27-3.7 1.37-4.42 1.37-.72 0-3.15-.1-4.42-1.37a.48.48 0 0 1 .68-.68c.8.8 2.52.99 3.74.99 1.22 0 2.93-.19 3.74-.99a.48.48 0 1 1 .68.68Zm-.29-3.06a1.86 1.86 0 1 1 0-3.72 1.86 1.86 0 0 1 0 3.72Z" />
@@ -170,10 +197,5 @@ const IconReddit = () => (
 const IconTelegram = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
     <path d="M21.94 4.3 18.6 19.86c-.25 1.1-.9 1.38-1.83.86l-5.05-3.72-2.44 2.35c-.27.27-.5.5-1.02.5l.36-5.16 9.4-8.5c.4-.36-.09-.56-.63-.2L5.16 13.18l-5-1.57c-1.08-.34-1.1-1.08.23-1.6l19.55-7.53c.9-.34 1.7.2 1.4 1.82Z" />
-  </svg>
-);
-const IconMail = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-    <path d="M3 4h18a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1Zm9 7.13 8-5.13H4l8 5.13Zm0 2.37L4 8.37V18h16V8.37l-8 5.13Z" />
   </svg>
 );
