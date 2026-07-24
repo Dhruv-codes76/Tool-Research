@@ -64,18 +64,22 @@ export function ToolExplorer({ tools }: { tools: CardTool[] }) {
       {/* Category filters — relative z-20 keeps the row above the relatively-
           positioned hero section, which would otherwise paint over (and steal
           clicks from) these chips where the negative margin overlaps it. */}
-      {/* Single horizontal row: scrolls sideways on narrow screens (so "MCP
-          Servers" stays inline instead of wrapping), and centers once the four
-          chips fit. Scrollbar hidden for a clean edge-to-edge swipe. */}
-      <div className="relative z-20 flex flex-nowrap justify-start md:justify-center gap-3 px-gutter -mt-12 md:-mt-20 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-        {CATEGORIES.map((cat: any) => (
-          <CategoryChip
-            key={cat}
-            label={cat}
-            isActive={active === cat}
-            onClick={() => setActive(cat)}
-          />
-        ))}
+      {/* Single horizontal row. On phones it scrolls sideways — so "MCP Servers"
+          stays inline after "Linux" instead of wrapping to a second row — and
+          once all four chips fit, they center. The hero-overlap negative margin
+          lives on this outer wrapper so the scroll container itself stays clean
+          (no clipped first chip, no vertically-clipped hover-lift). */}
+      <div className="relative z-20 -mt-12 md:-mt-20">
+        <div className="flex flex-nowrap gap-3 overflow-x-auto overscroll-x-contain px-gutter py-2 md:justify-center [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+          {CATEGORIES.map((cat: any) => (
+            <CategoryChip
+              key={cat}
+              label={cat}
+              isActive={active === cat}
+              onClick={() => setActive(cat)}
+            />
+          ))}
+        </div>
       </div>
 
       {/* Tools grid */}

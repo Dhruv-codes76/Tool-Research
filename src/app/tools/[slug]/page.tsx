@@ -9,7 +9,6 @@ import { ShareButton } from '@/components/tools/ShareButton';
 import { SaveButton } from '@/components/tools/SaveButton';
 import { ImageGallery } from '@/components/tools/ImageGallery';
 import { JsonLd } from '@/components/seo/JsonLd';
-import { UploadedByBadge } from '@/components/tools/UploadedByBadge';
 import { buildMetadata, graph, breadcrumbSchema, softwareApplicationSchema } from '@/lib/seo';
 
 const glassStyle = {
@@ -231,10 +230,6 @@ export default async function ToolDetailPage({ params }: PageProps) {
                     </span>
                   ))}
                 </div>
-                {/* Uploader attribution — trust signal, hover to reveal */}
-                <div className="shrink-0">
-                  <UploadedByBadge name={dbTool.user?.name ?? null} role={dbTool.user?.role ?? null} />
-                </div>
               </div>
               <div className="flex items-center gap-3 md:gap-4 mb-2 mt-2 md:mt-0">
                 {(dbTool.heroImageUrl || dbTool.imageUrl) && (
@@ -253,7 +248,7 @@ export default async function ToolDetailPage({ params }: PageProps) {
                   role="img"
                   aria-label="Verified tool"
                   title="Verified — human-curated listing"
-                  className="material-symbols-outlined shrink-0 text-[22px] md:text-[36px] drop-shadow-xl"
+                  className="material-symbols-outlined shrink-0 -ml-1 self-center text-[16px] md:text-[24px] drop-shadow-xl leading-none"
                   style={{ color: '#1D9BF0', fontVariationSettings: "'FILL' 1" }}
                 >
                   verified
