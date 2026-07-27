@@ -17,14 +17,14 @@ interface ToolCardProps {
 export const ToolCard: React.FC<ToolCardProps> = ({ id, slug, name, stars, description, tags, icon, color, logoUrl }) => {
   return (
     <Link href={`/tools/${slug}`} className="block h-full">
-      <div className="relative bg-surface rounded-2xl border border-outline-variant/30 p-6 hover:scale-[1.02] hover:border-outline-variant/60 transition-all duration-300 group cursor-pointer flex flex-col h-full">
+      <div className="relative bg-surface rounded-2xl border border-outline-variant/30 p-6 hover:scale-[1.02] hover:border-outline-variant/60 transition-all duration-300 group cursor-pointer flex flex-col h-full min-h-[215px]">
         {/* Wishlist heart — overlay, stops propagation so it doesn't navigate.
             Uses the same bare Instagram-style heart as the detail-page hero. */}
-        <div className="absolute top-3 right-3 z-10">
+        <div className="absolute top-2.5 right-2.5 z-10">
           <SaveButton toolId={id} variant="hero" />
         </div>
-        <div className="flex items-center gap-4 mb-4">
-          <div className={`w-12 h-12 rounded-lg border border-white/10 flex items-center justify-center overflow-hidden ${color}`}>
+        <div className="flex items-center gap-4 mb-4 pr-6">
+          <div className={`w-12 h-12 rounded-lg border border-white/10 flex items-center justify-center overflow-hidden shrink-0 ${color}`}>
             {logoUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={logoUrl} alt={`${name} logo`} className="w-full h-full object-contain p-1.5" />
@@ -34,7 +34,7 @@ export const ToolCard: React.FC<ToolCardProps> = ({ id, slug, name, stars, descr
               </span>
             )}
           </div>
-          <div>
+          <div className="min-w-0 flex-1">
             <div className="flex items-center gap-1">
               <h3 className="font-headline-md text-headline-md text-on-surface text-lg">{name}</h3>
               {/* Verified curation mark — matches the detail-page hero tick. */}
@@ -48,7 +48,7 @@ export const ToolCard: React.FC<ToolCardProps> = ({ id, slug, name, stars, descr
                 verified
               </span>
             </div>
-            <div className="flex items-center gap-1 text-on-surface-variant text-xs">
+            <div className="flex items-center gap-1 text-on-surface-variant text-xs mt-0.5">
               <span className="material-symbols-outlined text-[14px]">star</span>
               <span>{stars}</span>
             </div>

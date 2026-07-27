@@ -22,7 +22,7 @@ export function Skeleton({
  *  grid doesn't jump when the real cards swap in. */
 export function ToolCardSkeleton() {
   return (
-    <div className="bg-surface rounded-2xl border border-outline-variant/30 p-6 flex flex-col h-full">
+    <div className="bg-surface rounded-2xl border border-outline-variant/30 p-6 flex flex-col h-full min-h-[215px]">
       <div className="flex items-center gap-4 mb-4">
         <Skeleton className="w-12 h-12 rounded-lg shrink-0" />
         <div className="flex-1 space-y-2">
