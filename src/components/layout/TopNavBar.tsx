@@ -116,7 +116,7 @@ const TopNavBar = () => {
 
   return (
     <nav className="fixed top-0 w-full z-50 bg-surface/80 dark:bg-surface/80 backdrop-blur-md border-b border-outline-variant/20">
-      <div className="flex justify-between items-center max-w-container-max mx-auto px-gutter h-16">
+      <div className="relative flex justify-between items-center max-w-container-max mx-auto px-gutter h-16">
         <div className="font-sans text-2xl font-black tracking-tighter leading-none text-white">
           <Link href="/" className="flex items-center gap-2">
             <Image src="/logo-v2.png" alt="AI Tool Research" width={32} height={30} className="object-contain" />
@@ -126,7 +126,7 @@ const TopNavBar = () => {
           </Link>
         </div>
 
-        <div className="hidden md:flex items-center gap-stack-md font-body-base text-body-base">
+        <div className="hidden md:flex items-center gap-stack-md font-body-base text-body-base absolute left-1/2 -translate-x-1/2">
           <Link
             href="/"
             className="text-on-surface-variant font-medium hover:text-primary transition-colors duration-200"
