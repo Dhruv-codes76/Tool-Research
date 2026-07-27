@@ -35,8 +35,8 @@ export const ToolCard: React.FC<ToolCardProps> = ({ id, slug, name, stars, descr
             )}
           </div>
           <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-1">
-              <h3 className="font-headline-md text-headline-md text-on-surface text-lg">{name}</h3>
+            <div className="flex items-center gap-1 min-w-0">
+              <h3 className="font-headline-md text-headline-md text-on-surface text-lg truncate whitespace-nowrap" title={name}>{name}</h3>
               {/* Verified curation mark — matches the detail-page hero tick. */}
               <span
                 role="img"
@@ -54,7 +54,11 @@ export const ToolCard: React.FC<ToolCardProps> = ({ id, slug, name, stars, descr
             </div>
           </div>
         </div>
-        <p className="font-body-base text-body-base text-on-surface-variant flex-grow text-sm line-clamp-2" title="Click to see more">
+        <p 
+          className="font-body-base text-body-base text-on-surface-variant flex-grow text-sm"
+          style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}
+          title="Click to see more"
+        >
           {description}
         </p>
         <div 

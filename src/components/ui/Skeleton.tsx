@@ -32,8 +32,7 @@ export function ToolCardSkeleton() {
       </div>
       <div className="space-y-2 flex-grow">
         <Skeleton className="h-3 w-full rounded" />
-        <Skeleton className="h-3 w-full rounded" />
-        <Skeleton className="h-3 w-3/5 rounded" />
+        <Skeleton className="h-3 w-4/5 rounded" />
       </div>
       <div className="mt-4 flex gap-2">
         <Skeleton className="h-6 w-16 rounded" />
