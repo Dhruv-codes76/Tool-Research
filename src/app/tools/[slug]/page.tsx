@@ -248,7 +248,7 @@ export default async function ToolDetailPage({ params }: PageProps) {
                   role="img"
                   aria-label="Verified tool"
                   title="Verified — human-curated listing"
-                  className="material-symbols-outlined shrink-0 -ml-1 self-center text-[16px] md:text-[24px] drop-shadow-xl leading-none"
+                  className="material-symbols-outlined shrink-0 -ml-1 self-center !text-[15px] md:!text-[22px] drop-shadow-xl leading-none"
                   style={{ color: '#1D9BF0', fontVariationSettings: "'FILL' 1" }}
                 >
                   verified

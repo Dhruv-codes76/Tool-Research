@@ -42,7 +42,7 @@ export const ToolCard: React.FC<ToolCardProps> = ({ id, slug, name, stars, descr
                 role="img"
                 aria-label="Verified tool"
                 title="Verified — human-curated listing"
-                className="material-symbols-outlined shrink-0 text-[9px] leading-none"
+                className="material-symbols-outlined shrink-0 !text-[12px] sm:!text-[14px] leading-none"
                 style={{ color: '#1D9BF0', fontVariationSettings: "'FILL' 1" }}
               >
                 verified

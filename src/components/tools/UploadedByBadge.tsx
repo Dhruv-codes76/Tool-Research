@@ -39,7 +39,7 @@ export function UploadedByBadge({ name, role }: { name: string | null; role: str
       {/* Verified badge — always visible, sits on top of the sliding label */}
       <span className="relative z-10 flex h-8 w-8 items-center justify-center rounded-full bg-primary/15 text-primary ring-1 ring-primary/40 transition-colors group-hover:bg-primary/25">
         <span
-          className="material-symbols-outlined text-[18px]"
+          className="material-symbols-outlined !text-[15px] sm:!text-[18px]"
           style={{ fontVariationSettings: "'FILL' 1" }}
         >
           verified
