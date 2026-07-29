@@ -27,7 +27,10 @@ export default async function OgImage({
   const name = tool?.name ?? "AI Tool Research";
   const description = (tool?.description ?? "A curated index of open-source AI tools.").slice(0, 120);
   const logo = tool?.heroImageUrl || tool?.imageUrl || null;
-  const category = (tool?.toolTypes?.[0]?.name ?? "Open Source").toUpperCase();
+  // A proprietary tool has no repo: never render "0 Stars · 0 Forks" on a share
+  // card, and never label it "Open Source" by default.
+  const isProprietary = tool?.sourceType === "PROPRIETARY";
+  const category = (tool?.toolTypes?.[0]?.name ?? (isProprietary ? "Curated Pick" : "Open Source")).toUpperCase();
   const version = tool?.version ?? "v1.0.0"; // default for preview if none
 
   return new ImageResponse(
@@ -121,21 +124,33 @@ export default async function OgImage({
               alignSelf: "flex-start",
             }}
           >
-            <div style={{ display: "flex", alignItems: "center", gap: 16, fontSize: 32, fontWeight: 700 }}>
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="#facc15">
-                <path d="M12 2l2.9 6.26 6.9.6-5.2 4.52 1.55 6.74L12 17.27 5.85 20.6l1.55-6.74L2.2 8.86l6.9-.6z" />
-              </svg>
-              {fmt(tool?.stars ?? 0)} Stars
-            </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 16, fontSize: 32, fontWeight: 700 }}>
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="6" y1="3" x2="6" y2="15" />
-                <circle cx="18" cy="6" r="3" />
-                <circle cx="6" cy="18" r="3" />
-                <path d="M18 9a9 9 0 0 1-9 9" />
-              </svg>
-              {fmt(tool?.forks ?? 0)} Forks
-            </div>
+            {isProprietary ? (
+              <div style={{ display: "flex", alignItems: "center", gap: 16, fontSize: 32, fontWeight: 700, color: "#D9A441" }}>
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#D9A441" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="11" width="18" height="11" rx="2" />
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                </svg>
+                Not open source
+              </div>
+            ) : (
+              <>
+                <div style={{ display: "flex", alignItems: "center", gap: 16, fontSize: 32, fontWeight: 700 }}>
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="#facc15">
+                    <path d="M12 2l2.9 6.26 6.9.6-5.2 4.52 1.55 6.74L12 17.27 5.85 20.6l1.55-6.74L2.2 8.86l6.9-.6z" />
+                  </svg>
+                  {fmt(tool?.stars ?? 0)} Stars
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 16, fontSize: 32, fontWeight: 700 }}>
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="6" y1="3" x2="6" y2="15" />
+                    <circle cx="18" cy="6" r="3" />
+                    <circle cx="6" cy="18" r="3" />
+                    <path d="M18 9a9 9 0 0 1-9 9" />
+                  </svg>
+                  {fmt(tool?.forks ?? 0)} Forks
+                </div>
+              </>
+            )}
           </div>
 
           {/* Version */}

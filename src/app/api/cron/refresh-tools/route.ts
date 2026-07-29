@@ -74,7 +74,13 @@ export async function GET(request: Request) {
 
   const force = new URL(request.url).searchParams.get("force") === "1";
 
-  const tools = await prisma.tool.findMany({ where: { status: "ACTIVE" } });
+  // Only open-source listings have a repository to refresh. Proprietary tools
+  // are excluded at the query level — passing one through would parse a null
+  // repoUrl and, worse, flag a REPO_DELETED change for a tool that never had a
+  // repo in the first place.
+  const tools = await prisma.tool.findMany({
+    where: { status: "ACTIVE", sourceType: "OPEN_SOURCE", repoUrl: { not: null } },
+  });
 
   let checked = 0;
   let statsUpdated = 0;

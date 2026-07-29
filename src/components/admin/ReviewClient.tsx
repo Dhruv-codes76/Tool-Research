@@ -22,7 +22,7 @@ export type ChangeVM = {
   toolId: string;
   toolName: string;
   toolSlug: string | null;
-  repoUrl: string;
+  repoUrl: string | null;
 };
 
 // Full current state of the tool, rendered read-only in the review modal so the
@@ -34,7 +34,7 @@ export type ToolDetailVM = {
   status: string;
   description: string;
   aboutText: string | null;
-  repoUrl: string;
+  repoUrl: string | null;
   imageUrl: string | null;
   heroImageUrl: string | null;
   stars: number;
@@ -331,7 +331,7 @@ function ToolModel({ detail, changingKeys }: { detail: ToolDetailVM; changingKey
 
       {/* Meta grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-        <DetailRow label="Repository" value={detail.repoUrl.replace("https://github.com/", "")} changing={changingKeys.has("repoUrl")} />
+        <DetailRow label="Repository" value={detail.repoUrl?.replace("https://github.com/", "")} changing={changingKeys.has("repoUrl")} />
         <DetailRow label="Author" value={detail.author} />
         <DetailRow label="Since" value={detail.since} />
         <DetailRow label="License" value={detail.license} />
@@ -492,7 +492,7 @@ function ReviewModal({ change, onClose }: { change: ChangeVM; onClose: () => voi
               {change.toolName}
             </Link>
             <p className="font-body-base text-[11px] text-on-surface-variant mt-0.5 truncate">
-              {change.repoUrl.replace("https://github.com/", "")}
+              {change.repoUrl?.replace("https://github.com/", "")}
             </p>
           </div>
           <button

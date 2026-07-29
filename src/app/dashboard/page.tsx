@@ -47,7 +47,9 @@ export default async function DashboardPage({
     publishedAt: t.publishedAt ? t.publishedAt.toISOString() : null,
     rejectionReason: t.rejectionReason,
     edits: t.edits,
-    repoUrl: t.repoUrl,
+    // Submissions are always GitHub-backed, but repoUrl is nullable at the DB
+    // level now (proprietary admin listings have none).
+    repoUrl: t.repoUrl ?? '',
     galleryImages: t.galleryImages ?? '[]',
     galleryLayout: t.galleryLayout ?? '16:9',
     toolTypes: t.toolTypes.map((ty) => ty.name),

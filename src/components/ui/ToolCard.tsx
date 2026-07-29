@@ -12,12 +12,19 @@ interface ToolCardProps {
   icon: string;
   color: string;
   logoUrl?: string | null;
+  /** "OPEN_SOURCE" (default) | "PROPRIETARY" */
+  sourceType?: string;
 }
 
-export const ToolCard: React.FC<ToolCardProps> = ({ id, slug, name, stars, description, tags, icon, color, logoUrl }) => {
+export const ToolCard: React.FC<ToolCardProps> = ({ id, slug, name, stars, description, tags, icon, color, logoUrl, sourceType }) => {
+  // A proprietary listing has no repo and therefore no star count. The amber
+  // accent + label is the same recognition cue used on the detail page, so the
+  // two kinds stay tellable apart without reading a word.
+  const isProprietary = sourceType === 'PROPRIETARY';
+
   return (
     <Link href={`/tools/${slug}`} className="block h-full">
-      <div className="relative bg-surface rounded-2xl border border-outline-variant/30 p-6 hover:scale-[1.02] hover:border-outline-variant/60 transition-all duration-300 group cursor-pointer flex flex-col h-full min-h-[215px]">
+      <div className="relative overflow-hidden bg-surface rounded-2xl border border-outline-variant/30 hover:border-outline-variant/60 p-6 hover:scale-[1.02] transition-all duration-300 group cursor-pointer flex flex-col h-full min-h-[215px]">
         {/* Wishlist heart — overlay, stops propagation so it doesn't navigate.
             Uses the same bare Instagram-style heart as the detail-page hero. */}
         <div className="absolute top-2.5 right-2.5 z-10">
@@ -48,10 +55,16 @@ export const ToolCard: React.FC<ToolCardProps> = ({ id, slug, name, stars, descr
                 verified
               </span>
             </div>
-            <div className="flex items-center gap-1 text-on-surface-variant text-xs mt-0.5">
-              <span className="material-symbols-outlined text-[14px]">star</span>
-              <span>{stars}</span>
-            </div>
+            {isProprietary ? (
+              <div className="flex items-center gap-1 text-[#D9A441] text-xs mt-0.5">
+                <span className="font-medium">Proprietary</span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-1 text-on-surface-variant text-xs mt-0.5">
+                <span className="material-symbols-outlined text-[14px]">star</span>
+                <span>{stars}</span>
+              </div>
+            )}
           </div>
         </div>
         <p 

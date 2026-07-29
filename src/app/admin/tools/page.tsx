@@ -22,7 +22,7 @@ export default async function ManageToolsPage() {
             <span className="text-on-surface">Tools</span>
           </div>
           <h1 className="font-display-lg text-3xl font-bold text-on-surface tracking-tight mb-1">Manage Tools</h1>
-          <p className="font-body-base text-sm text-on-surface-variant">Curate and oversee the open-source repository ecosystem.</p>
+          <p className="font-body-base text-sm text-on-surface-variant">Curate and oversee the directory — open-source repositories and recommended proprietary tools.</p>
         </div>
         
         <AddToolButton />
@@ -75,9 +75,19 @@ export default async function ManageToolsPage() {
                         )}
                       </div>
                       <div className="flex flex-col">
-                        <span className="font-label-sm text-sm text-on-surface">{tool.name}</span>
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-label-sm text-sm text-on-surface">{tool.name}</span>
+                          {tool.sourceType === 'PROPRIETARY' && (
+                            <span className="shrink-0 rounded-sm border border-[#D9A441]/30 bg-[#D9A441]/10 px-1.5 py-px font-label-sm text-[9px] uppercase tracking-wider text-[#D9A441]">
+                              Not OSS
+                            </span>
+                          )}
+                        </div>
+                        {/* A proprietary listing has no repo — fall back to its website. */}
                         <span className="font-body-base text-[11px] text-on-surface-variant mt-0.5 truncate max-w-[200px]">
-                          {tool.repoUrl.replace('https://github.com/', '')}
+                          {tool.repoUrl?.replace('https://github.com/', '')
+                            ?? tool.websiteUrl?.replace(/^https?:\/\//, '')
+                            ?? '—'}
                         </span>
                       </div>
                     </div>
@@ -97,10 +107,14 @@ export default async function ManageToolsPage() {
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <div className="flex items-center gap-1.5 text-on-surface font-mono-code text-[13px]">
-                      <span className="material-symbols-outlined text-[14px] text-[#FBBF24]">star</span>
-                      {(tool.stars / 1000).toFixed(1)}k
-                    </div>
+                    {tool.sourceType === 'PROPRIETARY' ? (
+                      <span className="font-mono-code text-[13px] text-on-surface-variant/50">—</span>
+                    ) : (
+                      <div className="flex items-center gap-1.5 text-on-surface font-mono-code text-[13px]">
+                        <span className="material-symbols-outlined text-[14px] text-[#FBBF24]">star</span>
+                        {(tool.stars / 1000).toFixed(1)}k
+                      </div>
+                    )}
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-2 font-label-sm text-xs">

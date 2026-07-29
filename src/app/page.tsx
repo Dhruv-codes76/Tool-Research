@@ -52,6 +52,7 @@ function mapToolToCard(dbTool: ToolWithCategories, index: number) {
     icon: icons[index % icons.length], // Fallback when no logo was uploaded
     color: colors[index % colors.length], // Cycles through valid tailwind design colors
     logoUrl: dbTool.heroImageUrl ?? null, // Uploaded tool logo; takes precedence over the icon
+    sourceType: dbTool.sourceType, // Drives the "not open source" card variant + filter
   };
 }
 

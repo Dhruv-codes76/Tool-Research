@@ -140,11 +140,18 @@ export async function submitTool(formData: FormData, userId: string, submitterEm
 
 /**
  * Server action to get all published tools.
+ *
+ * `sourceType` narrows to one listing kind ("OPEN_SOURCE" | "PROPRIETARY").
+ * Ordering is deliberate: open source first (A < P alphabetically), then by
+ * stars. Proprietary tools have no repo and therefore 0 stars, so a plain
+ * stars-desc sort would bury every one of them at the end of the last page —
+ * they're ranked among themselves by recency instead.
  */
-export async function getTools(query?: string, platform?: string, toolType?: string) {
+export async function getTools(query?: string, platform?: string, toolType?: string, sourceType?: string) {
   return prisma.tool.findMany({
     where: {
       status: 'ACTIVE',
+      ...(sourceType && { sourceType }),
       ...(query && {
         OR: [
           { name: { contains: query } },
@@ -170,9 +177,11 @@ export async function getTools(query?: string, platform?: string, toolType?: str
       platforms: true,
       toolTypes: true,
     },
-    orderBy: {
-      stars: "desc",
-    },
+    orderBy: [
+      { sourceType: "asc" },
+      { stars: "desc" },
+      { createdAt: "desc" },
+    ],
   });
 }
 
@@ -199,6 +208,7 @@ export async function refreshToolStats(toolId: string) {
 
   if (!tool) throw new Error("Tool not found");
 
+  // No repo (proprietary listing) or an unparseable URL → nothing to refresh.
   const githubInfo = parseGitHubUrl(tool.repoUrl);
   if (!githubInfo) return tool;
 

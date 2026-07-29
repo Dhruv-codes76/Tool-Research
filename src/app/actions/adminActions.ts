@@ -121,22 +121,61 @@ export type ToolAdminFormData = {
   downloadUrl: string;
   downloadAssets: string; // JSON string of curated DownloadAsset[]
   slug: string;
+  sourceType: string; // "OPEN_SOURCE" | "PROPRIETARY"
+  sourceNote: string; // optional one-liner shown in the PROPRIETARY notice
   platforms: string[]; // array of names
   toolTypes: string[]; // array of names
 };
 
+/**
+ * Shared write-path normalisation + validation for the admin tool form.
+ *
+ * Two things matter here and both are easy to get wrong:
+ *  1. `repoUrl` is UNIQUE and nullable. An empty string is NOT null — two
+ *     repo-less proprietary tools saved with `""` would collide on the unique
+ *     index. Always coerce blank → null.
+ *  2. A listing must have a usable public link: a GitHub repo for OPEN_SOURCE,
+ *     a website for PROPRIETARY. The client form enforces this too, but server
+ *     actions are the API — never trust the caller.
+ */
+function normaliseToolWrite<T extends Omit<ToolAdminFormData, "platforms" | "toolTypes">>(toolData: T) {
+  const sourceType = toolData.sourceType === "PROPRIETARY" ? "PROPRIETARY" : "OPEN_SOURCE";
+  const repoUrl = toolData.repoUrl?.trim() || null;
+  const websiteUrl = toolData.websiteUrl?.trim() || "";
+
+  if (sourceType === "OPEN_SOURCE" && !repoUrl) {
+    throw new Error("An open-source listing needs a GitHub repository URL.");
+  }
+  if (sourceType === "PROPRIETARY" && !websiteUrl) {
+    throw new Error("A non-open-source listing needs a website URL.");
+  }
+
+  return {
+    ...toolData,
+    sourceType,
+    repoUrl,
+    websiteUrl,
+    // A source note only ever renders on a proprietary page — drop it otherwise
+    // so toggling a tool back to open source doesn't leave a stale note behind.
+    sourceNote: sourceType === "PROPRIETARY" ? toolData.sourceNote?.trim() || null : null,
+    // Repo stats are meaningless without a repo.
+    ...(repoUrl ? {} : { stars: 0, forks: 0, issues: 0 }),
+  };
+}
+
 export async function createTool(data: ToolAdminFormData) {
   return withErrorHandling(async () => {
     const admin = await requireAdmin();
-    
-    const { platforms, toolTypes, ...toolData } = data;
+
+    const { platforms, toolTypes, ...rest } = data;
+    const toolData = normaliseToolWrite(rest);
 
     // Backend duplicate blocks
     if (!(await checkSlugUnique(toolData.slug))) {
       throw new Error(`The slug "${toolData.slug}" is already taken.`);
     }
-    if (toolData.websiteUrl || toolData.repoUrl) {
-      const urlToCheck = toolData.websiteUrl || toolData.repoUrl;
+    const urlToCheck = toolData.websiteUrl || toolData.repoUrl;
+    if (urlToCheck) {
       const existing = await checkUrlExists(urlToCheck);
       if (existing) {
         throw new Error(`The URL is already used by another tool (${existing.name}).`);
@@ -168,7 +207,7 @@ export async function createTool(data: ToolAdminFormData) {
       targetType: "Tool",
       targetId: tool.id,
       targetLabel: tool.name,
-      metadata: { repoUrl: tool.repoUrl, status: tool.status, platforms, toolTypes },
+      metadata: { repoUrl: tool.repoUrl, sourceType: tool.sourceType, status: tool.status, platforms, toolTypes },
     });
 
     revalidatePath("/admin/tools");
@@ -181,14 +220,15 @@ export async function updateTool(id: string, data: ToolAdminFormData) {
   return withErrorHandling(async () => {
     const admin = await requireAdmin();
 
-    const { platforms, toolTypes, ...toolData } = data;
+    const { platforms, toolTypes, ...rest } = data;
+    const toolData = normaliseToolWrite(rest);
 
     // Backend duplicate blocks
     if (!(await checkSlugUnique(toolData.slug, id))) {
       throw new Error(`The slug "${toolData.slug}" is already taken.`);
     }
-    if (toolData.websiteUrl || toolData.repoUrl) {
-      const urlToCheck = toolData.websiteUrl || toolData.repoUrl;
+    const urlToCheck = toolData.websiteUrl || toolData.repoUrl;
+    if (urlToCheck) {
       const existing = await checkUrlExists(urlToCheck, id);
       if (existing) {
         throw new Error(`The URL is already used by another tool (${existing.name}).`);
@@ -223,7 +263,7 @@ export async function updateTool(id: string, data: ToolAdminFormData) {
       targetType: "Tool",
       targetId: tool.id,
       targetLabel: tool.name,
-      metadata: { status: tool.status, platforms, toolTypes },
+      metadata: { status: tool.status, sourceType: tool.sourceType, platforms, toolTypes },
     });
 
     revalidatePath("/admin/tools");

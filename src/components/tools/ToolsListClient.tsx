@@ -15,7 +15,17 @@ interface ToolItem {
   color: string;
   logoUrl?: string | null;
   slug: string;
+  sourceType?: string;
 }
+
+// The source toggle. Sits above the search bar rather than inside it: it splits
+// the directory into two kinds of listing, which is a higher-order distinction
+// than "which platform" — and it stays visible instead of hiding in a dropdown.
+const SOURCE_FILTERS = [
+  { key: 'All', label: 'All tools' },
+  { key: 'OPEN_SOURCE', label: 'Open source' },
+  { key: 'PROPRIETARY', label: 'Not open source' },
+] as const;
 
 interface ToolsListClientProps {
   initialTools: ToolItem[];
@@ -53,6 +63,7 @@ export const ToolsListClient: React.FC<ToolsListClientProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedPlatform, setSelectedPlatform] = useState('All');
   const [selectedType, setSelectedType] = useState('All');
+  const [selectedSource, setSelectedSource] = useState<string>('All');
   const [page, setPage] = useState(1);
 
   // Filter tools dynamically on the client for instant, reactive responsiveness.
@@ -69,17 +80,21 @@ export const ToolsListClient: React.FC<ToolsListClientProps> = ({
 
       const matchesPlatform = selectedPlatform === 'All' || tool.tags.includes(selectedPlatform);
       const matchesType = selectedType === 'All' || tool.tags.includes(selectedType);
+      // Source is a real field, not a tag — legacy rows with no value are open
+      // source (matching the DB default).
+      const matchesSource =
+        selectedSource === 'All' || (tool.sourceType ?? 'OPEN_SOURCE') === selectedSource;
 
-      return matchesSearch && matchesPlatform && matchesType;
+      return matchesSearch && matchesPlatform && matchesType && matchesSource;
     });
-  }, [initialTools, searchQuery, selectedPlatform, selectedType]);
+  }, [initialTools, searchQuery, selectedPlatform, selectedType, selectedSource]);
 
   const totalPages = Math.max(1, Math.ceil(filteredTools.length / PAGE_SIZE));
 
   // Snap back to the first page whenever the search/filter changes — done during
   // render (React's recommended pattern) rather than in an effect to avoid an
   // extra render pass. https://react.dev/learn/you-might-not-need-an-effect
-  const filterKey = `${searchQuery}|${selectedPlatform}|${selectedType}`;
+  const filterKey = `${searchQuery}|${selectedPlatform}|${selectedType}|${selectedSource}`;
   const [prevFilterKey, setPrevFilterKey] = useState(filterKey);
   if (filterKey !== prevFilterKey) {
     setPrevFilterKey(filterKey);
@@ -94,6 +109,38 @@ export const ToolsListClient: React.FC<ToolsListClientProps> = ({
 
   return (
     <>
+      {/* Source toggle — open source vs. the curated proprietary picks. */}
+      <div className="mb-6 flex justify-center">
+        <div
+          role="tablist"
+          aria-label="Filter by source"
+          className="glass-panel inline-flex gap-1 rounded-full p-1"
+        >
+          {SOURCE_FILTERS.map(({ key, label }) => {
+            const active = selectedSource === key;
+            const isProp = key === 'PROPRIETARY';
+            return (
+              <button
+                key={key}
+                type="button"
+                role="tab"
+                aria-selected={active}
+                onClick={() => setSelectedSource(key)}
+                className={`rounded-full px-4 py-2 text-sm transition-colors duration-200 ${
+                  active
+                    ? isProp
+                      ? 'bg-[#D9A441]/15 text-[#D9A441] font-semibold'
+                      : 'bg-primary-container text-on-primary-container font-semibold'
+                    : 'text-on-surface-variant hover:text-on-surface hover:bg-on-surface/[0.06]'
+                }`}
+              >
+                {label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
       {/* Unified search + filter bar */}
       <div className="mb-16">
         <ToolSearchFilterBar
@@ -120,7 +167,7 @@ export const ToolsListClient: React.FC<ToolsListClientProps> = ({
           <span className="material-symbols-outlined text-5xl text-on-surface-variant/40 mb-4 block">search_off</span>
           <h3 className="font-headline-sm text-on-surface mb-2">No matching tools found</h3>
           <p className="text-on-surface-variant font-body-base max-w-md mx-auto">
-            Try adjusting your search query or selecting a different category to discover open-source excellence.
+            Try adjusting your search query, or selecting a different category or source.
           </p>
         </div>
       )}

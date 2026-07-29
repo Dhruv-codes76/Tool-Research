@@ -6,7 +6,8 @@ import { parseDownloadAssets, osIcon, type DownloadAsset } from '@/lib/install';
 interface DownloadButtonProps {
   downloadUrl?: string | null;
   downloadAssets?: string | null; // JSON string of DownloadAsset[]
-  repoUrl: string;
+  // Null for a proprietary listing — there is no repository to link releases to.
+  repoUrl?: string | null;
 }
 
 const pillClass =
@@ -21,7 +22,7 @@ export const DownloadButton: React.FC<DownloadButtonProps> = ({ downloadUrl, dow
     options.push({ label: 'Direct download', url: downloadUrl });
   }
 
-  const releasesUrl = `${repoUrl.replace(/\/$/, '')}/releases/latest`;
+  const releasesUrl = repoUrl ? `${repoUrl.replace(/\/$/, '')}/releases/latest` : null;
 
   useEffect(() => {
     if (!open) return;
@@ -102,20 +103,22 @@ export const DownloadButton: React.FC<DownloadButtonProps> = ({ downloadUrl, dow
               ))}
             </div>
 
-            <div className="px-5 py-4 border-t border-outline-variant/20 text-center">
-              <p className="text-xs text-on-surface-variant">
-                Not sure which to pick?{' '}
-                <a
-                  href={releasesUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-primary font-semibold hover:underline underline-offset-2 inline-flex items-center gap-1"
-                >
-                  See all releases on GitHub
-                  <span className="material-symbols-outlined text-[14px]">open_in_new</span>
-                </a>
-              </p>
-            </div>
+            {releasesUrl && (
+              <div className="px-5 py-4 border-t border-outline-variant/20 text-center">
+                <p className="text-xs text-on-surface-variant">
+                  Not sure which to pick?{' '}
+                  <a
+                    href={releasesUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary font-semibold hover:underline underline-offset-2 inline-flex items-center gap-1"
+                  >
+                    See all releases on GitHub
+                    <span className="material-symbols-outlined text-[14px]">open_in_new</span>
+                  </a>
+                </p>
+              </div>
+            )}
           </div>
         </div>
       )}

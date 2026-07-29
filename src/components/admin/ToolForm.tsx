@@ -166,9 +166,15 @@ export function ToolForm({ initialData, availablePlatforms = [], availableToolTy
     websiteUrl: initialData?.websiteUrl || '',
     downloadUrl: initialData?.downloadUrl || '',
     downloadAssets: initialData?.downloadAssets || '[]',
+    sourceType: initialData?.sourceType || 'OPEN_SOURCE',
+    sourceNote: initialData?.sourceNote || '',
     platforms: initialData?.platforms?.map((p: any) => p.name) || [],
     toolTypes: initialData?.toolTypes?.map((t: any) => t.name) || [],
   });
+
+  // Non-open-source listings have no repository: the GitHub panel and its
+  // auto-fetch are hidden, and the website URL becomes the required link.
+  const isProprietary = formData.sourceType === 'PROPRIETARY';
 
   const validateSlug = async (slugToValidate: string) => {
     if (!slugToValidate) {
@@ -297,6 +303,20 @@ export function ToolForm({ initialData, availablePlatforms = [], availableToolTy
     newFeatures[idx][key] = value;
     setFeatures(newFeatures);
   };
+
+  // Every listing needs one usable public link. Which one depends on the kind:
+  // a repo for open source, a website for everything else.
+  const linkMissing = isProprietary ? !formData.websiteUrl.trim() : !formData.repoUrl.trim();
+
+  const saveDisabled =
+    isSubmitting ||
+    linkMissing ||
+    slugStatus === 'checking' ||
+    slugStatus === 'taken' ||
+    slugStatus === 'unvalidated' ||
+    !formData.slug ||
+    urlStatus === 'checking' ||
+    urlStatus === 'taken';
 
   const handleSubmit = async (status: 'ACTIVE' | 'DRAFT') => {
     setIsSubmitting(true);
@@ -446,30 +466,89 @@ export function ToolForm({ initialData, availablePlatforms = [], availableToolTy
       ) : (
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <h1 className="font-display-lg text-3xl font-bold text-on-surface tracking-tight">
-            {initialData ? 'Edit' : 'Create'} Open-Source Tool
+            {initialData ? 'Edit' : 'Create'} {isProprietary ? 'Recommended Tool' : 'Open-Source Tool'}
           </h1>
 
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => handleSubmit('DRAFT')}
-              disabled={isSubmitting || slugStatus === 'checking' || slugStatus === 'taken' || slugStatus === 'unvalidated' || !formData.slug || urlStatus === 'checking' || urlStatus === 'taken'}
-              className="px-5 py-2.5 rounded-lg border border-outline-variant/30 text-on-surface hover:bg-surface-container transition-colors font-label-sm text-sm"
-            >
-              Save Draft
-            </button>
-            <button
-              onClick={() => handleSubmit('ACTIVE')}
-              disabled={isSubmitting || slugStatus === 'checking' || slugStatus === 'taken' || slugStatus === 'unvalidated' || !formData.slug || urlStatus === 'checking' || urlStatus === 'taken'}
-              className="px-5 py-2.5 rounded-lg bg-primary-container text-on-primary-container hover:bg-primary transition-colors font-label-sm text-sm"
-            >
-              {isSubmitting ? 'Saving...' : 'Publish to Gallery'}
-            </button>
+          <div className="flex flex-col items-end gap-1.5">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => handleSubmit('DRAFT')}
+                disabled={saveDisabled}
+                className="px-5 py-2.5 rounded-lg border border-outline-variant/30 text-on-surface hover:bg-surface-container transition-colors font-label-sm text-sm disabled:opacity-40"
+              >
+                Save Draft
+              </button>
+              <button
+                onClick={() => handleSubmit('ACTIVE')}
+                disabled={saveDisabled}
+                className="px-5 py-2.5 rounded-lg bg-primary-container text-on-primary-container hover:bg-primary transition-colors font-label-sm text-sm disabled:opacity-40"
+              >
+                {isSubmitting ? 'Saving...' : 'Publish to Gallery'}
+              </button>
+            </div>
+            {linkMissing && (
+              <span className="text-[11px] text-yellow-500">
+                {isProprietary ? 'A website URL is required for a non-open-source tool.' : 'A GitHub repository URL is required.'}
+              </span>
+            )}
           </div>
         </div>
       )}
 
-      {/* Source & Fetch */}
-      <div className="glass-panel p-6 rounded-xl flex flex-col gap-4 border border-outline-variant/20">
+      {/* Listing Type — decides whether this entry is presented as open source
+          or as a recommended proprietary tool. Hidden in submission-review mode:
+          community submissions are GitHub-only by design. */}
+      {!isSubmissionMode && (
+        <div className="glass-panel p-6 rounded-xl flex flex-col gap-4 border border-outline-variant/20">
+          <h2 className="font-label-sm text-sm text-on-surface uppercase tracking-wider">Listing Type</h2>
+          <div className="flex flex-col md:flex-row gap-4">
+            <div className="flex flex-col gap-2 md:w-1/2">
+              <label className="font-label-sm text-[11px] text-on-surface-variant uppercase tracking-wider">Source</label>
+              <div className="relative">
+                <select
+                  className="w-full bg-surface-container-low border border-outline-variant/30 rounded-lg pl-4 pr-10 py-3 text-sm text-on-surface focus:border-primary appearance-none cursor-pointer"
+                  value={formData.sourceType}
+                  onChange={e => setFormData({ ...formData, sourceType: e.target.value })}
+                >
+                  <option value="OPEN_SOURCE">Open-source tool</option>
+                  <option value="PROPRIETARY">Not open source — recommended tool</option>
+                </select>
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-on-surface-variant">
+                  <span className="material-symbols-outlined text-[18px]">expand_more</span>
+                </div>
+              </div>
+              <p className="text-[10px] text-on-surface-variant">
+                {isProprietary
+                  ? 'The public page carries a "not open source" notice and hides repo stats.'
+                  : 'The default. Requires a GitHub repository and shows live stars/forks.'}
+              </p>
+            </div>
+
+            {isProprietary && (
+              <div className="flex flex-col gap-2 md:w-1/2">
+                <label className="font-label-sm text-[11px] text-on-surface-variant uppercase tracking-wider">
+                  Source Note <span className="normal-case text-on-surface-variant/60">(optional)</span>
+                </label>
+                <input
+                  type="text"
+                  maxLength={90}
+                  placeholder="e.g. Free tier available · paid plans for teams"
+                  className="w-full bg-surface-container-low border border-outline-variant/30 rounded-lg px-4 py-3 text-on-surface text-sm focus:border-primary"
+                  value={formData.sourceNote}
+                  onChange={e => setFormData({ ...formData, sourceNote: e.target.value })}
+                />
+                <p className="text-[10px] text-on-surface-variant">
+                  Appears inside the notice on the public page. {formData.sourceNote.length}/90
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Source & Fetch — open-source listings only; there is no repo to fetch
+          for a proprietary tool. */}
+      <div className={`glass-panel p-6 rounded-xl flex-col gap-4 border border-outline-variant/20 ${isProprietary ? 'hidden' : 'flex'}`}>
         <h2 className="font-label-sm text-sm text-on-surface uppercase tracking-wider">GitHub Integration</h2>
         <div className="flex flex-col md:flex-row gap-4">
           <div className="flex-1 relative">
@@ -600,13 +679,13 @@ export function ToolForm({ initialData, availablePlatforms = [], availableToolTy
             <input
               type="text"
               maxLength={70}
-              placeholder={`${formData.name || 'Tool name'} — Open-Source Tool`}
+              placeholder={`${formData.name || 'Tool name'} — ${isProprietary ? 'Tool Review & Guide' : 'Open-Source Tool'}`}
               className="w-full bg-surface-container-low border border-outline-variant/30 rounded-lg p-4 text-on-surface text-sm focus:border-primary/50"
               value={formData.metaTitle}
               onChange={e => setFormData({...formData, metaTitle: e.target.value})}
             />
             <span className="text-[10px] text-on-surface-variant/60 self-end">
-              Blank → “{formData.name || 'Tool name'} — Open-Source Tool” · {formData.metaTitle.length}/70
+              Blank → “{formData.name || 'Tool name'} — {isProprietary ? 'Tool Review & Guide' : 'Open-Source Tool'}” · {formData.metaTitle.length}/70
             </span>
           </div>
 
@@ -656,10 +735,12 @@ export function ToolForm({ initialData, availablePlatforms = [], availableToolTy
           </div>
           
           <div className="flex flex-col gap-2 relative pb-4">
-            <label className="font-label-sm text-[11px] text-on-surface-variant uppercase tracking-wider">Website URL</label>
-            <input 
-              type="text" 
-              placeholder="https://" 
+            <label className="font-label-sm text-[11px] text-on-surface-variant uppercase tracking-wider">
+              Website URL {isProprietary && <span className="text-error">*</span>}
+            </label>
+            <input
+              type="text"
+              placeholder={isProprietary ? 'https://the-tool.com (required)' : 'https://'}
               className={`w-full bg-surface-container-low border rounded-lg px-3 py-2 text-on-surface text-sm focus:outline-none transition-colors ${
                 urlStatus === 'taken' && formData.websiteUrl
                   ? 'border-yellow-500 focus:border-yellow-500 text-yellow-500'

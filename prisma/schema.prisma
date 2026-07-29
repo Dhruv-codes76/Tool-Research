@@ -42,7 +42,11 @@ model Tool {
   id               String       @id @default(cuid())
   name             String
   description      String
-  repoUrl          String       @unique
+  // Nullable because a PROPRIETARY listing has no public repository. Postgres
+  // treats NULLs as distinct, so the unique constraint stays safe across many
+  // repo-less rows (same reasoning as `slug` below). Presence is enforced in
+  // the app layer for OPEN_SOURCE tools only.
+  repoUrl          String?      @unique
   imageUrl         String?
   stars            Int          @default(0)
   forks            Int          @default(0)
@@ -82,11 +86,23 @@ model Tool {
   // distinct, so the constraint is safe on legacy rows) — presence is enforced
   // in the app layer (both submit forms + server actions always set a slug).
   slug             String?      @unique
+  // Listing kind. "OPEN_SOURCE" (the default and the bulk of the directory) or
+  // "PROPRIETARY" — a closed-source tool listed on usefulness alone. Drives the
+  // public notice block, the card/hero UI variant, and the source filter.
+  // A string lifecycle field like `status`, deliberately NOT a ToolType row:
+  // categories are curator-renameable, and renaming one must never silently
+  // change whether a page claims to be open source.
+  sourceType       String       @default("OPEN_SOURCE")
+  // Optional curator one-liner shown inside the "not open source" notice
+  // (e.g. "Free tier available"). Ignored for OPEN_SOURCE tools.
+  sourceNote       String?
   user             User         @relation(fields: [userId], references: [id])
   changes          ToolChange[]
   savedBy          SavedTool[]
   platforms        Platform[]   @relation("PlatformToTool")
   toolTypes        ToolType[]   @relation("ToolToToolType")
+
+  @@index([sourceType])
 }
 
 /**

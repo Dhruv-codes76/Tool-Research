@@ -8,7 +8,7 @@ import { buildMetadata, graph, breadcrumbSchema, collectionPageSchema } from '@/
 type ToolWithCategories = Tool & { platforms: Platform[]; toolTypes: ToolType[] };
 
 const PAGE_DESCRIPTION =
-  'Browse the complete index of curated open-source AI tools. Filter by platform or tool type to find exactly what you need.';
+  'Browse the complete index of curated open-source AI tools, plus the closed-source picks worth knowing. Filter by source, platform, or tool type.';
 
 export const metadata = buildMetadata({
   title: 'Open-Source AI Tool Directory',
@@ -45,6 +45,7 @@ function mapToolToCard(dbTool: ToolWithCategories, index: number) {
     icon: icons[index % icons.length], // Fallback when no logo was uploaded
     color: colors[index % colors.length],
     logoUrl: dbTool.heroImageUrl ?? null, // Uploaded tool logo; takes precedence over the icon
+    sourceType: dbTool.sourceType, // Drives the "not open source" card variant + filter
   };
 }
 
@@ -75,10 +76,11 @@ export default async function ToolsPage() {
       />
       <header className="mb-12">
         <h1 className="font-display-lg text-display-lg text-on-surface mb-stack-md">
-          Open Source Directory
+          The Tool Directory
         </h1>
         <p className="font-body-base text-body-base text-on-surface-variant max-w-2xl">
-          Explore our complete index of curated community excellence. Filter by category, platforms, or search for specific tools.
+          Our complete index — open-source tools first, plus the closed-source ones we think
+          are worth knowing about. Filter by source, category, or platform.
         </p>
       </header>
 

@@ -7,7 +7,8 @@ const octokit = new Octokit({
 /**
  * Enhanced GitHub URL parsing to handle various formats (HTTPS, clean URLs, etc.).
  */
-export function parseGitHubUrl(url: string) {
+export function parseGitHubUrl(url: string | null | undefined) {
+  // Nullable: a PROPRIETARY listing has no repoUrl at all.
   if (!url) return null;
   
   // Clean URL: remove trailing slashes and common artifacts

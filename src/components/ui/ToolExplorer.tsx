@@ -17,10 +17,15 @@ export interface CardTool {
   color: string;
   logoUrl?: string | null;
   slug: string;
+  sourceType?: string;
 }
 
-// The four filters the homepage exposes. "All Tools" is the reset state.
-const CATEGORIES = ['All Tools', 'Android', 'Linux', 'MCP Servers'] as const;
+// The filters the homepage exposes. "All Tools" is the reset state.
+// "Not Open Source" is different in kind from the others: it matches the tool's
+// `sourceType` field, not its category tags — see matchesCategory.
+const CATEGORIES = ['All Tools', 'Android', 'Linux', 'MCP Servers', 'Not Open Source'] as const;
+
+const SOURCE_CATEGORY = 'Not Open Source';
 
 // A tool's `tags` array is the union of its platform + toolType names. We match
 // each chip against those tags loosely (case-insensitive, alias-aware) so the
@@ -32,10 +37,13 @@ const ALIASES: Record<string, string[]> = {
   'MCP Servers': ['mcp server', 'mcp servers', 'mcp'],
 };
 
-function matchesCategory(tags: string[], category: string): boolean {
+function matchesCategory(tool: CardTool, category: string): boolean {
   if (category === 'All Tools') return true;
+  // Source is a field, never a tag — matching it loosely against category names
+  // would be wrong (a tool tagged "proprietary" is not necessarily one).
+  if (category === SOURCE_CATEGORY) return tool.sourceType === 'PROPRIETARY';
   const wanted = ALIASES[category] ?? [category.toLowerCase()];
-  const normalized = tags.map((t: any) => t.toLowerCase().trim());
+  const normalized = tool.tags.map((t: any) => t.toLowerCase().trim());
   return normalized.some((tag) => wanted.some((w) => tag === w || tag.includes(w)));
 }
 
@@ -55,7 +63,7 @@ export function ToolExplorer({ tools }: { tools: CardTool[] }) {
   const { query } = useToolFilter();
 
   const filtered = useMemo(
-    () => tools.filter((tool) => matchesCategory(tool.tags, active) && matchesQuery(tool, query)),
+    () => tools.filter((tool) => matchesCategory(tool, active) && matchesQuery(tool, query)),
     [tools, active, query]
   );
 
