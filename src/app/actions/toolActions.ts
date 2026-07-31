@@ -241,7 +241,8 @@ export async function refreshToolStats(toolId: string) {
  * what the admin changed before publishing.
  */
 export type ToolSubmissionInput = {
-  repoUrl: string;
+  sourceType?: 'OPEN_SOURCE' | 'PROPRIETARY';
+  repoUrl?: string;
   name: string;
   description?: string;
   websiteUrl?: string;
@@ -266,26 +267,49 @@ export async function submitToolRequest(input: ToolSubmissionInput) {
       throw new AppError("You must be signed in to submit a tool.", "UNAUTHORIZED");
     }
 
-    const repoUrl = input.repoUrl?.trim();
+    const isProprietary = input.sourceType === "PROPRIETARY";
     const name = input.name?.trim();
-    if (!repoUrl) throw new AppError("A GitHub repository URL is required.", "VALIDATION_ERROR");
-    if (!name) throw new AppError("Could not read the tool name — try fetching again.", "VALIDATION_ERROR");
-    if (!parseGitHubUrl(repoUrl)) {
-      throw new AppError("That doesn't look like a valid GitHub repository URL.", "VALIDATION_ERROR");
-    }
+    if (!name) throw new AppError("Tool name is required.", "VALIDATION_ERROR");
 
-    // Reject a repo that's already in the directory (any status but deleted).
-    const existing = await prisma.tool.findFirst({
-      where: { repoUrl, status: { not: "DELETED" } },
-      select: { status: true },
-    });
-    if (existing) {
-      throw new AppError(
-        existing.status === "PENDING"
-          ? "This tool has already been submitted and is awaiting review."
-          : "This tool is already in the directory.",
-        "CONFLICT",
-      );
+    let repoUrl: string | null = null;
+    const websiteUrl: string = input.websiteUrl?.trim() || "";
+
+    if (isProprietary) {
+      if (!websiteUrl) {
+        throw new AppError("A valid website URL is required for proprietary tools.", "VALIDATION_ERROR");
+      }
+      // Check duplicate websiteUrl for proprietary tools
+      const existing = await prisma.tool.findFirst({
+        where: { websiteUrl, status: { not: "DELETED" } },
+        select: { status: true },
+      });
+      if (existing) {
+        throw new AppError(
+          existing.status === "PENDING"
+            ? "This tool has already been submitted and is awaiting review."
+            : "This tool is already in the directory.",
+          "CONFLICT",
+        );
+      }
+    } else {
+      repoUrl = input.repoUrl?.trim() || null;
+      if (!repoUrl) throw new AppError("A GitHub repository URL is required for open-source tools.", "VALIDATION_ERROR");
+      if (!parseGitHubUrl(repoUrl)) {
+        throw new AppError("That doesn't look like a valid GitHub repository URL.", "VALIDATION_ERROR");
+      }
+      // Reject a repo that's already in the directory (any status but deleted).
+      const existing = await prisma.tool.findFirst({
+        where: { repoUrl, status: { not: "DELETED" } },
+        select: { status: true },
+      });
+      if (existing) {
+        throw new AppError(
+          existing.status === "PENDING"
+            ? "This tool has already been submitted and is awaiting review."
+            : "This tool is already in the directory.",
+          "CONFLICT",
+        );
+      }
     }
 
     // Auto-generate a unique slug — the admin can refine it before publishing.
@@ -335,6 +359,7 @@ export async function submitToolRequest(input: ToolSubmissionInput) {
         galleryImages: input.galleryImages ?? "[]",
         galleryLayout: input.galleryLayout ?? "16:9",
         downloadAssets: input.downloadAssets ?? "[]",
+        sourceType: isProprietary ? "PROPRIETARY" : "OPEN_SOURCE",
         status: "PENDING",
         userId: user.id,
         submittedByEmail: user.email ?? null,

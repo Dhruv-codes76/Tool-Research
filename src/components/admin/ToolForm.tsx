@@ -177,6 +177,107 @@ export function ToolForm({ initialData, initialSourceType, availablePlatforms = 
   // auto-fetch are hidden, and the website URL becomes the required link.
   const isProprietary = formData.sourceType === 'PROPRIETARY';
 
+  // Auto-Save Draft & Local Storage Recovery State
+  const draftKey = `aitools_draft_${initialData?.id || 'new'}`;
+  const [savedDraft, setSavedDraft] = useState<{
+    formData: ToolAdminFormData;
+    features: Feature[];
+    commands: InstallCommand[];
+    assets: DownloadAsset[];
+    timestamp: number;
+  } | null>(() => {
+    if (isSubmissionMode || typeof window === 'undefined') return null;
+    try {
+      const stored = localStorage.getItem(draftKey);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (parsed && parsed.timestamp && parsed.formData) {
+          return parsed;
+        }
+      }
+    } catch (e) {
+      console.warn("Failed to check local draft:", e);
+    }
+    return null;
+  });
+
+  const [showDraftBanner, setShowDraftBanner] = useState<boolean>(() => savedDraft !== null);
+  const [lastAutoSaved, setLastAutoSaved] = useState<string | null>(null);
+
+  // Debounced auto-save effect
+  useEffect(() => {
+    if (isSubmissionMode || showDraftBanner) return;
+
+    const hasContent =
+      Boolean(formData.name.trim()) ||
+      Boolean(formData.repoUrl.trim()) ||
+      Boolean(formData.websiteUrl.trim()) ||
+      Boolean(formData.description.trim()) ||
+      Boolean(formData.aboutText?.trim());
+
+    if (!hasContent) return;
+
+    const timer = setTimeout(() => {
+      try {
+        const payload = {
+          formData,
+          features,
+          commands,
+          assets,
+          timestamp: Date.now(),
+        };
+        localStorage.setItem(draftKey, JSON.stringify(payload));
+        const now = new Date();
+        setLastAutoSaved(now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+      } catch (err) {
+        console.warn("Draft auto-save error:", err);
+      }
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, [formData, features, commands, assets, draftKey, isSubmissionMode, showDraftBanner]);
+
+  // Prompt before leaving tab with unsaved edits
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      const isDirty =
+        Boolean(formData.name.trim()) ||
+        Boolean(formData.repoUrl.trim()) ||
+        Boolean(formData.websiteUrl.trim()) ||
+        Boolean(formData.description.trim());
+
+      if (isDirty && !isSubmitting) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [formData, isSubmitting]);
+
+  const handleRestoreDraft = () => {
+    if (!savedDraft) return;
+    setFormData(savedDraft.formData);
+    if (savedDraft.features) setFeatures(savedDraft.features);
+    if (savedDraft.commands) setCommands(savedDraft.commands);
+    if (savedDraft.assets) setAssets(savedDraft.assets);
+    setShowDraftBanner(false);
+  };
+
+  const handleDiscardDraft = () => {
+    try {
+      localStorage.removeItem(draftKey);
+    } catch (e) {}
+    setSavedDraft(null);
+    setShowDraftBanner(false);
+  };
+
+  const clearDraft = () => {
+    try {
+      localStorage.removeItem(draftKey);
+    } catch (e) {}
+  };
+
   const validateSlug = async (slugToValidate: string) => {
     if (!slugToValidate) {
       setSlugStatus('idle');
@@ -352,6 +453,7 @@ export function ToolForm({ initialData, initialSourceType, availablePlatforms = 
         return;
       }
       
+      clearDraft();
       router.push('/admin/tools');
     } catch (error) {
       console.error("Unexpected error saving tool:", error);
@@ -428,6 +530,37 @@ export function ToolForm({ initialData, initialSourceType, availablePlatforms = 
 
   return (
     <div className={`flex flex-col gap-6 ${isSubmissionMode ? '' : 'pb-20'}`}>
+      {/* Draft Restoration Banner */}
+      {showDraftBanner && !isSubmissionMode && (
+        <div className="glass-panel p-4 rounded-xl border border-[#D9A441]/40 bg-[#D9A441]/10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <span className="material-symbols-outlined text-[#D9A441] text-[24px]">history</span>
+            <div>
+              <h4 className="font-semibold text-sm text-on-surface">Unsaved Local Draft Found</h4>
+              <p className="text-xs text-on-surface-variant">
+                We found an unsaved draft from {savedDraft?.timestamp ? new Date(savedDraft.timestamp).toLocaleString() : 'a previous editing session'}.
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={handleDiscardDraft}
+              className="px-3 py-1.5 rounded-lg border border-outline-variant/30 text-xs text-on-surface-variant hover:text-on-surface hover:bg-surface-container-highest transition-colors"
+            >
+              Discard Draft
+            </button>
+            <button
+              type="button"
+              onClick={handleRestoreDraft}
+              className="px-4 py-1.5 rounded-lg bg-[#D9A441] text-black font-semibold text-xs hover:bg-[#D9A441]/90 transition-colors shadow-sm"
+            >
+              Restore Draft
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       {isSubmissionMode ? (
         <div className="sticky top-0 z-20 -mx-6 -mt-6 flex flex-col gap-3 border-b border-outline-variant/10 bg-surface-container/95 py-4 pl-6 pr-14 backdrop-blur sm:flex-row sm:items-center sm:justify-between">
@@ -466,9 +599,17 @@ export function ToolForm({ initialData, initialSourceType, availablePlatforms = 
         </div>
       ) : (
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <h1 className="font-display-lg text-3xl font-bold text-on-surface tracking-tight">
-            {initialData ? 'Edit' : 'Create'} {isProprietary ? 'Recommended Tool' : 'Open-Source Tool'}
-          </h1>
+          <div className="flex items-center gap-3">
+            <h1 className="font-display-lg text-3xl font-bold text-on-surface tracking-tight">
+              {initialData ? 'Edit' : 'Create'} {isProprietary ? 'Recommended Tool' : 'Open-Source Tool'}
+            </h1>
+            {lastAutoSaved && !showDraftBanner && (
+              <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-full border border-emerald-500/20">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                Auto-saved {lastAutoSaved}
+              </span>
+            )}
+          </div>
 
           <div className="flex flex-col items-end gap-1.5">
             <div className="flex items-center gap-3">

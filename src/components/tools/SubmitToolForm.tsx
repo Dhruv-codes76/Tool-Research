@@ -36,11 +36,19 @@ export function SubmitToolForm({
   availablePlatforms?: string[];
   availableToolTypes?: string[];
 }) {
+  const [sourceType, setSourceType] = useState<'OPEN_SOURCE' | 'PROPRIETARY'>('OPEN_SOURCE');
+  
+  // Open source state
   const [repoUrl, setRepoUrl] = useState('');
   const [meta, setMeta] = useState<GitHubMeta | null>(null);
   const [isFetching, setIsFetching] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
 
+  // Closed source / Proprietary state
+  const [websiteUrl, setWebsiteUrl] = useState('');
+  const [propName, setPropName] = useState('');
+
+  // Shared state
   const [description, setDescription] = useState('');
   const [heroImageUrl, setHeroImageUrl] = useState('');
   const [gallery, setGallery] = useState<string[]>(['', '', '', '']);
@@ -59,9 +67,7 @@ export function SubmitToolForm({
     try {
       const data = await fetchPublicGitHubMetadata(repoUrl.trim());
       setMeta(data);
-      // Seed the logo with the GitHub owner avatar; the submitter can replace it.
       if (data.heroImageUrl && !heroImageUrl) setHeroImageUrl(data.heroImageUrl);
-      // Pre-select any taxonomy that matches repo topics — purely a convenience.
       const topics: string[] = Array.isArray(data.topics) ? data.topics.map((t: string) => t.toLowerCase()) : [];
       setToolTypes((prev) => Array.from(new Set([
         ...prev,
@@ -82,12 +88,13 @@ export function SubmitToolForm({
   const toggle = (list: string[], set: (v: string[]) => void, name: string) =>
     set(list.includes(name) ? list.filter((n) => n !== name) : [...list, name]);
 
-  const handleSubmit = async () => {
+  const handleOpenSourceSubmit = async () => {
     if (!meta) return;
     setIsSubmitting(true);
     setSubmitError(null);
     try {
       const res = await submitToolRequest({
+        sourceType: 'OPEN_SOURCE',
         repoUrl: repoUrl.trim(),
         name: meta.name,
         description: description.trim() || undefined,
@@ -116,6 +123,32 @@ export function SubmitToolForm({
     }
   };
 
+  const handleProprietarySubmit = async () => {
+    if (!websiteUrl.trim() || !propName.trim() || !description.trim()) return;
+    setIsSubmitting(true);
+    setSubmitError(null);
+    try {
+      const res = await submitToolRequest({
+        sourceType: 'PROPRIETARY',
+        name: propName.trim(),
+        websiteUrl: websiteUrl.trim(),
+        description: description.trim(),
+        toolTypes,
+        platforms,
+      });
+
+      if (!res.success) {
+        setSubmitError(res.error.message || 'Something went wrong. Please try again.');
+        return;
+      }
+      setSubmitted(propName.trim());
+    } catch {
+      setSubmitError('An unexpected error occurred. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   // ---- Success screen ------------------------------------------------------
   if (submitted) {
     return (
@@ -128,7 +161,7 @@ export function SubmitToolForm({
         <h2 className="mb-2 text-2xl font-black tracking-tight text-white">Submitted for review</h2>
         <p className="mx-auto mb-8 max-w-md text-sm leading-relaxed text-on-surface-variant">
           Thanks — <span className="font-semibold text-on-surface">{submitted}</span> is now in our review queue. Our editors will
-          polish the details and publish it. You can track its status in your dashboard.
+          review the details and publish it. You can track its status in your dashboard.
         </p>
         <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
           <Link
@@ -141,7 +174,7 @@ export function SubmitToolForm({
           <button
             type="button"
             onClick={() => {
-              setSubmitted(null); setMeta(null); setRepoUrl(''); setDescription('');
+              setSubmitted(null); setMeta(null); setRepoUrl(''); setWebsiteUrl(''); setPropName(''); setDescription('');
               setHeroImageUrl(''); setGallery(['', '', '', '']); setToolTypes([]); setPlatforms([]);
             }}
             className="inline-flex items-center gap-2 rounded-full border border-outline-variant/40 px-6 py-2.5 text-sm font-medium text-on-surface-variant transition-colors hover:border-outline-variant/70 hover:text-on-surface"
@@ -155,208 +188,348 @@ export function SubmitToolForm({
 
   return (
     <div className="flex flex-col gap-6">
-      {/* STEP 1 — GitHub source ------------------------------------------- */}
-      <section className="glass-panel rounded-2xl border border-outline-variant/20 p-6 md:p-7">
-        <div className="mb-4 flex items-center gap-2.5">
-          <StepDot n={1} done={!!meta} />
-          <h2 className="text-sm font-semibold uppercase tracking-wider text-on-surface">Repository</h2>
-        </div>
-
-        <div className="flex flex-col gap-3 sm:flex-row">
-          <div className="relative flex-1">
-            <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant">
-              <GithubMark />
-            </span>
-            <input
-              type="url"
-              inputMode="url"
-              placeholder="github.com/owner/repository"
-              value={repoUrl}
-              onChange={(e) => { setRepoUrl(e.target.value); setFetchError(null); }}
-              onKeyDown={(e) => e.key === 'Enter' && handleFetch()}
-              className="w-full rounded-xl border border-outline-variant/30 bg-surface-container-lowest py-3 pl-12 pr-4 text-sm text-on-surface transition-colors placeholder:text-on-surface-variant/50 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-            />
-          </div>
+      {/* Source Type Selector */}
+      <div className="mb-2 flex justify-center">
+        <div role="tablist" aria-label="Select tool type" className="glass-panel inline-flex p-1 rounded-2xl border border-outline-variant/20 bg-surface-container-low/60">
           <button
             type="button"
-            onClick={handleFetch}
-            disabled={isFetching || !repoUrl.trim()}
-            className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-primary-container px-6 py-3 text-sm font-semibold text-on-primary-container transition-all hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:scale-100"
+            role="tab"
+            aria-selected={sourceType === 'OPEN_SOURCE'}
+            onClick={() => setSourceType('OPEN_SOURCE')}
+            className={`flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold transition-all ${
+              sourceType === 'OPEN_SOURCE'
+                ? 'bg-primary-container text-on-primary-container shadow-md'
+                : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container-highest/50'
+            }`}
           >
-            <span className={`material-symbols-outlined text-[18px] ${isFetching ? 'animate-spin' : ''}`}>
-              {isFetching ? 'progress_activity' : 'auto_awesome'}
-            </span>
-            {isFetching ? 'Fetching…' : meta ? 'Re-fetch' : 'Fetch details'}
+            <span className="material-symbols-outlined text-[18px]">code</span>
+            Open Source
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={sourceType === 'PROPRIETARY'}
+            onClick={() => setSourceType('PROPRIETARY')}
+            className={`flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold transition-all ${
+              sourceType === 'PROPRIETARY'
+                ? 'bg-[#D9A441] text-black shadow-md'
+                : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container-highest/50'
+            }`}
+          >
+            <span className="material-symbols-outlined text-[18px]">workspace_premium</span>
+            Closed Source / Proprietary
           </button>
         </div>
+      </div>
 
-        {!meta && !fetchError && (
-          <p className="mt-3 text-xs text-on-surface-variant/70">
-            Paste a public GitHub URL — we pull the name, stars, license and more automatically.
-          </p>
-        )}
-        {fetchError && (
-          <p className="mt-3 flex items-center gap-1.5 text-xs text-error">
-            <span className="material-symbols-outlined text-[15px]">error</span>
-            {fetchError}
-          </p>
-        )}
-      </section>
+      {sourceType === 'OPEN_SOURCE' ? (
+        <>
+          {/* STEP 1 — GitHub source */}
+          <section className="glass-panel rounded-2xl border border-outline-variant/20 p-6 md:p-7">
+            <div className="mb-4 flex items-center gap-2.5">
+              <StepDot n={1} done={!!meta} />
+              <h2 className="text-sm font-semibold uppercase tracking-wider text-on-surface">Repository</h2>
+            </div>
 
-      {/* Everything below reveals only after a successful fetch. */}
-      <AnimatePresence>
-        {meta && (
-          <motion.div key="details" {...reveal} className="flex flex-col gap-6">
-            {/* Fetched preview card */}
-            <section className="relative overflow-hidden rounded-2xl border border-primary/20 bg-surface-container-lowest p-6">
-              <div className="absolute -right-16 -top-16 h-40 w-40 rounded-full bg-primary/10 blur-3xl" />
-              <div className="relative flex items-start gap-4">
-                <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-white/10 bg-surface-container">
-                  {heroImageUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={heroImageUrl} alt={`${meta.name} logo`} className="h-full w-full object-contain p-1.5" />
-                  ) : (
-                    <span className="material-symbols-outlined text-primary/70">deployed_code</span>
-                  )}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="mb-1 flex items-center gap-2">
-                    <h3 className="truncate text-lg font-bold text-white">{meta.name}</h3>
-                    <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-primary/12 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-primary">
-                      <span className="material-symbols-outlined text-[12px]">verified</span> from GitHub
-                    </span>
-                  </div>
-                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-on-surface-variant">
-                    <span className="inline-flex items-center gap-1"><span className="material-symbols-outlined text-[14px] text-yellow-400">star</span>{fmt(meta.stars)}</span>
-                    <span className="inline-flex items-center gap-1"><span className="material-symbols-outlined text-[14px]">fork_right</span>{fmt(meta.forks)}</span>
-                    {meta.license && <span className="inline-flex items-center gap-1"><span className="material-symbols-outlined text-[14px]">balance</span>{meta.license}</span>}
-                    {meta.author && <span className="inline-flex items-center gap-1"><span className="material-symbols-outlined text-[14px]">person</span>{meta.author}</span>}
-                  </div>
-                </div>
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <div className="relative flex-1">
+                <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant">
+                  <GithubMark />
+                </span>
+                <input
+                  type="url"
+                  inputMode="url"
+                  placeholder="github.com/owner/repository"
+                  value={repoUrl}
+                  onChange={(e) => { setRepoUrl(e.target.value); setFetchError(null); }}
+                  onKeyDown={(e) => e.key === 'Enter' && handleFetch()}
+                  className="w-full rounded-xl border border-outline-variant/30 bg-surface-container-lowest py-3 pl-12 pr-4 text-sm text-on-surface transition-colors placeholder:text-on-surface-variant/50 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                />
               </div>
-            </section>
-
-            {/* STEP 2 — Optional description */}
-            <section className="glass-panel rounded-2xl border border-outline-variant/20 p-6 md:p-7">
-              <div className="mb-3 flex items-center gap-2.5">
-                <StepDot n={2} />
-                <h2 className="text-sm font-semibold uppercase tracking-wider text-on-surface">Description</h2>
-                <span className="ml-auto text-[11px] font-medium uppercase tracking-wide text-on-surface-variant/60">Optional</span>
-              </div>
-              <textarea
-                rows={3}
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="One or two lines on what it does. Leave it blank and our editors will write one."
-                className="w-full resize-none rounded-xl border border-outline-variant/30 bg-surface-container-lowest px-4 py-3 text-sm leading-relaxed text-on-surface transition-colors placeholder:text-on-surface-variant/50 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-              />
-            </section>
-
-            {/* STEP 3 — Images */}
-            <section className="glass-panel rounded-2xl border border-outline-variant/20 p-6 md:p-7">
-              <div className="mb-4 flex items-center gap-2.5">
-                <StepDot n={3} />
-                <h2 className="text-sm font-semibold uppercase tracking-wider text-on-surface">Images</h2>
-                <span className="ml-auto text-[11px] font-medium uppercase tracking-wide text-on-surface-variant/60">Optional</span>
-              </div>
-
-              <div className="grid grid-cols-1 gap-6 sm:grid-cols-[9rem_1fr]">
-                {/* Logo */}
-                <div className="flex flex-col gap-2">
-                  <span className="text-[11px] font-medium uppercase tracking-wider text-on-surface-variant">Logo</span>
-                  <ImageDropzone
-                    value={heroImageUrl}
-                    onChange={setHeroImageUrl}
-                    aspect="square"
-                    fit="contain"
-                    filePrefix="logo"
-                    hint="Logo"
-                  />
-                </div>
-
-                {/* Gallery */}
-                <div className="flex flex-col gap-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-medium uppercase tracking-wider text-on-surface-variant">Screenshots</span>
-                    <div className="flex rounded-lg border border-outline-variant/30 bg-surface-container-low p-0.5">
-                      {(['16:9', '9:16'] as const).map((r) => (
-                        <button
-                          key={r}
-                          type="button"
-                          onClick={() => setGalleryLayout(r)}
-                          className={`rounded-md px-2.5 py-1 text-[10px] font-bold transition-colors ${galleryLayout === r ? 'bg-primary-container text-on-primary-container' : 'text-on-surface-variant hover:text-on-surface'}`}
-                        >
-                          {r}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                  <div className={galleryLayout === '16:9' ? 'grid grid-cols-2 gap-3' : 'grid grid-cols-4 gap-3'}>
-                    {gallery.map((img, idx) => (
-                      <ImageDropzone
-                        key={idx}
-                        value={img}
-                        onChange={(url) => setGallery((g) => g.map((v, i) => (i === idx ? url : v)))}
-                        aspect={galleryLayout === '16:9' ? 'video' : 'portrait'}
-                        filePrefix={`gallery-${idx}`}
-                        badge={idx + 1}
-                        hint="Add"
-                      />
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </section>
-
-            {/* STEP 4 — Categories */}
-            {(availableToolTypes.length > 0 || availablePlatforms.length > 0) && (
-              <section className="glass-panel rounded-2xl border border-outline-variant/20 p-6 md:p-7">
-                <div className="mb-4 flex items-center gap-2.5">
-                  <StepDot n={4} />
-                  <h2 className="text-sm font-semibold uppercase tracking-wider text-on-surface">Categories</h2>
-                  <span className="ml-auto text-[11px] font-medium uppercase tracking-wide text-on-surface-variant/60">Optional</span>
-                </div>
-
-                {availableToolTypes.length > 0 && (
-                  <div className="mb-4">
-                    <span className="mb-2 block text-[11px] font-medium uppercase tracking-wider text-on-surface-variant/70">Type</span>
-                    <PillGroup options={availableToolTypes} selected={toolTypes} onToggle={(n) => toggle(toolTypes, setToolTypes, n)} />
-                  </div>
-                )}
-                {availablePlatforms.length > 0 && (
-                  <div>
-                    <span className="mb-2 block text-[11px] font-medium uppercase tracking-wider text-on-surface-variant/70">Platform</span>
-                    <PillGroup options={availablePlatforms} selected={platforms} onToggle={(n) => toggle(platforms, setPlatforms, n)} />
-                  </div>
-                )}
-              </section>
-            )}
-
-            {/* Submit */}
-            <div className="flex flex-col gap-3">
-              {submitError && (
-                <p className="flex items-center gap-1.5 text-sm text-error">
-                  <span className="material-symbols-outlined text-[16px]">error</span>{submitError}
-                </p>
-              )}
               <button
                 type="button"
-                onClick={handleSubmit}
-                disabled={isSubmitting}
-                className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-primary-container py-3.5 text-[15px] font-semibold text-on-primary-container shadow-lg shadow-primary-container/20 transition-all hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:scale-100"
+                onClick={handleFetch}
+                disabled={isFetching || !repoUrl.trim()}
+                className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-primary-container px-6 py-3 text-sm font-semibold text-on-primary-container transition-all hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:scale-100"
               >
-                <span className={`material-symbols-outlined text-[19px] ${isSubmitting ? 'animate-spin' : ''}`}>
-                  {isSubmitting ? 'progress_activity' : 'send'}
+                <span className={`material-symbols-outlined text-[18px] ${isFetching ? 'animate-spin' : ''}`}>
+                  {isFetching ? 'progress_activity' : 'auto_awesome'}
                 </span>
-                {isSubmitting ? 'Submitting…' : 'Submit for review'}
+                {isFetching ? 'Fetching…' : meta ? 'Re-fetch' : 'Fetch details'}
               </button>
-              <p className="text-center text-[11px] text-on-surface-variant/60">
-                A human reviews every submission before it goes live.
+            </div>
+
+            {!meta && !fetchError && (
+              <p className="mt-3 text-xs text-on-surface-variant/70">
+                Paste a public GitHub URL — we pull the name, stars, license and more automatically.
+              </p>
+            )}
+            {fetchError && (
+              <p className="mt-3 flex items-center gap-1.5 text-xs text-error">
+                <span className="material-symbols-outlined text-[15px]">error</span>
+                {fetchError}
+              </p>
+            )}
+          </section>
+
+          {/* Everything below reveals only after a successful fetch. */}
+          <AnimatePresence>
+            {meta && (
+              <motion.div key="details" {...reveal} className="flex flex-col gap-6">
+                {/* Fetched preview card */}
+                <section className="relative overflow-hidden rounded-2xl border border-primary/20 bg-surface-container-lowest p-6">
+                  <div className="absolute -right-16 -top-16 h-40 w-40 rounded-full bg-primary/10 blur-3xl" />
+                  <div className="relative flex items-start gap-4">
+                    <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-white/10 bg-surface-container">
+                      {heroImageUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={heroImageUrl} alt={`${meta.name} logo`} className="h-full w-full object-contain p-1.5" />
+                      ) : (
+                        <span className="material-symbols-outlined text-primary/70">deployed_code</span>
+                      )}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="mb-1 flex items-center gap-2">
+                        <h3 className="truncate text-lg font-bold text-white">{meta.name}</h3>
+                        <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-primary/12 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-primary">
+                          <span className="material-symbols-outlined text-[12px]">verified</span> from GitHub
+                        </span>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-on-surface-variant">
+                        <span className="inline-flex items-center gap-1"><span className="material-symbols-outlined text-[14px] text-yellow-400">star</span>{fmt(meta.stars)}</span>
+                        <span className="inline-flex items-center gap-1"><span className="material-symbols-outlined text-[14px]">fork_right</span>{fmt(meta.forks)}</span>
+                        {meta.license && <span className="inline-flex items-center gap-1"><span className="material-symbols-outlined text-[14px]">balance</span>{meta.license}</span>}
+                        {meta.author && <span className="inline-flex items-center gap-1"><span className="material-symbols-outlined text-[14px]">person</span>{meta.author}</span>}
+                      </div>
+                    </div>
+                  </div>
+                </section>
+
+                {/* STEP 2 — Optional description */}
+                <section className="glass-panel rounded-2xl border border-outline-variant/20 p-6 md:p-7">
+                  <div className="mb-3 flex items-center gap-2.5">
+                    <StepDot n={2} />
+                    <h2 className="text-sm font-semibold uppercase tracking-wider text-on-surface">Description</h2>
+                    <span className="ml-auto text-[11px] font-medium uppercase tracking-wide text-on-surface-variant/60">Optional</span>
+                  </div>
+                  <textarea
+                    rows={3}
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    placeholder="One or two lines on what it does. Leave it blank and our editors will write one."
+                    className="w-full resize-none rounded-xl border border-outline-variant/30 bg-surface-container-lowest px-4 py-3 text-sm leading-relaxed text-on-surface transition-colors placeholder:text-on-surface-variant/50 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  />
+                </section>
+
+                {/* STEP 3 — Images */}
+                <section className="glass-panel rounded-2xl border border-outline-variant/20 p-6 md:p-7">
+                  <div className="mb-4 flex items-center gap-2.5">
+                    <StepDot n={3} />
+                    <h2 className="text-sm font-semibold uppercase tracking-wider text-on-surface">Images</h2>
+                    <span className="ml-auto text-[11px] font-medium uppercase tracking-wide text-on-surface-variant/60">Optional</span>
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-6 sm:grid-cols-[9rem_1fr]">
+                    {/* Logo */}
+                    <div className="flex flex-col gap-2">
+                      <span className="text-[11px] font-medium uppercase tracking-wider text-on-surface-variant">Logo</span>
+                      <ImageDropzone
+                        value={heroImageUrl}
+                        onChange={setHeroImageUrl}
+                        aspect="square"
+                        fit="contain"
+                        filePrefix="logo"
+                        hint="Logo"
+                      />
+                    </div>
+
+                    {/* Gallery */}
+                    <div className="flex flex-col gap-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[11px] font-medium uppercase tracking-wider text-on-surface-variant">Screenshots</span>
+                        <div className="flex rounded-lg border border-outline-variant/30 bg-surface-container-low p-0.5">
+                          {(['16:9', '9:16'] as const).map((r) => (
+                            <button
+                              key={r}
+                              type="button"
+                              onClick={() => setGalleryLayout(r)}
+                              className={`rounded-md px-2.5 py-1 text-[10px] font-bold transition-colors ${galleryLayout === r ? 'bg-primary-container text-on-primary-container' : 'text-on-surface-variant hover:text-on-surface'}`}
+                            >
+                              {r}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      <div className={galleryLayout === '16:9' ? 'grid grid-cols-2 gap-3' : 'grid grid-cols-4 gap-3'}>
+                        {gallery.map((img, idx) => (
+                          <ImageDropzone
+                            key={idx}
+                            value={img}
+                            onChange={(url) => setGallery((g) => g.map((v, i) => (i === idx ? url : v)))}
+                            aspect={galleryLayout === '16:9' ? 'video' : 'portrait'}
+                            filePrefix={`gallery-${idx}`}
+                            badge={idx + 1}
+                            hint="Add"
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </section>
+
+                {/* STEP 4 — Categories */}
+                {(availableToolTypes.length > 0 || availablePlatforms.length > 0) && (
+                  <section className="glass-panel rounded-2xl border border-outline-variant/20 p-6 md:p-7">
+                    <div className="mb-4 flex items-center gap-2.5">
+                      <StepDot n={4} />
+                      <h2 className="text-sm font-semibold uppercase tracking-wider text-on-surface">Categories</h2>
+                      <span className="ml-auto text-[11px] font-medium uppercase tracking-wide text-on-surface-variant/60">Optional</span>
+                    </div>
+
+                    {availableToolTypes.length > 0 && (
+                      <div className="mb-4">
+                        <span className="mb-2 block text-[11px] font-medium uppercase tracking-wider text-on-surface-variant/70">Type</span>
+                        <PillGroup options={availableToolTypes} selected={toolTypes} onToggle={(n) => toggle(toolTypes, setToolTypes, n)} />
+                      </div>
+                    )}
+                    {availablePlatforms.length > 0 && (
+                      <div>
+                        <span className="mb-2 block text-[11px] font-medium uppercase tracking-wider text-on-surface-variant/70">Platform</span>
+                        <PillGroup options={availablePlatforms} selected={platforms} onToggle={(n) => toggle(platforms, setPlatforms, n)} />
+                      </div>
+                    )}
+                  </section>
+                )}
+
+                {/* Submit */}
+                <div className="flex flex-col gap-3">
+                  {submitError && (
+                    <p className="flex items-center gap-1.5 text-sm text-error">
+                      <span className="material-symbols-outlined text-[16px]">error</span>{submitError}
+                    </p>
+                  )}
+                  <button
+                    type="button"
+                    onClick={handleOpenSourceSubmit}
+                    disabled={isSubmitting}
+                    className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-primary-container py-3.5 text-[15px] font-semibold text-on-primary-container shadow-lg shadow-primary-container/20 transition-all hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:scale-100"
+                  >
+                    <span className={`material-symbols-outlined text-[19px] ${isSubmitting ? 'animate-spin' : ''}`}>
+                      {isSubmitting ? 'progress_activity' : 'send'}
+                    </span>
+                    {isSubmitting ? 'Submitting…' : 'Submit for review'}
+                  </button>
+                  <p className="text-center text-[11px] text-on-surface-variant/60">
+                    A human reviews every submission before it goes live.
+                  </p>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </>
+      ) : (
+        /* PROPRIETARY / CLOSED SOURCE SUBMISSION FORM (3 Required Fields + Categories) */
+        <motion.div key="proprietary-form" {...reveal} className="flex flex-col gap-6">
+          <section className="glass-panel rounded-2xl border border-outline-variant/20 p-6 md:p-7 flex flex-col gap-5">
+            <div>
+              <h2 className="text-base font-bold text-on-surface">Submit a Closed-Source Tool</h2>
+              <p className="text-xs text-on-surface-variant mt-1">
+                Recommend a proprietary AI tool for the directory. Enter its website link, name, and description.
               </p>
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+
+            {/* 1. Website Link */}
+            <div className="flex flex-col gap-2">
+              <label className="text-xs font-semibold uppercase tracking-wider text-on-surface-variant">
+                Website Link <span className="text-error">*</span>
+              </label>
+              <input
+                type="url"
+                required
+                placeholder="https://example.com"
+                value={websiteUrl}
+                onChange={(e) => setWebsiteUrl(e.target.value)}
+                className="w-full rounded-xl border border-outline-variant/30 bg-surface-container-lowest py-3 px-4 text-sm text-on-surface placeholder:text-on-surface-variant/50 focus:border-[#D9A441] focus:outline-none"
+              />
+            </div>
+
+            {/* 2. Tool Name */}
+            <div className="flex flex-col gap-2">
+              <label className="text-xs font-semibold uppercase tracking-wider text-on-surface-variant">
+                Tool Name <span className="text-error">*</span>
+              </label>
+              <input
+                type="text"
+                required
+                placeholder="e.g. Cursor AI"
+                value={propName}
+                onChange={(e) => setPropName(e.target.value)}
+                className="w-full rounded-xl border border-outline-variant/30 bg-surface-container-lowest py-3 px-4 text-sm text-on-surface placeholder:text-on-surface-variant/50 focus:border-[#D9A441] focus:outline-none"
+              />
+            </div>
+
+            {/* 3. Description */}
+            <div className="flex flex-col gap-2">
+              <label className="text-xs font-semibold uppercase tracking-wider text-on-surface-variant">
+                Description <span className="text-error">*</span>
+              </label>
+              <textarea
+                rows={3}
+                required
+                placeholder="What does this tool do? High-level overview of key features and utility."
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                className="w-full resize-none rounded-xl border border-outline-variant/30 bg-surface-container-lowest px-4 py-3 text-sm text-on-surface placeholder:text-on-surface-variant/50 focus:border-[#D9A441] focus:outline-none"
+              />
+            </div>
+          </section>
+
+          {/* Categories & Platforms */}
+          {(availableToolTypes.length > 0 || availablePlatforms.length > 0) && (
+            <section className="glass-panel rounded-2xl border border-outline-variant/20 p-6 md:p-7">
+              <div className="mb-4 flex items-center justify-between">
+                <h2 className="text-sm font-semibold uppercase tracking-wider text-on-surface">Categories</h2>
+                <span className="text-[11px] font-medium uppercase tracking-wide text-on-surface-variant/60">Optional</span>
+              </div>
+              {availableToolTypes.length > 0 && (
+                <div className="mb-4">
+                  <span className="mb-2 block text-[11px] font-medium uppercase tracking-wider text-on-surface-variant/70">Type</span>
+                  <PillGroup options={availableToolTypes} selected={toolTypes} onToggle={(n) => toggle(toolTypes, setToolTypes, n)} />
+                </div>
+              )}
+              {availablePlatforms.length > 0 && (
+                <div>
+                  <span className="mb-2 block text-[11px] font-medium uppercase tracking-wider text-on-surface-variant/70">Platform</span>
+                  <PillGroup options={availablePlatforms} selected={platforms} onToggle={(n) => toggle(platforms, setPlatforms, n)} />
+                </div>
+              )}
+            </section>
+          )}
+
+          {/* Submit */}
+          <div className="flex flex-col gap-3">
+            {submitError && (
+              <p className="flex items-center gap-1.5 text-sm text-error">
+                <span className="material-symbols-outlined text-[16px]">error</span>{submitError}
+              </p>
+            )}
+            <button
+              type="button"
+              onClick={handleProprietarySubmit}
+              disabled={isSubmitting || !websiteUrl.trim() || !propName.trim() || !description.trim()}
+              className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#D9A441] py-3.5 text-[15px] font-semibold text-black shadow-lg transition-all hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <span className={`material-symbols-outlined text-[19px] ${isSubmitting ? 'animate-spin' : ''}`}>
+                {isSubmitting ? 'progress_activity' : 'send'}
+              </span>
+              {isSubmitting ? 'Submitting…' : 'Submit for review'}
+            </button>
+            <p className="text-center text-[11px] text-on-surface-variant/60">
+              A human reviews every submission before it goes live.
+            </p>
+          </div>
+        </motion.div>
+      )}
     </div>
   );
 }
