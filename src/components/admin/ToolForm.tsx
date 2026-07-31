@@ -19,8 +19,9 @@ function generateSlug(name: string): string {
   return name.toLowerCase().replace(/[^a-z0-9-]/g, '').replace(/(^-|-$)+/g, '');
 }
 
-export function ToolForm({ initialData, availablePlatforms = [], availableToolTypes = [], submission, onDone }: {
+export function ToolForm({ initialData, initialSourceType, availablePlatforms = [], availableToolTypes = [], submission, onDone }: {
   initialData?: any;
+  initialSourceType?: string;
   availablePlatforms?: string[];
   availableToolTypes?: string[];
   // When present, the form operates in submission-review mode: it publishes via
@@ -166,7 +167,7 @@ export function ToolForm({ initialData, availablePlatforms = [], availableToolTy
     websiteUrl: initialData?.websiteUrl || '',
     downloadUrl: initialData?.downloadUrl || '',
     downloadAssets: initialData?.downloadAssets || '[]',
-    sourceType: initialData?.sourceType || 'OPEN_SOURCE',
+    sourceType: initialData?.sourceType || initialSourceType || 'OPEN_SOURCE',
     sourceNote: initialData?.sourceNote || '',
     platforms: initialData?.platforms?.map((p: any) => p.name) || [],
     toolTypes: initialData?.toolTypes?.map((t: any) => t.name) || [],

@@ -9,6 +9,7 @@ import { ShareButton } from '@/components/tools/ShareButton';
 import { SaveButton } from '@/components/tools/SaveButton';
 import { ImageGallery } from '@/components/tools/ImageGallery';
 import { SourceNotice } from '@/components/tools/SourceNotice';
+import { ToolCard } from '@/components/ui/ToolCard';
 import { JsonLd } from '@/components/seo/JsonLd';
 import { buildMetadata, graph, breadcrumbSchema, softwareApplicationSchema } from '@/lib/seo';
 
@@ -183,6 +184,74 @@ export default async function ToolDetailPage({ params }: PageProps) {
   }
 
   const imageRatio = dbTool.galleryLayout === '9:16' ? '9:16' : '16:9';
+
+  // Fetch related tools (sharing toolTypes/platforms or general active tools)
+  const relatedToolsRaw = await prisma.tool.findMany({
+    where: {
+      status: 'ACTIVE',
+      id: { not: dbTool.id },
+      ...(dbTool.toolTypes.length > 0
+        ? {
+            toolTypes: {
+              some: {
+                name: { in: dbTool.toolTypes.map((t: any) => t.name) },
+              },
+            },
+          }
+        : {}),
+    },
+    take: 8,
+    include: {
+      platforms: true,
+      toolTypes: true,
+    },
+    orderBy: [
+      { stars: 'desc' },
+      { createdAt: 'desc' },
+    ],
+  });
+
+  let relatedTools = relatedToolsRaw;
+  if (relatedTools.length < 4) {
+    const extraTools = await prisma.tool.findMany({
+      where: {
+        status: 'ACTIVE',
+        id: { notIn: [dbTool.id, ...relatedTools.map((t) => t.id)] },
+      },
+      take: 8 - relatedTools.length,
+      include: {
+        platforms: true,
+        toolTypes: true,
+      },
+      orderBy: [
+        { stars: 'desc' },
+        { createdAt: 'desc' },
+      ],
+    });
+    relatedTools = [...relatedTools, ...extraTools];
+  }
+
+  const formattedRelatedTools = relatedTools.map((tool) => {
+    const formattedStars = tool.stars >= 1000
+      ? (tool.stars / 1000).toFixed(1).replace(/\.0$/, '') + 'k'
+      : tool.stars.toString();
+    const tags = [
+      ...tool.platforms.map((p: any) => p.name),
+      ...tool.toolTypes.map((t: any) => t.name),
+    ];
+    return {
+      id: tool.id,
+      slug: tool.slug || tool.id,
+      name: tool.name,
+      stars: formattedStars,
+      description: tool.description || '',
+      tags,
+      icon: tool.toolTypes[0]?.name?.toLowerCase() || 'build',
+      color: tool.sourceType === 'PROPRIETARY' ? 'bg-amber-500/10 text-[#D9A441]' : 'bg-primary-container/10 text-primary-container',
+      logoUrl: tool.heroImageUrl || tool.imageUrl || null,
+      sourceType: tool.sourceType,
+    };
+  });
 
   return (
     <main className="max-w-[1280px] mx-auto px-4 md:px-6 pt-24 pb-12">
@@ -363,6 +432,31 @@ export default async function ToolDetailPage({ params }: PageProps) {
             </section>
           )}
 
+          {/* Similar & Recommended Tools Section — 1 horizontal row */}
+          {formattedRelatedTools.length > 0 && (
+            <section className="space-y-4 pt-2">
+              <div className="flex items-center justify-between">
+                <h3 className="font-headline-md text-base md:text-lg text-on-surface flex items-center gap-2">
+                  <span className="material-symbols-outlined text-primary-container text-xl">auto_awesome</span>
+                  Similar & Recommended Tools
+                </h3>
+                <Link href="/tools" className="text-xs font-semibold text-primary hover:underline flex items-center gap-1">
+                  View All
+                  <span className="material-symbols-outlined text-sm">arrow_forward</span>
+                </Link>
+              </div>
+              <div className="overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-white/10">
+                <div className="flex gap-4 min-w-max">
+                  {formattedRelatedTools.map((tool) => (
+                    <div key={tool.id} className="w-[280px] sm:w-[320px] shrink-0">
+                      <ToolCard {...tool} />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </section>
+          )}
+
           {/* Installation Section - Interactive Client Island */}
           <InstallSection toolName={dbTool.name} installCommand={installCommand} />
 
@@ -370,7 +464,7 @@ export default async function ToolDetailPage({ params }: PageProps) {
 
         {/* Right Column (Sidebar) */}
         <div className="lg:col-span-4">
-          <div className="sticky top-24 space-y-6">
+          <div className="sticky top-1/2 -translate-y-1/2 space-y-6">
 
             {/* Metadata Card */}
             <div 

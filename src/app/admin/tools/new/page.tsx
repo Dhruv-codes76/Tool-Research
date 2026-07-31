@@ -1,8 +1,15 @@
 import { ToolForm } from "@/components/admin/ToolForm";
 import { getCategories } from "@/app/actions/adminActions";
 
-export default async function NewToolPage() {
+export default async function NewToolPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ sourceType?: string }>;
+}) {
+  const { sourceType } = await searchParams;
   const { platforms, toolTypes } = await getCategories();
+
+  const isProprietary = sourceType?.toUpperCase() === "PROPRIETARY";
 
   return (
     <div className="flex flex-col gap-8 pb-20">
@@ -12,13 +19,16 @@ export default async function NewToolPage() {
           <span>/</span>
           <span>Tools</span>
           <span>/</span>
-          <span className="text-on-surface">New Tool</span>
+          <span className="text-on-surface">
+            {isProprietary ? "New Proprietary Tool" : "New Open Source Tool"}
+          </span>
         </div>
       </div>
       
       <ToolForm
-        availablePlatforms={platforms.map((p: any) => p.name)}
-        availableToolTypes={toolTypes.map((t: any) => t.name)}
+        initialSourceType={isProprietary ? "PROPRIETARY" : "OPEN_SOURCE"}
+        availablePlatforms={platforms.map((p: { name: string }) => p.name)}
+        availableToolTypes={toolTypes.map((t: { name: string }) => t.name)}
       />
     </div>
   );
