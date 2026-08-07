@@ -253,6 +253,71 @@ export default async function ToolDetailPage({ params }: PageProps) {
     };
   });
 
+  const metadataCardElement = (
+    <div 
+      className="p-6 rounded-2xl flex flex-col justify-between space-y-4"
+      style={{ ...glassStyle, ...stellarGlowStyle, backgroundColor: "rgba(10, 10, 15, 0.7)" }}
+    >
+      <div className="flex justify-between items-center py-2 border-b border-outline-variant/30 text-sm">
+        <span className="text-on-surface-variant">Source</span>
+        <span className={`font-bold ${isProprietary ? 'text-[#D9A441]' : 'text-on-surface'}`}>
+          {isProprietary ? 'Proprietary' : 'Open source'}
+        </span>
+      </div>
+      {author && (
+        <div className="flex justify-between items-center py-2 border-b border-outline-variant/30 text-sm">
+          <span className="text-on-surface-variant">Author</span>
+          <span className="text-on-surface font-bold">{author}</span>
+        </div>
+      )}
+      {since && (
+        <div className="flex justify-between items-center py-2 border-b border-outline-variant/30 text-sm">
+          <span className="text-on-surface-variant">Since</span>
+          <span className="text-on-surface font-bold">{since}</span>
+        </div>
+      )}
+      {license && (
+        <div className="flex justify-between items-center py-2 border-b border-outline-variant/30 text-sm">
+          <span className="text-on-surface-variant">License</span>
+          <span className="text-on-surface font-bold">{license}</span>
+        </div>
+      )}
+      {version && (
+        <div className="flex justify-between items-center py-2 border-b border-outline-variant/30 text-sm">
+          <span className="text-on-surface-variant">Version</span>
+          <span className="text-on-surface font-bold">{version}</span>
+        </div>
+      )}
+      
+      {dbTool.platforms.length > 0 && (
+        <div className="flex justify-between items-start gap-3 py-2 border-b border-outline-variant/30 text-sm">
+          <span className="text-on-surface-variant shrink-0 pt-0.5">OS</span>
+          <div className="flex flex-wrap justify-end gap-1.5">
+            {dbTool.platforms.map((p: any) => (
+              <span key={p.name} className="bg-on-surface-variant/10 text-on-surface-variant px-2.5 py-0.5 rounded-full text-[10px] font-bold border border-outline-variant/30 tracking-wider">
+                {p.name.toUpperCase()}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {website && (
+        <div className="flex justify-between items-center py-2 text-sm">
+          <span className="text-on-surface-variant">Website</span>
+          <a 
+            href={website} 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="text-primary hover:underline font-bold truncate max-w-[200px] text-right"
+          >
+            {website}
+          </a>
+        </div>
+      )}
+    </div>
+  );
+
   return (
     <main className="max-w-[1280px] mx-auto px-4 md:px-6 pt-24 pb-12">
       {dbTool.status === 'ACTIVE' && dbTool.slug && (
@@ -432,6 +497,14 @@ export default async function ToolDetailPage({ params }: PageProps) {
             </section>
           )}
 
+          {/* Mobile Metadata Card — rendered right under the pictures on mobile */}
+          <div className="block lg:hidden">
+            {metadataCardElement}
+          </div>
+
+          {/* Installation Section - Interactive Client Island */}
+          <InstallSection toolName={dbTool.name} installCommand={installCommand} />
+
           {/* Similar & Recommended Tools Section — 1 horizontal row */}
           {formattedRelatedTools.length > 0 && (
             <section className="space-y-4 pt-2">
@@ -457,77 +530,15 @@ export default async function ToolDetailPage({ params }: PageProps) {
             </section>
           )}
 
-          {/* Installation Section - Interactive Client Island */}
-          <InstallSection toolName={dbTool.name} installCommand={installCommand} />
-
         </div>
 
         {/* Right Column (Sidebar) */}
         <div className="lg:col-span-4">
-          <div className="sticky top-1/2 -translate-y-1/2 space-y-6">
+          <div className="lg:sticky lg:top-1/2 lg:-translate-y-1/2 space-y-6">
 
-            {/* Metadata Card */}
-            <div 
-              className="p-6 rounded-2xl flex flex-col justify-between space-y-4"
-              style={{ ...glassStyle, ...stellarGlowStyle, backgroundColor: "rgba(10, 10, 15, 0.7)" }}
-            >
-              <div className="flex justify-between items-center py-2 border-b border-outline-variant/30 text-sm">
-                <span className="text-on-surface-variant">Source</span>
-                <span className={`font-bold ${isProprietary ? 'text-[#D9A441]' : 'text-on-surface'}`}>
-                  {isProprietary ? 'Proprietary' : 'Open source'}
-                </span>
-              </div>
-              {author && (
-                <div className="flex justify-between items-center py-2 border-b border-outline-variant/30 text-sm">
-                  <span className="text-on-surface-variant">Author</span>
-                  <span className="text-on-surface font-bold">{author}</span>
-                </div>
-              )}
-              {since && (
-                <div className="flex justify-between items-center py-2 border-b border-outline-variant/30 text-sm">
-                  <span className="text-on-surface-variant">Since</span>
-                  <span className="text-on-surface font-bold">{since}</span>
-                </div>
-              )}
-              {license && (
-                <div className="flex justify-between items-center py-2 border-b border-outline-variant/30 text-sm">
-                  <span className="text-on-surface-variant">License</span>
-                  <span className="text-on-surface font-bold">{license}</span>
-                </div>
-              )}
-              {version && (
-                <div className="flex justify-between items-center py-2 border-b border-outline-variant/30 text-sm">
-                  <span className="text-on-surface-variant">Version</span>
-                  <span className="text-on-surface font-bold">{version}</span>
-                </div>
-              )}
-              
-              {dbTool.platforms.length > 0 && (
-                <div className="flex justify-between items-start gap-3 py-2 border-b border-outline-variant/30 text-sm">
-                  <span className="text-on-surface-variant shrink-0 pt-0.5">OS</span>
-                  <div className="flex flex-wrap justify-end gap-1.5">
-                    {dbTool.platforms.map((p: any) => (
-                      <span key={p.name} className="bg-on-surface-variant/10 text-on-surface-variant px-2.5 py-0.5 rounded-full text-[10px] font-bold border border-outline-variant/30 tracking-wider">
-                        {p.name.toUpperCase()}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {website && (
-                <div className="flex justify-between items-center py-2 text-sm">
-                  <span className="text-on-surface-variant">Website</span>
-                  <a 
-                    href={website} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="text-primary hover:underline font-bold truncate max-w-[200px] text-right"
-                  >
-                    {website}
-                  </a>
-                </div>
-              )}
+            {/* Desktop Metadata Card */}
+            <div className="hidden lg:block">
+              {metadataCardElement}
             </div>
 
             {/* Capability Card */}
