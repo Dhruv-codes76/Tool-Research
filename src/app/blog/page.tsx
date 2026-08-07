@@ -16,7 +16,14 @@ export const metadata = buildMetadata({
 });
 
 export default async function BlogPage() {
-  const posts = await client.fetch<SanityPost[]>(postsQuery);
+  let posts: SanityPost[] = [];
+  try {
+    posts = (await client.fetch<SanityPost[]>(postsQuery)) || [];
+  } catch (error) {
+    console.error("Sanity fetch error on /blog page:", error);
+    posts = [];
+  }
+
   return (
     <>
       <JsonLd

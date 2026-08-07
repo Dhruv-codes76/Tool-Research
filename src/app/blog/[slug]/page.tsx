@@ -22,7 +22,12 @@ export async function generateMetadata({
   params: Promise<{ slug: string }> | { slug: string };
 }) {
   const slug = await getSlug(params);
-  const post = await client.fetch(postBySlugQuery, { slug });
+  let post = null;
+  try {
+    post = await client.fetch(postBySlugQuery, { slug });
+  } catch (error) {
+    console.error(`Sanity fetch error in generateMetadata for /blog/${slug}:`, error);
+  }
 
   if (!post) {
     return buildMetadata({ title: "Article Not Found", index: false });
@@ -42,7 +47,12 @@ export async function generateMetadata({
 export default async function BlogPostPage({ params }: { params: Promise<{ slug: string }> | { slug: string } }) {
   const postSlug = await getSlug(params);
 
-  const post = await client.fetch(postBySlugQuery, { slug: postSlug });
+  let post = null;
+  try {
+    post = await client.fetch(postBySlugQuery, { slug: postSlug });
+  } catch (error) {
+    console.error(`Sanity fetch error in BlogPostPage for /blog/${postSlug}:`, error);
+  }
 
   if (!post) {
     notFound();
